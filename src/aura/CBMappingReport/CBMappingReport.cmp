@@ -1,0 +1,310 @@
+<aura:component description="CloudBudget The Mustard Seed Mapping Report"
+                implements="lightning:actionOverride,lightning:isUrlAddressable,force:hasSObjectName,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId"
+                access="global"
+                controller="CBMappingReport">
+
+    <ltng:require scripts="{!join(',',$Resource.cb4__JS_CONST, $Resource.cb4__JS_UTILS)}"
+                  afterScriptsLoaded="{!c.runInit}"/>
+
+    <aura:attribute name="type" type="String" default="DOUBLED" access="private"/>
+    <aura:attribute name="yearNumber" type="String" access="global"/>
+    <aura:attribute name="typeSO" type="List" default="['DOUBLED', 'UNMAPPED']" access="private"/>
+    <aura:attribute name="reportData" type="Object" access="private"/>
+
+    <aura:attribute name="dimension1" type="String" access="private"/>
+    <aura:attribute name="dimension2" type="String" access="private"/>
+    <aura:attribute name="searchResult" type="List" access="private"/>
+
+
+    <!-- HEADER -->
+    <div class="slds-page-header slds-m-bottom_medium">
+        <div class="slds-page-header__row">
+            <div class="slds-page-header__col-title">
+                <div class="slds-media">
+                    <div class="slds-media__figure">
+                      <span class="slds-icon_container slds-icon-standard-calibration" title="Budget Application"
+                            style="background-color: #699be1 !important;">
+                        <lightning:icon iconName="standard:poll"
+                                        alternativeText="Budget Application"/>
+                      </span>
+                    </div>
+                    <div class="slds-media__body">
+                        <div class="slds-page-header__name">
+                            <div class="slds-page-header__name-title">
+                                <h1>
+                                        <span class="slds-page-header__title slds-truncate">
+                                                Mapping Report
+                                        </span>
+                                </h1>
+
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+            <lightning:layout>
+
+                <lightning:layoutItem>
+                    <div title="Budget Reporting Department Search Helper"
+                         style="border: 1px solid #c0c0c0; margin-right: 10px; border-radius: 5px;">
+                        <lightning:layout>
+                            <lightning:layoutItem>
+                                <lightning:input label="Dimension 1" value="{!v.dimension1}"
+                                                 placeholder="Dimension 1 Name"/>
+                            </lightning:layoutItem>
+                            <lightning:layoutItem>
+                                <lightning:input label="Dimension 2" value="{!v.dimension2}"
+                                                 placeholder="Optional"/>
+                            </lightning:layoutItem>
+                            <lightning:layoutItem>
+                                <lightning:button class="slds-m-top_large" label="Search"
+                                                  onclick="{!c.searchReportingDepartments}"/>
+                            </lightning:layoutItem>
+                        </lightning:layout>
+                    </div>
+                </lightning:layoutItem>
+
+                <lightning:layoutItem>
+                    <lightning:button label="Refresh" variant="brand" class="slds-m-top_large" onclick="{!c.runInit}"/>
+                </lightning:layoutItem>
+
+                <lightning:layoutItem>
+                    <lightning:select label="Type" value="{!v.type}">
+                        <aura:iteration items="{!v.typeSO}" var="t">
+                            <option label="{!t}" value="{!t}"></option>
+                        </aura:iteration>
+                    </lightning:select>
+                </lightning:layoutItem>
+
+                <lightning:layoutItem>
+                    <lightning:select label="Financial Year" aura:id="select" value="{!v.yearNumber}" required="true">
+                        <aura:iteration items="{!v.reportData.yearsSO}" var="y">
+                            <option label="{!y.title}" value="{!y.value}"
+                                    selected="{!y.value == v.yearNumber}"></option>
+                        </aura:iteration>
+                    </lightning:select>
+                </lightning:layoutItem>
+
+            </lightning:layout>
+
+        </div>
+    </div>
+    <!-- HEADER -->
+
+    <!-- DOUBLING REPORT -->
+    <aura:renderIf isTrue="{!v.reportData.doublingLines != null }">
+        <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+            <thead>
+            <tr class="slds-line-height_reset">
+                <th class="splitter">
+                    <div>#</div>
+                </th>
+                <th>
+                    <div class="slds-truncate">
+                        LVL
+                    </div>
+                </th>
+                <th class="splitter">
+                    <div>&nbsp;</div>
+                </th>
+                <th>
+                    <div class="slds-truncate">
+                        Line
+                    </div>
+                </th>
+                <th>
+                    <div class="slds-truncate">
+                        Budget Reporting Department
+                    </div>
+                </th>
+                <th class="splitter">
+                    <div>&nbsp;</div>
+                </th>
+                <th>
+                    <div class="slds-truncate">
+                        Doubling Line
+                    </div>
+                </th>
+                <th>
+                    <div class="slds-truncate">
+                        Budget Reporting Department
+                    </div>
+                </th>
+                <th class="splitter">
+                    <div>&nbsp;</div>
+                </th>
+                <th>
+                    <div class="slds-truncate">
+                        Dimension1
+                    </div>
+                </th>
+                <th>
+                    <div class="slds-truncate">
+                        Dimension2
+                    </div>
+                </th>
+
+
+            </tr>
+            </thead>
+            <tbody>
+            <aura:iteration items="{!v.reportData.doublingLines}" var="line" indexVar="i">
+                <tr class="slds-hint-parent">
+                    <td class="splitter">
+                        <div>{!i+1}</div>
+                    </td>
+
+                    <td>
+                        <div class="slds-truncate">
+                                {!line.budgetReportingDepartmentLevel}
+                            </div>
+                    </td>
+
+                    <td class="splitter">
+                        <div>&nbsp;</div>
+                    </td>
+
+                    <th>
+                        <div class="slds-truncate">
+                            <a href="{!'/' + line.budgetReportingDepartmentLineId}">{!line.budgetReportingDepartmentLineName}</a>
+                        </div>
+                    </th>
+                    <td>
+                        <div class="slds-truncate">
+                            <a href="{!'/' + line.budgetReportingDepartmentId}">{!line.budgetReportingDepartmentName}</a>
+                        </div>
+                    </td>
+
+                    <td class="splitter">
+                        <div>&nbsp;</div>
+                    </td>
+
+                    <td>
+                        <div class="slds-truncate">
+                            <a href="{!'/' + line.budgetReportingDepartmentLineId2}">{!line.budgetReportingDepartmentLineName2}</a>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="slds-truncate">
+                            <a href="{!'/' + line.budgetReportingDepartmentId2}">{!line.budgetReportingDepartmentName2}</a>
+                        </div>
+                    </td>
+
+                    <td class="splitter">
+                        <div>&nbsp;</div>
+                    </td>
+
+                    <td>
+                        <div class="slds-truncate">
+                               {!line.dimension1Name}
+                            </div>
+                    </td>
+                    <td>
+                        <div class="slds-truncate">
+                                {!line.dimension2Name}
+                            </div>
+                    </td>
+
+
+                </tr>
+            </aura:iteration>
+            </tbody>
+        </table>
+    </aura:renderIf>
+    <!-- DOUBLING REPORT -->
+
+    <!-- UNMAPPED REPORT -->
+    <aura:renderIf isTrue="{!v.reportData.unmappedLines != null }">
+        <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+            <thead>
+            <tr class="slds-line-height_reset">
+                <th class="splitter">
+                    <div>#</div>
+                </th>
+                <th>
+                    <div class="slds-truncate">
+                        LVL
+                    </div>
+                </th>
+                <th class="splitter">
+                    <div>&nbsp;</div>
+                </th>
+
+                <th>
+                    <div class="slds-truncate">
+                        Dimension1
+                    </div>
+                </th>
+                <th>
+                    <div class="slds-truncate">
+                        Dimension2
+                    </div>
+                </th>
+                <th class="splitter">
+                    <div>&nbsp;</div>
+                </th>
+                <th>
+                    <div class="slds-truncate">
+                        FF RB Example
+                    </div>
+                </th>
+
+
+            </tr>
+            </thead>
+            <tbody>
+            <aura:iteration items="{!v.reportData.unmappedLines}" var="line" indexVar="i">
+                <tr class="slds-hint-parent">
+                    <td class="splitter">
+                        <div>{!i+1}</div>
+                    </td>
+
+                    <td>
+                        <div class="slds-truncate">
+                                {!line.budgetReportingDepartmentLevel}
+                            </div>
+                    </td>
+
+                    <td class="splitter">
+                        <div>&nbsp;</div>
+                    </td>
+
+
+                    <td>
+                        <div class="slds-truncate">
+                               {!line.dimension1Name}
+                            </div>
+                    </td>
+                    <td>
+                        <div class="slds-truncate">
+                                {!line.dimension2Name}
+                            </div>
+                    </td>
+
+                    <td class="splitter">
+                        <div>&nbsp;</div>
+                    </td>
+
+                    <td>
+                        <div class="slds-truncate">
+                            <a href="{!'/' + line.rbExampleId}">{!line.rbExampleName}</a>
+                        </div>
+                    </td>
+
+
+                </tr>
+            </aura:iteration>
+            </tbody>
+        </table>
+    </aura:renderIf>
+    <!-- UNMAPPED REPORT -->
+
+
+    <!-- SUPER MODERN SPINNER -->
+    <lightning:spinner aura:id="sms" class="slds-hide"/>
+    <!-- SUPER MODERN SPINNER -->
+
+</aura:component>

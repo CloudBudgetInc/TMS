@@ -1,0 +1,15 @@
+<!-- ************************************************************************
+* VisualForce Page: CreateJournalsVerifyProject
+* Created by lv@nubik.ca, 06/13/2017
+* - Display an error message if the Designation related to the designation 
+*   budget doesnt have a Dimension 3
+*
+* Modifications:
+* - {DevName}, {MM/DD/YYYY} � {Description of changes made post deployment to client}
+*
+************************************************************************  -->
+<apex:page standardController="Opportunity" 
+        extensions="CreateJournalVerifyProjectController">
+    <apex:pageMessage severity="info" strength="1" summary="{!requiresProject}" 
+            rendered="{!IF(requiresProject=='',false,true)}"/>
+</apex:page>

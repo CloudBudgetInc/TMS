@@ -1,0 +1,16 @@
+<!-- ************************************************************************
+* VisualForce Page: BatchJobstatus
+* Created by Luis Velis - Nubik - 09/16/2015
+*
+* - Allow to see the status of the running batch
+*
+* Modifications:
+* - {DevName}, {MM/DD/YYYY} – {Description of changes made post deployment to client}
+*
+************************************************************************  -->
+<apex:page standardController="npsp__Batch__c">
+	<apex:form >
+        
+		<c:JobStatusComponent IdRecord="{!npsp__Batch__c.Id}" sObjectLabel="Batch" IdJob="{!npsp__Batch__c.Job_Id__c}"/>
+	</apex:form>
+</apex:page>

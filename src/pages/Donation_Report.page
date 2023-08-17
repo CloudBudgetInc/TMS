@@ -1,0 +1,39 @@
+<apex:page Controller="ReportController">
+<style>
+table {
+    border-collapse: collapse;
+}
+table, th, td {
+    border: 1px solid #ddd;
+}
+    
+{!StyleClasses}    
+</style>
+    
+    <apex:pageBlock title="Donation report">
+        <Table width="100%">
+            <!-- Report Header -->
+            <apex:repeat value="{!ReportHeader}" var="HLine">
+                <tr width="100%" style="{!HLine.style}" class="{!HLine.styleclass}">
+                    <apex:repeat value="{!HLine.cells}" var="rcell">
+                        <th rowspan="{!rcell.row}" colspan="{!rcell.col}" style="{!rcell.style}" class="{!rcell.styleclass}" >
+                            {!rcell.value}
+                        </th>      
+                    </apex:repeat>
+                </tr>
+            </apex:repeat>            
+            <!-- Report List -->
+            <apex:repeat value="{!Reportlist}" var="OLine">
+                <tr width="100%" style="{!OLine.style}" class="{!OLine.styleclass}">
+                    <apex:repeat value="{!OLine.cells}" var="rcell">
+                        <td rowspan="{!rcell.row}" colspan="{!rcell.col}" style="{!rcell.style}" class="{!rcell.styleclass}" >
+                            {!rcell.value}
+                        </td>      
+                    </apex:repeat>
+                </tr>
+            </apex:repeat>
+        </Table>
+        
+    </apex:pageBlock>
+    
+</apex:page>

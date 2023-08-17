@@ -1,0 +1,3 @@
+<apex:page standardController="Scanned_Payable_Invoice__c" recordSetVar="ConfirmedRecords" extensions="ScannedPayableInvoiceController" action="{!CreatePayableInvoices}">
+    <apex:messages />
+</apex:page>

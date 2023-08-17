@@ -1,0 +1,98 @@
+<apex:page controller="kell6_core.ReceiptTemplateController" renderAs="pdf">
+    <table class="letter" style="font-size: 10pt; padding-top: 1em;">
+        <tr><td style="padding-bottom: 1em;"><img src="{!$Resource[texts.kell6_core__Static_Resource_Letter_Logo__c]}" style="height: 75px;" alt="Logo" /></td></tr>
+        <tr><td class="right"><apex:outputText value="{0,date,MMMM' 'd', 'yyyy}"><apex:param value="{!TODAY()}" /></apex:outputText><br /><br /><br /></td></tr>
+        <tr><td style="padding-bottom: 1.5em;"><apex:outputText value="{!receiptMap['accompanyingLetter']}" escape="false" /></td></tr>
+        <tr><td><img src="{!$Resource[texts.kell6_core__Static_Resource_Letter_Sender_Signature__c]}" alt="Signature" style="width: 150px;" /></td></tr>
+        <tr><td><apex:outputField value="{!texts.kell6_core__Accompanying_Letter_Signor__c}" /></td></tr>
+    </table>
+    
+    <div class="receipt" style="font-size: 10pt;">
+        <div style="overflow: hidden; border-top: 2px gray dashed; padding-top: 10px;">
+            <table style="width: 100%;">
+                <tr>
+                    <td style="vertical-align: top;"><img src="{!$Resource[texts.kell6_core__Static_Resource_Receipt_Logo__c]}" alt="Logo" style="height: 75px;" /></td>
+                    <td style="text-align: center; vertical-align: top;">
+                        <h3><apex:outputField value="{!texts.kell6_core__Receipt_Title__c}" /></h3>
+                        <apex:outputField value="{!texts.kell6_core__Receipt_Subtitle__c}" />
+                    </td>
+                </tr>
+            </table>
+            
+            <apex:outputPanel style="color: red; display: block; margin-top: 1em;" rendered="{!receiptMap['type']=='replacement'}">   
+                <b><apex:outputField value="{!texts.kell6_core__Replacement__c}" /> {!receiptMap['oldRname']}</b> 
+            </apex:outputPanel>
+            <table style="margin-bottom: 20px; width: 100%;" cellpadding="5px">
+                <tr style="display: {!IF(NOT(ISBLANK(TRIM(receiptMap['rname']))), 'table-row', 'none')};">
+                    <td><apex:outputField value="{!texts.kell6_core__Label_Receipt_Number__c}" /></td>
+                    <td colspan="2"><apex:outputText value="{!receiptMap['rname']}" /></td>
+                </tr>
+                <tr style="display: {!IF(NOT(ISBLANK(TRIM(receiptMap['Campaign_Name']))), 'table-row', 'none')};">
+                    <td style="vertical-align: top;"><apex:outputField value="{!texts.kell6_core__Label_Campaign__c}" /></td>
+                    <td><apex:outputText value="{!receiptMap['Campaign_Name']}" /></td>
+                </tr>
+                <tr style="display: {!IF(NOT(ISBLANK(TRIM(receiptMap['CloseDate']))), 'table-row', 'none')};">
+                    <td><apex:outputField value="{!texts.kell6_core__Label_Donation_Date__c}" /></td>
+                    <td colspan="2"><apex:outputText value="{!receiptMap['CloseDate']}" /></td>
+                </tr>
+                <tr style="display: {!IF(NOT(ISBLANK(TRIM(receiptMap['Contact_Name']))), 'table-row', 'none')};">
+                    <td><apex:outputField value="{!texts.kell6_core__Label_Donor__c}" /></td>
+                    <td colspan="2"><apex:outputText value="{!receiptMap['Contact_Name']}" /></td>
+                </tr>
+                <tr style="display: {!IF(OR(NOT(ISBLANK(TRIM(receiptMap['BillingStreet']))), NOT(ISBLANK(TRIM(receiptMap['BillingCity']))), NOT(ISBLANK(TRIM(receiptMap['BillingState'])))), 'table-row', 'none')};">
+                    <td style="vertical-align: top;"><apex:outputField value="{!texts.kell6_core__Label_Donor_Address__c}" /></td>
+                    <td colspan="2">
+                        <apex:outputText value="{!receiptMap['BillingStreet']}" escape="false" /><br />
+                        <apex:outputText value="{!receiptMap['BillingCity']}, {!receiptMap['BillingState']} {!receiptMap['BillingPostalCode']}" escape="false" /><br />
+                        <apex:outputText value="{!receiptMap['BillingCountry']}" escape="false" />
+                    </td>
+                </tr>
+                <tr>
+                    <td style="width: 30%;">
+                        <apex:outputField value="{!texts.kell6_core__Label_Amount__c}" rendered="{!NOT(ISBLANK(TRIM(receiptMap['Amount'])))}" />
+                        <apex:outputText value="{0, number, {!texts.kell6_core__Currency_Format__c}}" rendered="{!NOT(ISBLANK(TRIM(receiptMap['Amount'])))}">
+                            <apex:param value="{!VALUE(receiptMap['Amount'])}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="width: 30%;">
+                        <apex:outputField value="{!texts.kell6_core__Label_Benefit_Value__c}" rendered="{!NOT(ISBLANK(TRIM(receiptMap['Benefit'])))}" />
+                        <apex:outputText value="{0, number, {!texts.kell6_core__Currency_Format__c}}" rendered="{!NOT(ISBLANK(TRIM(receiptMap['Benefit'])))}">
+                            <apex:param value="{!VALUE(receiptMap['Benefit'])}" />
+                        </apex:outputText>
+                    </td>
+                    <td style="width: 40%;">
+                        <apex:outputField value="{!texts.kell6_core__Label_Tax_Deductible_Amount__c}" rendered="{!NOT(ISBLANK(TRIM(receiptMap['Tax_Deductible_Amount'])))}" />&nbsp;
+                        <apex:outputText value="{0, number, {!texts.kell6_core__Currency_Format__c}}" rendered="{!NOT(ISBLANK(TRIM(receiptMap['Tax_Deductible_Amount'])))}">
+                            <apex:param value="{!VALUE(receiptMap['Tax_Deductible_Amount'])}" />
+                        </apex:outputText>
+                    </td>
+                </tr>
+                <tr style="display: {!IF(NOT(ISBLANK(TRIM(receiptMap['Description']))), 'table-row', 'none')};">
+                    <td><apex:outputField value="{!texts.kell6_core__Label_Description__c}" /></td>
+                    <td colspan="2"><apex:outputText value="{!receiptMap['Description']}" /></td>
+                </tr>
+                <tr style="display: {!IF(NOT(ISBLANK(TRIM(receiptMap['ReceiptDate']))), 'table-row', 'none')};">
+                    <td><apex:outputField value="{!texts.kell6_core__Label_Receipt_Date__c}" /></td>
+                    <td colspan="2"><apex:outputText value="{!receiptMap['ReceiptDate']}" /></td>
+                </tr>
+                <tr style="display: {!IF(NOT(ISBLANK(TRIM(texts.kell6_core__Place_of_Issue__c))), 'table-row', 'none')};">
+                    <td style="vertical-align: top;"><apex:outputField value="{!texts.kell6_core__Label_Place_of_Issue__c}" /></td>
+                    <td colspan="2"><apex:outputField value="{!texts.kell6_core__Place_of_Issue__c}" /></td>
+                </tr>
+                <tr>
+                    <td style="vertical-align: top;">Authorized signature:</td>
+                    <td class="receiptSignature" colspan="2" style="text-align: left;">
+                        <img src="{!$Resource[texts.kell6_core__Static_Resource_Receipt_Sender_Signature__c]}" alt="Signature" /><br />
+                        <apex:outputField value="{!texts.kell6_core__Receipt_Sender__c}" />
+                    </td>
+                </tr>
+            </table>
+            
+            <table style="width: 100%; margin-bottom: 20px;">
+                <tr>
+                    <td style="text-align: center;"><i><apex:outputText value="{!texts.kell6_core__Left_Footer_Original_Receipt__c}" /></i></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</apex:page>

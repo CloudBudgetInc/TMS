@@ -1,0 +1,185 @@
+<apex:page standardController="Scanned_Payable_Invoice__c" recordSetVar="ConfirmedRecords" tabStyle="Scanned_Payable_Invoice__c" extensions="ScannedInvoicePreview" docType="html-5.0">
+    <style>
+        .ESav:link {
+        color:#368733; 
+        text-decoration:none;
+        }
+        .ESav:hover {
+        color:#368733;
+        text-decoration:underline;
+        }
+        .EEdDel:link {
+        color:#015ba7; 
+        text-decoration:none;
+        }
+        .EEdDel:hover {
+        color:#015ba7; 
+        text-decoration:underline;
+        }
+        
+        .SaveBut:link, .SaveBut:visited {
+        background-color: #009933;
+        border-radius: 2px;
+        border: 1px solid green;
+        font-weight: bold;
+        color: white;
+        padding: 4px 4px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        }
+        
+        .SaveBut:hover, .SaveBut:active {
+        background-color: green;
+        }
+        
+        .CancelBut:link, .CancelBut:visited {
+        background-color: #f44336;
+        border-radius: 2px;
+        border: 1px solid red;
+        font-weight: bold;        
+        color: white;
+        padding: 4px 4px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        }
+        .CancelBut:hover, .CancelBut:active {
+        background-color: red;
+        }        
+    </style>
+    
+    <apex:outputPanel id="MainPanel">
+        <apex:form >
+            <center>
+                <h1 style="font-weight: bold; font-style: italic; font-size: 150%;">Scanned Payable Invoice (edit mode)</h1>
+            </center>
+            <apex:pageBlock >
+                <table style="width:100%">
+                    <tr style="height:45px; vertical-align: middle;" valign="middle">
+                        <td align="left" style="width:34%;vertical-align: middle;">
+                            <div>
+                                <span style="font-weight: bold; font-size: 150%;padding-bottom:30px;"> Scanned payable invoice: {!Record.Name}</span> &nbsp;&nbsp;
+                            </div>
+                        </td>
+                        <td align="right">
+                            <apex:commandLink value="Save" action="{!ESaveEdit}" styleClass="SaveBut"/>&nbsp;&nbsp;
+                            <apex:commandLink value="Cancel" action="{!ECancelEdit}" styleClass="CancelBut" immediate="true"/>
+                            <br/>
+                        </td>
+                    </tr>
+                </table>            
+                
+                <apex:pageBlockSection columns="2" title="Scanned invoice details" collapsible="false">
+                    <apex:inputField value="{!Record.Account_Name__c }" onkeydown="if(event.keyCode==13){this.blur();}"><apex:actionSupport event="onchange" reRender="MainPanel"/></apex:inputField>
+                    <apex:inputField value="{!Record.Invoice_Date__c }" onkeydown="if(event.keyCode==13){this.blur();}"/>
+                    &nbsp;
+                    <apex:inputField value="{!Record.Invoice_Number__c }" onkeydown="if(event.keyCode==13){this.blur();}"/>
+                    <apex:inputField value="{!Record.Total_Amount__c }" onkeydown="if(event.keyCode==13){this.blur();}"><apex:actionSupport event="onchange" reRender="MainPanel" action="{!EChangeLinesAmount}"/></apex:inputField>
+                    <apex:outputText value="{!Record.Status__c }" style="{!if(Record.Status__c='Confirmed','color:green;font-weight: bold', 'color:#990000;font-weight: bold')}" />
+                    <apex:inputField value="{!Record.GST__c }" onkeydown="if(event.keyCode==13){this.blur();}"><apex:actionSupport event="onchange" reRender="MainPanel" action="{!EChangeGST}"/></apex:inputField>
+                    <apex:inputField value="{!Record.Department_Name__c }" onkeydown="if(event.keyCode==13){this.blur();}"/>
+                    <apex:outputText escape="false" label="Total Lines Net Amount" value="${!DescTotAmount}" style="{!if(DescTotAmount=Record.Total_Amount__c,'color:green;font-weight: bold', 'color:red;font-weight: bold')}"/>
+                </apex:pageBlockSection>
+                
+                <apex:pageBlockSection title="Descriptions" collapsible="false" columns="1" id="Lines">
+                    
+                    <apex:variable value="{!0}" var="rowNum"/>
+                    <apex:variable value="{!(false)}" var="rowEdit"/>    
+                    
+                    <apex:pageBlockTable value="{!Record_Desc}" var="desc" style="width:100%" columnsWidth="4%,1%,15%,15%,15%,15%,15%,15%,5%">
+                        
+                        
+                        <apex:column headerValue="Action">
+                            <apex:variable value="{!rowNum + 1}" var="rowNum" />
+                            <apex:variable value="{!IF(Edit_Id==rowNum,true,false)}" var="rowEdit"/>
+                            
+                            <apex:outputPanel style="display:{!IF(desc.Payable_Control_GL__c!=GST_GL,'table','none')}">
+                                <apex:commandLink action="{!EEmpty}" value="Save"  styleClass="ESav" rendered="{!rowEdit}">
+                                    <apex:param name="h1" value="{!-1}" assignTo="{!Edit_Id}"/> 
+                                </apex:commandLink>
+                                <apex:commandLink action="{!EEmpty}" value="Edit" styleClass="EEdDel" rendered="{!NOT(rowEdit)}">
+                                    <apex:param name="h3" value="{!rowNum}" assignTo="{!Edit_Id}"/> 
+                                </apex:commandLink>
+                                |
+                                <apex:commandLink onclick="return confirm('Are you sure, you want to delete this line?');" action="{!EDelDescriptionLine}" value="Del" styleClass="EEdDel">
+                                    <apex:param name="h4" value="{!rowNum}" assignTo="{!Edit_Id}"/>
+                                </apex:commandLink>
+                            </apex:outputPanel>
+                        </apex:column>
+                        
+                        <apex:column headerValue="#"><apex:outputText >{!rowNum}</apex:outputText></apex:column>
+                        
+                        <apex:column headerValue="GL Account" >
+                            <apex:outputPanel style="display:{!if(rowEdit,'block','none')}">
+                                <apex:inputField value="{!desc.Payable_Control_GL__c}" style="width:90%" onkeydown="if(event.keyCode==13){this.blur();}" onfocus="this.value = this.value;"/>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="display:{!if(rowEdit,'none','block')}">
+                                <apex:outputField value="{!desc.Payable_Control_GL__c}"/>
+                            </apex:outputPanel>
+                        </apex:column>
+                        
+                        <apex:column headerValue="Dimension 1" >
+                            <apex:outputPanel style="display:{!if(rowEdit,'block','none')}">
+                                <apex:inputField value="{!desc.Dimension_1__c}" style="width:90%" onkeydown="if(event.keyCode==13){this.blur();}"/>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="display:{!if(rowEdit,'none','block')}">
+                                <apex:outputField value="{!desc.Dimension_1__c}"/>
+                            </apex:outputPanel>
+                        </apex:column>
+                        
+                        <apex:column headerValue="Dimension 2" >
+                            <apex:outputPanel style="display:{!if(rowEdit,'block','none')}">
+                                <apex:inputField value="{!desc.Dimension_2__c}" style="width:90%" onkeydown="if(event.keyCode==13){this.blur();}"/>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="display:{!if(rowEdit,'none','block')}">
+                                <apex:outputField value="{!desc.Dimension_2__c}"/>
+                            </apex:outputPanel>
+                        </apex:column>
+                        
+                        <apex:column headerValue="Dimension 3">
+                            <apex:outputPanel style="display:{!if(rowEdit,'block','none')}">
+                                <apex:inputField value="{!desc.Dimension_3__c}" style="width:90%" onkeydown="if(event.keyCode==13){this.blur();}"/>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="display:{!if(rowEdit,'none','block')}">
+                                <apex:outputField value="{!desc.Dimension_3__c}"/>
+                            </apex:outputPanel>
+                        </apex:column>
+                        
+                        <apex:column headerValue="Dimension 4" >
+                            <apex:outputPanel style="display:{!if(rowEdit,'block','none')}">
+                                <apex:inputField value="{!desc.Dimension_4__c}" style="width:90%" onkeydown="if(event.keyCode==13){this.blur();}"/>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="display:{!if(rowEdit,'none','block')}">
+                                <apex:outputField value="{!desc.Dimension_4__c}"/>
+                            </apex:outputPanel>
+                        </apex:column>
+                        
+                        <apex:column headerValue="Description" >
+                            <apex:outputPanel style="display:{!if(rowEdit,'block','none')}">
+                                <apex:inputField value="{!desc.Description__c}" style="width:90%" onkeydown="if(event.keyCode==13){this.blur();}"/>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="display:{!if(rowEdit,'none','block')}">
+                                <apex:outputField value="{!desc.Description__c}"/>
+                            </apex:outputPanel>
+                        </apex:column>
+                        
+                        <apex:column headerValue="Net Amount" >
+                            <apex:outputPanel style="display:{!if(rowEdit,'block','none')}"> 
+                                <apex:inputField value="{!desc.Net_Amount__c}" style="width:90%" onkeydown="if(event.keyCode==13){this.blur();}">
+                                    <apex:actionSupport event="onblur" action="{!EChangeLinesAmount}" reRender="MainPanel"/>
+                                </apex:inputField>
+                            </apex:outputPanel>
+                            <apex:outputPanel style="display:{!if(rowEdit,'none','block')}">
+                                <apex:outputField value="{!desc.Net_Amount__c}" style="display:{!if(rowEdit,'none','block')}"/>
+                            </apex:outputPanel>
+                        </apex:column>
+                        
+                    </apex:pageBlockTable>
+                    <apex:commandLink value="+ Add Line" action="{!EAddDescriptionLine}"/>
+                </apex:pageBlockSection>
+                
+            </apex:pageBlock>
+        </apex:form>
+    </apex:outputPanel>
+</apex:page>

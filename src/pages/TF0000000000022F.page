@@ -1,0 +1,507 @@
+<!-- User Note: TF0000000000022X Reporting Template for gathering information -->
+<!-- User Note: The Template Is Generic. Template Only Uses A Single Data Range. -->
+<!-- REGION 01: GENERAL CONFIGURATION START-->
+<apex:page standardController="ffr__ReportingDefinition__c" extensions="ffr.ReportingTemplateController" readOnly="true" showHeader="true" sidebar="false" standardStylesheets="false" renderas="{!RenderReportAs}">
+
+<!-- Variable to represent styles for report -->
+<apex:stylesheet value="{!URLFOR($Resource.ffr__ReportingDefaultStyles, 'ReportingDefaultStyles.css')}"/>
+<apex:stylesheet value="{!StyleSheetName}"/>
+<apex:variable var="TblHeader" value="font-size: 9pt; font-weight:bold; background-color: #ACB9CA; text-align: center;"/>
+<apex:variable var="TblHeaderY" value="font-size: 9pt; font-weight:bold; background-color: #ACB98A; text-align: center;"/>
+<apex:variable var="TblTotal" value="font-size: 11pt; font-weight:bold; background-color: #ACB9CA; text-align: right;"/>
+<apex:variable var="TblTotalY" value="font-size: 11pt; font-weight:bold; background-color: #ACB98A; text-align: right;"/>
+<apex:variable var="Header01" value="font-size: 10pt; font-weight:bold; background-color: #C1CAD7; text-align: left;"/>
+<apex:variable var="Header01Y" value="font-size: 10pt; font-weight:bold; background-color: #C1CA97; text-align: left;"/>
+<apex:variable var="STotal01" value="font-size: 10pt; font-weight:bold; background-color: #C1CAD7; text-align: right;"/>
+<apex:variable var="STotal01Y" value="font-size: 10pt; font-weight:bold; background-color: #C1CA97; text-align: right;"/>
+<apex:variable var="Header02" value="font-size: 9pt; font-weight:bold; background-color: #D6DCE4; text-align: left;"/>
+<apex:variable var="Header02Y" value="font-size: 9pt; font-weight:bold; background-color: #D6DCA4; text-align: left;"/>
+<apex:variable var="STotal02" value="font-size: 9pt; font-weight:bold; background-color: #D6DCE4; text-align: right;"/>
+<apex:variable var="STotal02Y" value="font-size: 9pt; font-weight:bold; background-color: #D6DCA4; text-align: right;"/>
+<apex:variable var="Detail03" value="font-size: 8pt; text-align: right; border-bottom: 1px solid #ddd;"/>
+<apex:variable var="Detail03L" value="font-size: 8pt; text-align: left; border-bottom: 1px solid #ddd;"/>
+<apex:variable var="Detail04" value="font-size: 8pt; text-align: right; border-bottom: 1px solid #ddd; background-color: #FFFFC8; font-weight:bold; color: #880015"/>
+
+<!-- Variable to represent boolean true/false when needing to set other variables to these states -->
+<apex:variable var="true" value="{!1=1}"/>
+<apex:variable var="false" value="{!1=0}"/>
+    
+<!-- Variable to represent number formats for report -->
+<apex:variable var="dateFormat" value="{0, date, MM/dd/yyyy}"/>
+<apex:variable var="V2NCB" value="{0, number, #,###,###,##0.00;(#,###,###,##0.00)}"/>
+<apex:variable var="P2NCB" value="{0, number, #,###,###,##0.00%;(#,###,###,##0.00%)}"/>
+<apex:variable var="V0NCB" value="{0, number, #,###,###,##0;(#,###,###,##0)}"/>
+<apex:variable var="P0NCB" value="{0, number, #,###,###,##0%;(#,###,###,##0%)}"/>
+<apex:variable var="V2RCB" value="{0, number, (#,###,###,##0.00);#,###,###,##0.00}"/>
+<apex:variable var="P2RCB" value="{0, number, (#,###,###,##0.00%);#,###,###,##0.00%}"/>
+<apex:variable var="V0RCB" value="{0, number, (#,###,###,##0);#,###,###,##0}"/>
+<apex:variable var="P0RCB" value="{0, number, (#,###,###,##0%);#,###,###,##0%}"/>
+<apex:variable var="V2NCBUSD" value="{0, number, $#,###,###,##0.00;$(#,###,###,##0.00)}"/>
+<apex:variable var="V2RCBUSD" value="{0, number, $(#,###,###,##0.00);$#,###,###,##0.00}"/>
+<apex:variable var="VZ" value="0.00"/>
+<apex:variable var="PZ" value="0.00%"/>
+<apex:variable var="VZUSD" value="$0.00"/>
+
+<!-- REGION 02: REPORT HEADER START -->
+<!-- Demand The Report Definition Fields To Be Loaded Even If Data Is Not Found -->
+<apex:outputText value="{!ffr__ReportingDefinition__c.Name}" rendered="false"/>
+<apex:outputText value="{!ffr__ReportingDefinition__c.ffr__Description__c}" rendered="false"/>
+<apex:outputText value="{!ffr__ReportingDefinition__c.ffr__Title__c}" rendered="false"/>
+<apex:outputText value="{!ffr__ReportingDefinition__c.ffr__DisplayPrompts__c}" rendered="false"/>
+<apex:outputText value="{!ffr__ReportingDefinition__c.ffr__ReportingTemplate__c}" rendered="false"/>
+<apex:outputText value="{!ffr__ReportingDefinition__c.ffr__StyleSheet__c}" rendered="false"/>
+<apex:outputText value="{!ffr__ReportingDefinition__c.ffr__PrintStyleSheet__c}" rendered="false"/>
+<apex:outputText value="{!ffr__ReportingDefinition__c.ffr__CompanyLogo__c}" rendered="false"/>
+<apex:outputText value="{!ffr__ReportingDefinition__c.ffr__PrintChatterFeed__c}" rendered="false"/>
+<!-- User Note: Show The Error Messages From The Reporting Engine -->
+
+<apex:PageMessages />
+<div class="chatterPosition"></div>
+<!-- User Note: I Want A Consistent Header Format To All Of My Reports With Titles Descriptions And Runtime Prompts Etc -->
+<!-- User Note: When Creating New Templates This Well Formatted Header Should Be Copied And Used Across All The Reports -->
+<table class="ffrgridd">
+  <tr>
+      <td rowspan="4"><apex:image url="{!URLFOR(StaticResourceImages, CompanyLogo)}" width="50" height="50" rendered="{!DisplayCompanyLogo}"/></td>
+      <td height="25"></td>
+  </tr>
+  <tr>
+    <td><h1 class="ffrtitle">{!ffr__ReportingDefinition__c.ffr__Title__c}</h1></td>
+    <td align="right">{!NOW()}</td>
+  </tr>
+  <tr>
+    <td><h2 class="ffrname">{!ffr__ReportingDefinition__c.Name}</h2></td>
+    <td align="right"><h2 class="ffrwhiteonwhite">{!ffr__ReportingDefinition__c.ffr__ReportingTemplate__c}</h2></td>
+  </tr>
+  <tr>
+    <td align="left"><apex:outputField value="{!ffr__ReportingDefinition__c.ffr__Description__c}"/></td>
+    <td align="right"><h2 class="ffrwhiteonwhite">{!ffr__ReportingDefinition__c.ffr__StyleSheet__c}</h2></td>
+  </tr>
+</table>
+    
+<apex:variable var="ReportPeriod" value="/001"/>
+    
+<!-- User Note: Create a new table to display the prompt information -->
+<table class="ffrgridnotfullpage">
+	<tr>
+        <td class="ffrgridspacer2"></td>
+    </tr>
+	<tr>
+		<td align="left">
+			<table class="ffrgrid">
+				<apex:repeat value="{!promptList}" var="prompt" >
+					<tr>
+						<td align="left">{!prompt.label}</td>
+						<td align="left" class="ffrgridspacer"></td>
+						<td align="left"><strong>{!prompt.value}</strong></td>
+						<apex:variable var="ReportPeriod" value="{!IF(prompt.label=='Reporting Period',prompt.value, ReportPeriod)}"/>
+					</tr>
+				</apex:repeat>
+			</table>
+		</td>
+	</tr>
+</table>
+<!-- User Note: Insert a space after the header -->
+<table class="ffrgrid">
+<tr><td class="ffrgridspacer"></td></tr>
+</table>
+<!-- REGION 02: REPORT HEADER END -->
+<!-- REGION 03: REPORT BODY-->
+<apex:outputpanel rendered="{!!hasMessages}">
+    <!-- This template uses only one data range -->
+    <apex:variable var="dataRange" value="{!reportingData[Case(ReportPeriod,'/001','DR01','/002','DR02','/003','DR03','/004','DR04','/005','DR05','/006','DR06','/007','DR07','/008','DR08','/009','DR09','/010','DR10','/011','DR11','/012','DR12','DR12')]}"/>
+    <apex:variable var="BudYTD" value="A"/>
+    <apex:variable var="ActYTD" value="B"/>
+    <apex:variable var="FcstYTD" value="D"/>
+    <apex:variable var="TotBud" value="C"/>
+
+    <!-- Group setup-->
+    <!-- Set the default group value rendering state variables to "false" -->
+    <apex:variable var="RenderGroup01" value="{!false}"/>
+    <apex:variable var="RenderGroup02" value="{!false}"/>
+    <apex:variable var="RenderGroup03" value="{!false}"/>
+    
+    <!-- We need to know whether to keep group subtotals. Default condition is false -->
+    <apex:variable var="RenderGroupSubtotals" value="{!false}"/>
+    <!-- Now set the group rendering state variables according to which group values have been used -->
+    <apex:repeat var="groupKey" value="{!dataRange.groupKeyList}">
+    	<apex:outputPanel layout="none" rendered="{!groupKey=='01'}">
+    		<apex:variable var="RenderGroup01" value="{!true}"/>
+    		<apex:variable var="RenderGroupSubtotals" value="{!true}"/>
+    	</apex:outputPanel>
+    	<apex:outputPanel layout="none" rendered="{!groupKey=='02'}">
+    		<apex:variable var="RenderGroup02" value="{!true}"/>
+    		<apex:variable var="RenderGroupSubtotals" value="{!true}"/>
+    	</apex:outputPanel>
+    	<apex:outputPanel layout="none" rendered="{!groupKey=='03'}">
+    		<apex:variable var="RenderGroup03" value="{!true}"/>
+    		<apex:variable var="RenderGroupSubtotals" value="{!true}"/>
+    	</apex:outputPanel>
+    </apex:repeat>
+    
+    <table style="width: 100%;">
+
+        <!-- Column headings -->
+    	<tr>
+    		<th rowspan="2" style="{!TblHeader}">Description</th>
+    		<th colspan="4" style="{!TblHeader}">Year to Date</th>
+    		<th colspan="3" style="{!TblHeaderY}">Year</th> 
+    	</tr>
+    	<tr>
+    		<th style="{!TblHeader}">Budget</th>
+    		<th style="{!TblHeader}">Actuals</th>
+    		<th style="{!TblHeader}">Variance</th>
+            <th style="{!TblHeader}">Variance %</th>
+    		<th style="{!TblHeaderY}">Total Budget</th> 
+            <th style="{!TblHeaderY}">Remaining Budget</th>
+            <th style="{!TblHeaderY}">Forecast</th>
+    	</tr>
+        
+    <!-- For each row, reset all subtotals to zero (if the column is in use - determined by column render state variables) -->
+    	<tr style="display:none;">
+        	<td>
+    			<apex:variable value="{!0}" var="rowSubtotal01ColumnA"/>
+    			<apex:variable value="{!0}" var="rowSubtotal01ColumnB"/>
+    			<apex:variable value="{!0}" var="rowSubtotal01ColumnC"/>
+    			<apex:variable value="{!0}" var="rowSubtotal01ColumnD"/>
+                <apex:variable value="{!0}" var="rowSubtotal01ColumnF"/>
+                <apex:variable value="{!0}" var="rowSubtotal01ColumnG"/>
+    			<apex:variable value="{!0}" var="rowSubtotal02ColumnA"/>
+    			<apex:variable value="{!0}" var="rowSubtotal02ColumnB"/>
+    			<apex:variable value="{!0}" var="rowSubtotal02ColumnC"/>
+    			<apex:variable value="{!0}" var="rowSubtotal02ColumnD"/>
+                <apex:variable value="{!0}" var="rowSubtotal02ColumnF"/>
+                <apex:variable value="{!0}" var="rowSubtotal02ColumnG"/>
+    			<apex:variable value="{!0}" var="rowTotalColumnA"/>
+    			<apex:variable value="{!0}" var="rowTotalColumnB"/>
+    			<apex:variable value="{!0}" var="rowTotalColumnC"/>
+    			<apex:variable value="{!0}" var="rowTotalColumnD"/>
+                <apex:variable value="{!0}" var="rowTotalColumnF"/>
+                <apex:variable value="{!0}" var="rowTotalColumnG"/>
+    		</td>
+        </tr>
+        
+    <!-- These variables are used to determine when to add a space between groups -->
+    <apex:variable var="previousLineGroup01" value=""/>
+    <apex:variable var="previousLineGroup02" value=""/>
+    <apex:variable var="previousLineGroup03" value=""/>
+    <apex:variable var="currentLineGroup01" value=""/>
+    <apex:variable var="currentLineGroup02" value=""/>
+    <apex:variable var="currentLineGroup03" value=""/>
+    <!-- This variable is used to determine whether the line is the first line in the group - to prevent a space being printed before the first line -->
+    <apex:variable var="firstLine" value="{!true}"/>
+    
+        
+    <!-- Iterate over the Rows -->
+    <apex:repeat value="{!dataRange.rowList}" var="row">
+    <!-- Iterate over the Lines -->
+    <apex:repeat value="{!row.lineList}" var="line" >
+        
+    <!-- Set the variables representing the groups for the current line for comparison with the previous line -->
+    <tr>
+        <td class = "ffrhidden">
+    		<apex:variable value="{!line.genericGroups['01'].value}" var="currentLineGroup01" rendered="{!RenderGroup01}"/>
+    		<apex:variable value="{!line.genericGroups['02'].value}" var="currentLineGroup02" rendered="{!RenderGroup02}"/>
+    		<apex:variable value="{!line.genericGroups['03'].value}" var="currentLineGroup03" rendered="{!RenderGroup03}"/>
+   		</td>
+    </tr>
+        
+    <apex:variable var="doSubtotal01" value="{!RenderGroupSubtotals && currentLineGroup01!=previousLineGroup01}"/>
+    <apex:variable var="doSubtotal02" value="{!RenderGroupSubtotals && currentLineGroup02!=previousLineGroup02}"/>        
+        
+        <tr style="{!if(!doSubtotal02||firstLine,'display:none','')};">
+            <td/>
+    		<td style="{!STotal02}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal02ColumnB}"/>
+				</apex:outputText>
+			</td>
+            <td style="{!STotal02}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal02ColumnC}"/>
+				</apex:outputText>
+			</td>
+    		<td style="{!STotal02+IF(rowSubtotal02ColumnD<0,'color:red;','')}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal02ColumnD}"/>
+				</apex:outputText>
+			</td>
+            <td style="{!STotal02}"/>
+            <td style="{!STotal02Y}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal02ColumnA}"/>
+				</apex:outputText>
+            </td>
+    		<td style="{!STotal02Y}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal02ColumnF}"/>
+				</apex:outputText>
+			</td>
+    		<td style="{!STotal02Y}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal02ColumnG}"/>
+				</apex:outputText>
+			</td>
+        </tr>
+        
+        
+         <tr style="{!if(!doSubtotal01||firstLine,'display:none','')};">
+             <td/>
+    		<td style="{!STotal01}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal01ColumnB}"/>
+				</apex:outputText>
+			</td>
+            <td style="{!STotal01}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal01ColumnC}"/>
+				</apex:outputText>
+			</td>
+    		<td style="{!STotal01+IF(rowSubtotal01ColumnD<0,'color:red;','')}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal01ColumnD}"/>
+				</apex:outputText>
+			</td>
+             <td style="{!STotal01}"/>
+            <td style="{!STotal01Y}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal01ColumnA}"/>
+				</apex:outputText>
+            </td>
+            <td style="{!STotal01Y}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal01ColumnF}"/>
+				</apex:outputText>
+			</td>
+            <td style="{!STotal01Y}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal01ColumnG}"/>
+				</apex:outputText>
+			</td>
+        </tr>
+        
+        
+     <!-- Reset the subtotals -->
+    <tr style="display:none;">
+        <td class="ffrhidden">
+    		<apex:variable value="{!0}" var="rowSubtotal01ColumnA" rendered="{!doSubtotal01}"/>
+            <apex:variable value="{!0}" var="rowSubtotal01ColumnB" rendered="{!doSubtotal01}"/>
+    		<apex:variable value="{!0}" var="rowSubtotal01ColumnC" rendered="{!doSubtotal01}"/>
+            <apex:variable value="{!0}" var="rowSubtotal01ColumnD" rendered="{!doSubtotal01}"/>
+            <apex:variable value="{!0}" var="rowSubtotal01ColumnF" rendered="{!doSubtotal01}"/>
+            <apex:variable value="{!0}" var="rowSubtotal01ColumnG" rendered="{!doSubtotal01}"/>
+            <apex:variable value="{!0}" var="rowSubtotal02ColumnA" rendered="{!doSubtotal02}"/>
+    		<apex:variable value="{!0}" var="rowSubtotal02ColumnB" rendered="{!doSubtotal02}"/>
+            <apex:variable value="{!0}" var="rowSubtotal02ColumnC" rendered="{!doSubtotal02}"/>
+    		<apex:variable value="{!0}" var="rowSubtotal02ColumnD" rendered="{!doSubtotal02}"/>
+    		<apex:variable value="{!0}" var="rowSubtotal02ColumnF" rendered="{!doSubtotal02}"/>
+            <apex:variable value="{!0}" var="rowSubtotal02ColumnG" rendered="{!doSubtotal02}"/>
+	    </td>
+    </tr> 
+
+        <!-- Display the grouping values based on render settings -->
+        <tr style="{!if(!doSubtotal01,'display:none','')}">
+    		<td colspan="5" style="{!Header01}">{!currentLineGroup01}</td>
+            <td colspan="3" style="{!Header01Y}"/>
+        </tr>
+        <tr style="{!if(!doSubtotal02,'display:none;','')}">
+    		<td colspan="5" style="{!Header02}">{!currentLineGroup02}</td>
+            <td colspan="3" style="{!Header02Y}"/>
+        </tr>
+        
+        <tr style="display:none;">
+            <td class="ffrhidden">
+    			<apex:variable var="ColA" value="{!line.columns['A'].values[TotBud]}"/>
+    			<apex:variable var="ColB" value="{!line.columns['A'].values[BudYTD]}"/>
+    			<apex:variable var="ColC" value="{!IF(currentLineGroup01='Gross Profit', (-1)*line.columns['A'].values[ActYTD], line.columns['A'].values[ActYTD])}"/>
+    			<apex:variable var="ColD" value="{!IF(currentLineGroup01='Gross Profit', ColC-ColB, ColB-ColC)}"/>
+    			<apex:variable var="ColE" value="{!IF(ColB!=0,ColC/ColB,'')}"/>
+    			<apex:variable var="ColF" value="{!IF(ColA>0 && (ColA-ColC)>0,ColA-ColC,0)}"/>
+                <apex:variable var="ColG" value="{!line.columns['A'].values[FcstYTD]}"/>
+    		</td>
+        </tr>
+        
+        
+        <tr>
+			<td style="{!Detail03L}">{!currentLineGroup03}</td>
+     		<td style="{!Detail03}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!ColB}"/>
+				</apex:outputText>
+			</td>
+            <td style="{!Detail03+IF(ColC<0,'color:red;','')}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!ColC}"/>
+				</apex:outputText>
+			</td>
+    		<td style="{!Detail03+IF(ColD<0,'color:red;','')}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!ColD}"/>
+				</apex:outputText>
+			</td>
+    		<td style="{!Detail03}">
+                <apex:outputText value="{!P0NCB}">
+    				<apex:param value="{!ColE}"/>
+				</apex:outputText>
+			</td>
+            <td style="{!Detail04}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!ColA}"/>
+				</apex:outputText>
+            </td>
+    		<td style="{!Detail04}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!ColF}"/>
+				</apex:outputText>
+			</td>
+    		<td style="{!Detail04}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!ColG}"/>
+				</apex:outputText>
+			</td>
+		</tr>
+      
+     <!-- Summarize subtotals -->
+        <tr style="display:none;">
+            <td class="ffrhidden">
+    			<apex:variable var="rowSubtotal01ColumnA" value="{!rowSubtotal01ColumnA+ColA}"/>
+    			<apex:variable var="rowSubtotal01ColumnB" value="{!rowSubtotal01ColumnB+ColB}"/>
+    			<apex:variable var="rowSubtotal01ColumnC" value="{!rowSubtotal01ColumnC+ColC}"/>
+    			<apex:variable var="rowSubtotal01ColumnD" value="{!rowSubtotal01ColumnD+ColD}"/>
+    			<apex:variable var="rowSubtotal01ColumnF" value="{!rowSubtotal01ColumnF+ColF}"/>
+                <apex:variable var="rowSubtotal01ColumnG" value="{!rowSubtotal01ColumnG+ColG}"/>
+    			<apex:variable var="rowSubtotal02ColumnA" value="{!rowSubtotal02ColumnA+ColA}"/>
+     			<apex:variable var="rowSubtotal02ColumnB" value="{!rowSubtotal02ColumnB+ColB}"/>
+    			<apex:variable var="rowSubtotal02ColumnC" value="{!rowSubtotal02ColumnC+ColC}"/>
+    			<apex:variable var="rowSubtotal02ColumnD" value="{!rowSubtotal02ColumnD+ColD}"/>
+    			<apex:variable var="rowSubtotal02ColumnF" value="{!rowSubtotal02ColumnF+ColF}"/>
+                <apex:variable var="rowSubtotal02ColumnG" value="{!rowSubtotal02ColumnG+ColG}"/>
+    			<apex:variable var="rowTotalColumnA" value="{!rowTotalColumnA+IF(currentLineGroup01='Gross Profit', ColA, (-1)*ColA)}"/>
+     			<apex:variable var="rowTotalColumnB" value="{!rowTotalColumnB+IF(currentLineGroup01='Gross Profit', ColB, (-1)*ColB)}"/>
+    			<apex:variable var="rowTotalColumnC" value="{!rowTotalColumnC+IF(currentLineGroup01='Gross Profit', ColC, (-1)*ColC)}"/>
+     			<apex:variable var="rowTotalColumnD" value="{!rowTotalColumnD+ColD}"/>
+     			<apex:variable var="rowTotalColumnF" value="{!rowTotalColumnF+IF(currentLineGroup01='Gross Profit', ColF, (-1)*ColF)}"/>
+                <apex:variable var="rowTotalColumnG" value="{!rowTotalColumnG+IF(currentLineGroup01='Gross Profit', ColG, (-1)*ColG)}"/>
+    		</td>
+        </tr>
+              
+    <!-- Setup for next line -->
+    <!-- Record the group values as "previous" for comparison on the next line -->
+    <tr style="display:none;"><td class="ffrhidden">
+    <apex:variable var="previousLineGroup01" value="{!currentLineGroup01}"/>
+    <apex:variable var="previousLineGroup02" value="{!currentLineGroup02}"/>
+    <apex:variable var="previousLineGroup03" value="{!currentLineGroup03}"/>
+    </td></tr>
+    <!-- If this was the first line, it was completed, so set first line to false -->
+    <apex:variable var="firstLine" value="{!false}" rendered="{!firstLine}" />
+    </apex:repeat> <!-- go to next line -->
+    <!-- Go to the next set of rows -->
+    </apex:repeat>
+ 
+ <!-- Display subtotals for the last groups and report totals -->
+        <tr>
+            <td/>
+    		<td style="{!STotal02}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal02ColumnB}"/>
+				</apex:outputText>
+			</td>
+            <td style="{!STotal02}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal02ColumnC}"/>
+				</apex:outputText>
+			</td>
+    		<td style="{!STotal02+IF(rowSubtotal02ColumnD<0,'color:red;','')}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal02ColumnD}"/>
+				</apex:outputText>
+			</td>
+            <td style="{!STotal02}"/>
+            <td style="{!STotal02Y}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal02ColumnA}"/>
+				</apex:outputText>
+            </td>
+            <td style="{!STotal02Y}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal02ColumnF}"/>
+				</apex:outputText>
+			</td>
+            <td style="{!STotal02Y}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal02ColumnG}"/>
+				</apex:outputText>
+			</td>
+        </tr>
+         <tr>
+             <td/>
+            <td style="{!STotal01}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal01ColumnB}"/>
+				</apex:outputText>
+			</td>
+            <td style="{!STotal01}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal01ColumnC}"/>
+				</apex:outputText>
+			</td>
+            <td style="{!STotal01+IF(rowSubtotal01ColumnD<0,'color:red;','')}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal01ColumnD}"/>
+				</apex:outputText>
+			</td>
+            <td style="{!STotal01}"/>
+            <td style="{!STotal01Y}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal01ColumnA}"/>
+				</apex:outputText>
+            </td>
+             <td style="{!STotal01Y}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal01ColumnF}"/>
+				</apex:outputText>
+			</td>
+             <td style="{!STotal01Y}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowSubtotal01ColumnG}"/>
+				</apex:outputText>
+			</td>
+        </tr>
+<!-- report Totals  -->
+         <tr>
+            <td style="{!TblHeader}">Excess (Deficiency) of Revenue over Expenses:</td>
+            <td style="{!TblTotal+IF(rowTotalColumnB<0,'color:red;','')}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowTotalColumnB}"/>
+				</apex:outputText>
+			</td>
+            <td style="{!TblTotal+IF(rowTotalColumnC<0,'color:red;','')}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowTotalColumnC}"/>
+				</apex:outputText>
+			</td>
+            <td style="{!TblTotal+IF(rowTotalColumnD<0,'color:red;','')}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowTotalColumnD}"/>
+				</apex:outputText>
+			</td>
+            <td style="{!TblTotal}"/>
+            <td style="{!TblTotalY+IF(rowTotalColumnA<0,'color:red;','')}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowTotalColumnA}"/>
+				</apex:outputText>
+            </td>
+             <td style="{!TblTotalY+IF(rowTotalColumnF<0,'color:red;','')}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowTotalColumnF}"/>
+				</apex:outputText>
+			</td>
+             <td style="{!TblTotalY+IF(rowTotalColumnG<0,'color:red;','')}">
+                <apex:outputText value="{!V0NCB}">
+    				<apex:param value="{!rowTotalColumnG}"/>
+				</apex:outputText>
+			</td>
+        </tr>
+    </table>
+</apex:outputpanel>
+
+</apex:page>

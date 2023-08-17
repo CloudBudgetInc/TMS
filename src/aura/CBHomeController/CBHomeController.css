@@ -1,0 +1,16 @@
+.THIS .processContainer{
+    margin-left: -20px;
+    margin-top: 10px;
+}
+
+.THIS .cb-top{
+    top:-2px;
+}
+
+.THIS .cb_positive{
+    color: green;
+}
+
+.THIS .cb_negative{
+    color: red;
+}

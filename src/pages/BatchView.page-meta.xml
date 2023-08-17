@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ApexPage xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>42.0</apiVersion>
+    <availableInTouch>false</availableInTouch>
+    <confirmationTokenRequired>false</confirmationTokenRequired>
+    <description>Batch View for highlighting fields &apos;Number of Items&apos; &amp; &apos;total Amount&apos;</description>
+    <label>BatchView</label>
+    <packageVersions>
+        <majorNumber>3</majorNumber>
+        <minorNumber>144</minorNumber>
+        <namespace>npsp</namespace>
+    </packageVersions>
+</ApexPage>

@@ -1,0 +1,165 @@
+/**
+ * Created by Alex JR on 11/05/19.
+ */
+.THIS .total {
+    font-weight: bolder !important;
+    font-size: medium !important;
+    color: #E7F0F9;
+    background-color: #16325c !important;
+    border-bottom: 1px #050529 solid !important;
+}
+
+.THIS .subTotal1 {
+    font-weight: bold !important;
+    color: #190000;
+    background-color: #8d9aab !important;
+    border-bottom: 1px #004391 solid !important;
+}
+
+.THIS .subTotal2 {
+    font-weight: bold !important;
+    color: #190000;
+    background-color: #bacddf !important;
+    border-bottom: 1px #007ed7 solid !important;
+}
+
+.THIS .subTotal3 {
+    font-weight: bold !important;
+    color: #190000;
+    background-color: #d3e8fa !important;
+    border-bottom: 1px #0089f5 solid !important;
+}
+
+.THIS .subTotal4, .THIS .subTotal5, .THIS .subTotal6, .THIS .subTotal7 {
+    font-weight: bold !important;
+    color: #190000;
+    background-color: #ecf8ff !important;
+    border-bottom: 1px #0089f5 solid !important;
+}
+
+.THIS .trueHide {
+    display: none !important;
+}
+
+.THIS .topRow {
+    font-size: small;
+}
+
+.THIS .dec {
+    font-size: x-small !important;
+    text-align: right !important;
+}
+
+.THIS .centerText {
+    text-align: center
+}
+
+.THIS .yellow {
+    background-color: lightyellow !important;
+}
+
+.THIS .green {
+    background-color: lightgreen !important;
+}
+
+.THIS .red {
+    background-color: indianred !important;
+}
+
+.THIS .blue {
+    background-color: lightblue !important;
+}
+
+.THIS .grey {
+    background-color: #d0d2d1 !important;
+}
+
+/**
+Decimal cell
+*/
+.THIS td[id*='*'] {
+    font-size: 12px !important;
+    text-align: right !important;
+    padding-right: 2px !important;
+}
+
+.THIS #mt {
+    background: rgb(255, 255, 255);
+    border-radius: 0.25rem;
+    box-shadow: inset 0px 0px 10px 0px rgb(136, 136, 136);
+}
+
+.THIS .tableText {
+    font-size: small !important;
+    text-align: left !important;
+}
+
+.THIS .header {
+    font-size: smaller !important;
+    text-align: left !important;
+    padding-left: 7px;
+    background: rgb(255, 255, 255);
+}
+
+.THIS #pic {
+    width: 100% !important;
+    filter: blur(10px);
+
+}
+
+.THIS #picDiv {
+    border-radius: 5px !important;
+}
+
+.THIS .slds-spinner_container {
+    z-index: 9000;
+    position: fixed !important;
+    height: 100% !important;
+}
+
+.THIS .sorting_disabled {
+    background: rgb(255, 255, 255) !important;
+}
+
+.THIS.slds-spinner_container {
+    z-index: 5000;
+    position: fixed !important;
+}
+
+.THIS .dimensionDiv {
+    max-width: 170px;
+    float: right;
+}
+
+.THIS .index {
+    font-size: smaller !important;
+    padding: 0px !important;
+    background-color: #16325c !important;
+    color: #E7F0F9;
+    font-weight: normal;
+    text-align: center;
+}
+
+
+.THIS #tableToPDF {
+    background: rgb(255, 255, 255);
+    border-radius: 0.25rem;
+    box-shadow: inset 0px 0px 10px 0px rgb(136, 136, 136);
+}
+
+.THIS .PDFTotal {
+    background-color: #8d9aab !important;
+}
+
+.THIS .PDFIndex {
+    background-color: #8d9aab !important;
+}
+
+.THIS .PDFColumnTop {
+    border-left: none;
+    border-right: none;
+}
+
+.THIS .dataTables_wrapper.no-footer .dataTables_scrollBody{
+    border-bottom: 0px;
+}

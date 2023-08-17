@@ -1,0 +1,5 @@
+<apex:page standardController="Contact" showHeader="false" sidebar="false" extensions="AnnotationFieldController">      
+    <apex:form id="theform">            
+        <apex:outputField value="{!Contact.Annotation__c}" style="background-color:#FEE27A;width:98%;"/>
+    </apex:form>
+</apex:page>

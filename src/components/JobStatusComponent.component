@@ -1,0 +1,131 @@
+<!-- ************************************************************************
+* VisualForce Component : JobStatusComponent
+* Created by Luis Velis - Nubik - 09/16/2015
+*
+* - Allow to see the status of the running batch
+*
+* Modifications:
+* - {DevName}, {MM/DD/YYYY} – {Description of changes made post deployment to client}
+*
+************************************************************************  -->
+<apex:component controller="JobStatusController">
+	<apex:attribute name="IdRecord" description="record Id" type="String" 
+			required="true" assignTo="{!recordId}"/>
+
+    <apex:attribute name="IdJob" description="Job Id" type="String" 
+			required="true" assignTo="{!jobId}"/>
+
+	<apex:attribute name="sObjectLabel" description="sObjectLabel" type="String" 
+			required="true" assignTo="{!sObjectName}"/>
+	
+	<style>
+        .progressBar{
+            background-color: #f8f8f8;
+            border:1px solid #DDDDDD;
+            height: 19px;
+            width: 300px;
+            -moz-border-radius: 5px; 
+            -webkit-border-radius: 5px;
+        }
+        .progress{
+            background-color: #F7B64B;
+            border:1px solid #E78F08;
+            height: 100%;
+            margin: -1px;
+            text-align: center;
+            -moz-border-radius: 5px; 
+            -webkit-border-radius: 5px;
+            line-height: 18px;
+        }
+        .error {
+            color:red;
+        }
+        .notError {
+            color: green;
+        }
+    </style>
+    
+    
+    
+        
+	    <apex:outputPanel id="jobs">
+           
+		    <apex:outputPanel rendered="{!AND(NOT(posted), hasIdJob)}">
+			    <br/>
+			    <br/>
+			    <div style="width:300px;text-align:center;">
+				    <div>
+					    <apex:outputPanel rendered="{!!isCompleted}">
+                            
+                            <apex:outputPanel rendered="{!isValidating}">
+						    Validating ...
+                            </apex:outputPanel>
+
+                            <apex:outputPanel rendered="{!isPosting}">
+                            Processing ...
+                            </apex:outputPanel>
+
+					    </apex:outputPanel>
+
+					    <apex:outputPanel rendered="{!isCompleted}">
+                            <apex:outputPanel rendered="{!isPosting}">
+						        Process Completed.<br/>Please refresh the page.
+                            </apex:outputPanel>
+
+                            <apex:outputPanel rendered="{!isValidating}">
+						        Validation Completed.
+                            </apex:outputPanel>
+					    </apex:outputPanel>
+
+				    </div>
+				    <div class="progressBar">
+	        		    <div class="progress" style="width: {!percentComplete}%;">
+	           			    {!percentComplete}%
+	         		    </div>
+	    		    </div>
+	    	    </div>
+    	    </apex:outputPanel>
+	    </apex:outputPanel>
+        
+        <apex:actionPoller rerender="jobs" interval="5" enabled="{!hasIdJob}"  action="{!init}"/>
+        
+        <apex:outputPanel id="finalStatus" rendered="{!posted || (errorReported && !hasIdJob)}">
+                <br/>
+			    <br/>
+                <br/>
+            
+			    <div style="width:500px;text-align:center;">
+                    <strong>The batch has been already processed.</strong>
+                    <br/>
+                    
+                        <apex:outputPanel id="finalError" rendered="{!errorReported}">
+                            During the process the following error was detected:
+                            <br/>
+                            <div Class="error">
+                                {!errorMessage}
+                            </div>
+                        </apex:outputPanel>
+                        <apex:outputPanel id="NoError" rendered="{!!errorReported}">
+                            <div Class="notError">
+                                No error was detected during the process.
+                            </div>
+                        </apex:outputPanel>
+                    
+                </div>
+                
+        </apex:outputPanel>
+
+
+        <apex:outputPanel id="finalStatusNotReady" rendered="{!notReady}">
+                <br/>
+			    <br/>
+                <br/>
+            
+			    <div style="width:500px;text-align:center;">
+                    <strong>Some opportunities are not ready to be posted.</strong>
+                    <br/>
+                </div>
+                
+        </apex:outputPanel>
+    
+</apex:component>

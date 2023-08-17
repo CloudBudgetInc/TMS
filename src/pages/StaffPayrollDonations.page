@@ -1,0 +1,91 @@
+<apex:page standardController="npsp__Batch__c" recordSetVar="ExpLines" extensions="StaffPayrollDonations" docType="html-5.0">
+    <script type = "text/javascript">
+    function showFn(fna, lbl) {
+        if (fna== "") {
+            lbl.innerHTML = 'No file chosen...';
+        } else {
+            lbl.innerHTML =fna;
+        }
+    }
+    // function to show file name... As after rerendering FileInput gonna be empty...
+    function GetFileName() {
+        var inputF = document.getElementById('{!$Component.mForm.PB.fileInput}');
+        var labelF = document.getElementById('fileLabel');
+        var fn = '{!nameFile}';
+        
+        if ('files' in inputF) {
+            if (inputF.files.length > 0) {
+                labelF.innerHTML = inputF.files[0].name;
+            } else {
+                showFn(fn, labelF);
+            }   
+        } else {   
+            showFn(fn, labelF);
+        }
+    }
+    </script>    
+    <apex:pageMessages />
+    <apex:form id="mForm">
+        <apex:pageBlock id="PB">
+            <apex:pageBlockSection id="PBS" title="Upload Settings" collapsible="true">
+                <apex:inputText title="This information is case sensitive!" label="Account SF ID:" id="CAccount" value="{!CSAccount}" onchange="Update()" style="{!if(CAccount==-1||CAccount==null,'border-color: red','')}"/>
+                <apex:inputText title="This information is case sensitive!" label="Contact SF ID:" id="CContact" value="{!CSContact}" onchange="Update()" style="{!if(CContact==-1||CContact==null,'border-color: red','')}"/>
+                <apex:inputText title="This information is case sensitive!" label="Donation 15th:" id="C15" value="{!CS15}" onchange="Update()" style="{!if(C15==-1||C15==null,'border-color: red','')}"/>
+                <apex:inputText title="This information is case sensitive!" label="Donation 31st:" id="C31" value="{!CS31}" onchange="Update()" style="{!if(C31==-1||C31==null,'border-color: red','')}"/>
+                <apex:inputText title="Number of Header row!" label="Data Header Row:" id="StartRow" value="{!StartRow}" onchange="Update()" style="{!if(parsedCSVH.size==Null,'border-color: red',if(StartRow<0||StartRow>parsedCSVH.size,'border-color: red',''))}"/>
+                <apex:inputText title="This information is case sensitive!" label="TMS City:" id="CTMSCity" value="{!CSTMSCity}" onchange="Update()" style="{!if(CTMSCity==-1||CTMSCity==null,'border-color: red','')}"/>
+                <apex:input label="Report month:" type="date" value="{!ReportDate}" onchange="Update()" style="{!if(ReportDate==Null,'border-color: red','')}"/>
+                &nbsp;
+                <apex:commandLink value="Save Settings" action="{!saveSettings}" style="float: right;"/>
+            </apex:pageBlockSection>
+            
+            <table width="100%">
+                <td width="25%">
+                    
+                    <apex:inputFile id="fileInput" value="{!contentFile}" filename="{!nameFile}" accept=".csv" onchange="GetFileName()" style="width:90px; color:transparent;"/>
+                    <label id="fileLabel" style="color:#006600; font-weight: bold;"></label>
+                </td>
+                <td>
+                    <apex:commandButton value="Upload/Update File" id="theButton" action="{!uploadFile}"/>
+                    <apex:commandButton value="Upload Payroll Donations" id="tBs" action="{!createReports}" disabled="{!DisableReportCreating}" />
+                </td>
+            </table>
+            
+            <apex:actionFunction action="{!updateSettingsChanges}" name="Update"/>
+            
+            <!-- Script open or close 'Upload settings' section -->
+            <script>
+            if ({!Twist}) {twistSection(document.getElementById('{!$Component.PB.PBS}').getElementsByTagName('img')[0]);}
+            </script>
+            
+        </apex:pageBlock>
+           <apex:outputPanel id="results">
+            <table title="Uploaded CSV" border="1" width="100%">
+                <apex:variable value="{!0}" var="numRow"/>
+                <apex:repeat value="{!parsedCSVH}" var="row">
+                    <apex:variable value="{!MAX(CAccount, CContact, CTMSCity, C31, C15, 0)+1}" var="ColumnMax"/>
+                     <apex:variable value="{!If(CAccount>-1&&row.size>=ColumnMax,If(LEN(TRIM(row[CAccount]))<15,'ffdddd',''),'')}" var="rowLevelVerification"/>
+                     <apex:variable value="{!If(CContact>-1&&row.size>=ColumnMax,If(LEN(TRIM(row[CContact]))<15,'ffdddd',rowLevelVerification),rowLevelVerification)}" var="rowLevelVerification"/>
+                     <apex:variable value="{!If(C15>-1&&C31>-1&&row.size>=ColumnMax,If(AND(LEN(TRIM(row[C15]))<=0,LEN(TRIM(row[C31]))<=0),'ffdddd',rowLevelVerification),rowLevelVerification)}" var="rowLevelVerification"/>
+                     <apex:variable value="{!If(row.size<ColumnMax,'ffdddd',rowLevelVerification)}" var="rowLevelVerification"/>
+                     <apex:variable value="{!if(numRow==StartRow,'cccccc',rowLevelVerification)}" var="rowLevelVerification"/> 
+                    <!-- Make the Header in bold -->
+                    <tr style="{!if(rowLevelVerification!='','font-weight: bold;background-color: #' & rowLevelVerification,'')}">
+                        <apex:variable value="{!0}" var="num"/>
+                        <apex:repeat value="{!row}" var="cell">
+                            <!-- If column was selected for data extraction paint it in green -->
+                            <td style="{!if(rowLevelVerification=='',if(num==CAccount || num==CContact || num==CTMSCity || num==C31|| num==C15,'background-color: #ccffe5',''),'font-weight: bold;background-color: #' & rowLevelVerification)}"> {!cell} </td>
+                            <apex:variable var="num" value="{!num + 1}"/>
+                        </apex:repeat>
+                        <apex:variable value="{!numRow+1}" var="numRow"/>
+                    </tr>
+                </apex:repeat>
+            </table>
+        </apex:outputPanel>
+    </apex:form>
+    <!-- Make sure after page rerendering we still see file name. -->
+    <script type="text/javascript">
+    	GetFileName();
+    </script>
+    
+</apex:page>

@@ -1,0 +1,114 @@
+<apex:page standardController="npsp__Batch__c" extensions="BatchViewController"> <!-- action="{!verifyStatus}" -->
+<!--
+    <style type="text/css">
+    	[title~=Delete] {
+        	display:none;
+          	visibility:hidden
+		} 
+	</style>
+--> 
+    <script>
+
+    function buttonAccessibility() {
+        // Enable "Create Journal" button only when batch Status is "Review Complete"...
+        if("{!npsp__Batch__c.npsp__Batch_Status__c}"!="Complete" || "{!npsp__Batch__c.ESi_Journal__c}"!="") {
+            var y = document.getElementsByName("create_journal_esi");
+            for (var i=0; i<y.length; i++) {
+                y[i].className ="";
+                y[i].disabled = "true";
+            }
+        }
+        // Enable "Complete review" button only when batch status is "In Progress"...
+        if ("{!npsp__Batch__c.npsp__Batch_Status__c}"!="In Progress") {
+            var y = document.getElementsByName("complete_batch");
+            for (var i=0; i<y.length; i++) {
+                y[i].className ="";
+                y[i].disabled = "true";
+            }
+        }
+    }
+
+    function PrintPackingSlipLink() {
+        // pbBody --> pbSubsection {if previous pbSubheader innerText equal "Bank Deposit Slip"
+        var pbGate = false;
+        var pbBody = document.getElementsByClassName("pbBody");
+        for (var i=0; i<pbBody.length; i++) {
+            var pbDiv=pbBody[i].children;
+            for (var j=0; j<pbDiv.length; j++) {
+                if (pbDiv[j].classList.contains("pbSubsection") && pbGate==true) {
+                    pbDiv[j].innerHTML+="<div class='links'><a href='BankDepositSlip?id={!npsp__Batch__c}' target='_blank' class='configLinks' style='color:#015ba7;text-decoration:none;' onMouseOver='this.style.textDecoration=&#39;underline&#39;;' onMouseOut='this.style.textDecoration=&#39;none&#39;;'>Print Bank Deposit Slip</a></div>";
+                    break;
+                }
+
+                if (pbDiv[j].classList.contains("pbSubheader")) {
+                    var pbInTxt=pbDiv[j].innerText;
+                    if(pbInTxt=="Bank Deposit Slip") {
+                        pbGate = true;
+                    }
+                }
+            }
+            if(pbGate) { break;}
+        }
+    }
+
+    function renew() {
+        PrintPackingSlipLink();
+        buttonAccessibility();
+
+        var totalAmount=0;
+        var x = document.getElementsByClassName("detailList");
+        for (var i = 0; i < x.length; i++) {
+            var Labels=x[i].getElementsByClassName("labelCol");
+            var Data=x[i].getElementsByClassName("dataCol");
+            for (var j = 0; j < Labels.length; j++) {
+                var va=Labels[j].innerText;
+
+                if (va=="Object Name") {
+                    Labels[j].innerText="";
+                    Data[j].innerText="";
+                }
+                if (va=="Number of Items") {
+                    Labels[j].innerText="Scanned Gifts";
+                }
+                if (va=="Approved Gifts") {
+                    Data[j].style.fontWeight = "bold";
+                    Data[j].style.color = "green";
+                }
+                if (va=="Declined Gifts") {
+                    var dg=Number(Data[j].innerText.replace(/[^0-9\.-]+/g,""));
+                    if (dg>0) {
+                        Data[j].style.fontWeight = "bold";
+                        Data[j].style.color = "red";
+                    }
+                }
+                if (va=="Total Amount") {
+                    totalAmount=Number(Data[j].innerText.replace(/[^0-9\.-]+/g,""));
+                    Data[j].style.fontWeight = "bold";
+                }
+                if (va=="Declined Amount") {
+                    var da=Number(Data[j].innerText.replace(/[^0-9\.-]+/g,""));
+                    if (da>0) {
+                        Data[j].style.fontWeight = "bold";
+                        Data[j].style.color = "red";
+                    }
+                }
+                if (va=="Total Deposit Slip Amount") {
+                    var da=Number(Data[j].innerText.replace(/[^0-9\.-]+/g,""));
+                    Data[j].style.fontWeight = "bold";
+                    if (da!=totalAmount) {
+                        Data[j].style.color = "red";
+                    } else {
+                        Data[j].style.color = "green";
+                    }
+                }
+            }
+        }
+    }
+    </script>
+    <apex:detail subject="{!npsp__Batch__c}" relatedList="true" title="true" inlineEdit="true" oncomplete="renew();" /> 
+    
+	<script>
+    	renew();
+    	twistAllSections(false);
+	</script>
+</apex:page>

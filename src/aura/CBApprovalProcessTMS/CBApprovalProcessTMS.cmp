@@ -1,0 +1,82 @@
+<!--
+ - Created by Alex JR on 11/10/2020.
+ -->
+
+<aura:component description="CloudBudget The Mustard Seed Controller"
+                implements="lightning:actionOverride,lightning:isUrlAddressable,force:hasSObjectName,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId"
+                access="global"
+                controller="CBApprovalProcessTMS">
+
+    <ltng:require scripts="{!join(',',$Resource.cb4__JS_CONST, $Resource.cb4__JS_UTILS)}"
+                  afterScriptsLoaded="{!c.runInit}"/>
+
+    <aura:attribute name="isDisplayed" type="Boolean" access="global" default="false"
+                    description="True if buttons must be displayed"/>
+    <aura:attribute name="forwardButtonName" type="String" access="global" default="Action"/>
+    <aura:attribute name="backButtonName" type="String" access="global" default="Reject"/>
+    <aura:attribute name="app" type="Object" access="global"/>
+    <aura:attribute name="isforwardButtonDisplayed" type="Boolean" access="global" default="false"
+                    description="True if Forward buttons must be displayed"/>
+    <aura:attribute name="isbackButtonDisplayed" type="Boolean" access="global" default="false"
+                    description="True if Back buttons must be displayed"/>
+    <aura:attribute name="isApprovedStatus" type="Boolean" access="global" default="false"
+                    description="True if Status== Approved"/>
+    <aura:attribute name="isSubmitButtonDisplayed" type="Boolean" access="global" default="false"
+                    description="True if Submit button must be displayed"/>
+    <aura:attribute name="isApproveButtonDisplayed" type="Boolean" access="global" default="false"
+                    description="True if Approve button must be displayed"/>
+    <aura:attribute name="isRejectButtonDisplayed" type="Boolean" access="global" default="false"
+                    description="True if Reject button must be displayed"/>
+    <aura:attribute name="designatedApproverId" type="Id" access="global"
+                    description="Designated Approver Id"/>
+    <aura:attribute name="designatedApproverName" type="String" access="global"
+                    description="Designated Approver Name"/>
+    <aura:attribute name="approverName" type="String" access="global"
+                    description="Approver Name"/>
+    <aura:attribute name="hasChildren" type="Boolean" access="global" default="false"
+                    description="True if app has Children"/>
+    <aura:attribute name="currentUserId" type="Id" access="global"
+                    description="Current User Id"/>
+    <aura:attribute name="approvalStatus" type="String" access="global"
+                    description="Approval Status"/>
+  <aura:if isTrue="{!v.isDisplayed}">
+   <ul class="slds-list_horizontal" style="margin-top: 12px; margin-right: -6px"> 
+             <aura:if isTrue="{!v.approvalStatus =='Locked'}">
+              <li>   
+                         <lightning:input type="text" name="Locked by" readonly="true"
+                                         label="Locked by" value="{!v.approverName}"
+                                         style="width: 140px !important; margin-top: -22px"/>
+              </li>    
+            </aura:if>
+             <aura:if isTrue="{!v.isSubmitButtonDisplayed}">
+              <li>   
+                         <lightning:input type="text" name="Approver" readonly="true"
+                                         label="Approver" value="{!v.designatedApproverName}"
+                                         style="width: 140px !important; margin-top: -22px"/>
+              </li>    
+            </aura:if>
+        	<aura:if isTrue="{!v.isApprovedStatus}">
+             <li>  
+                    <lightning:input type="text" name="Approved by" readonly="true" 
+                                     label="Approved by" value="{!v.approverName}"
+                                     style="width: 140px !important; margin-top: -22px"/>
+             </li> 
+             </aura:if> 
+            <aura:if isTrue="{!v.isSubmitButtonDisplayed}">
+              <li>   
+                     <lightning:button label="Submit" onclick="{!c.callSubmit}" variant="brand"/>
+              </li>  
+            </aura:if>
+            <aura:if isTrue="{!v.isApproveButtonDisplayed}">
+              <li style="margin-right: 3px" >   
+                    <lightning:button label="Approve" onclick="{!c.callApprove}" variant="brand"/>
+              </li>    
+             </aura:if>
+            <aura:if isTrue="{!v.isRejectButtonDisplayed}">
+              <li>  
+                        <lightning:button label="Reject" onclick="{!c.callReject}" variant="brand"  class="slds-button--destructive"/>
+ 			  </li>
+            </aura:if>
+      </ul>
+  </aura:if>
+</aura:component>

@@ -1,0 +1,364 @@
+<aura:component description="CloudBudget The Mustard Seed Controller"
+                implements="lightning:actionOverride,lightning:isUrlAddressable,force:hasSObjectName,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId"
+                access="global"
+                controller="CBTMSController">
+
+    <ltng:require scripts="{!join(',',$Resource.cb4__JS_CONST, $Resource.cb4__JS_UTILS)}"
+                  afterScriptsLoaded="{!c.runInit}"/>
+
+    <aura:attribute name="yearNumber" type="String" access="private"/>
+    <aura:attribute name="selectOptions" type="Object" access="private"/>
+
+    <aura:attribute name="response" type="String" access="private"/>
+    <aura:attribute name="emailRecipients" type="String" access="private"/>
+
+    <aura:attribute name="sourceYear" type="String" access="private"/>
+    <aura:attribute name="targetYear" type="String" access="private"/>
+    <aura:attribute name="sourceType" description="BASE OR FORECAST AS BA SOURCE" type="String" access="private"/>
+    <aura:attribute name="targetType" description="BASE OR FORECAST NEED TO BE CREATED" type="String" access="private"/>
+
+
+    <aura:attribute name="forecastPeriod" type="String" access="private" default="upToDate"/>
+    <!---->
+    <aura:attribute name="baseBudgetYearNumber" type="String" access="private"/>
+    <aura:attribute name="updateBaseByActualsPeriod" type="String" access="private" default="YT end of last Q"/>
+    <aura:attribute name="disableUpdate" type="Boolean" access="private" default="false"/>
+    <!---->
+
+    <!--FF RB statistic-->
+    <aura:attribute name="rbWithoutBDG" type="String" default="Please, refresh"/>
+    <aura:attribute name="rbWithoutBRD" type="String" default="Please, refresh"/>
+    <aura:attribute name="ffrbNumber" type="String" default="Please, refresh"/>
+    <aura:attribute name="ffrbWithoutLastUpdates" type="String" default="Please, refresh"/>
+    <aura:attribute name="cbrbNumber" type="String" default="Please, refresh"/>
+    <aura:attribute name="ffcbAmountDifferences" type="String" default="Please, refresh"/>
+    <aura:attribute name="amountsnotincb" type="String" default="Please, refresh"/>
+    <!--FF RB statistic-->
+
+    <!--Forecast Budgets Locker-->
+    <aura:attribute name="lockYear"  type="String" access="private"/>
+    <aura:attribute name="lockMonth" type="String" access="private"/>
+    <aura:attribute name="lockIndicator" type="String" access="private" default="none"/>
+    <!--Forecast Budgets Locker-->
+
+    <!--Process Step-->
+    <aura:attribute name="processStep" type="String" default="0" access="private"/>
+    <!--Process Step-->
+
+    <lightning:card variant="Narrow" iconName="standard:account">
+        <aura:set attribute="actions">
+
+
+            <lightning:buttonMenu alternativeText="Show menu" iconSize="x-small"
+                                  menuAlignment="right" onselect="{!c.handleMainMenu}">
+                <lightning:menuItem value="redirectToApexJobs" label="Apex Jobs"/>
+            </lightning:buttonMenu>
+
+        </aura:set>
+
+        <aura:set attribute="title">
+            CloudBudget Controller
+        </aura:set>
+
+
+        <aura:set attribute="body">
+            <lightning:tabset selectedTabId="update">
+                <lightning:tab label="Update Data" id="update">
+
+                    <lightning:layout>
+                        <lightning:layoutItem padding="around-none" size="3">
+
+
+                            <div style="display: inline-block;" class="slds-m-left_medium">
+                                <lightning:select label="Year" value="{!v.yearNumber}"
+                                                  onchange="{!c.changeGlobalVariable}" disabled="{!v.processStep != '0'}">
+                                    <aura:iteration items="{!v.selectOptions.years}" var="y">
+                                        <option label="{!y.title}" value="{!y.value}"
+                                                selected="{!y.title == v.selectOptions.fy}"></option>
+                                    </aura:iteration>
+                                </lightning:select>
+                            </div>
+                            <div style="display: inline-block;" class="slds-p-bottom_large">
+                                <lightning:helptext title="" content="Global Calculation Update"/>
+                            </div>
+
+
+                        </lightning:layoutItem>
+                        <lightning:layoutItem padding="around-none" size="7">
+
+                            <lightning:button label="Run Master Update" variant="brand" onclick="{!c.runServer}"
+                                              class="slds-m-top_large"
+                                              value="runMasterUpdateServer"/>
+                            <lightning:buttonIcon iconName="utility:refresh" alternativeText="Refresh current process status" onclick="{!c.updateProcessStatus}" variant="brand" class="cb-top slds-m-left_medium"/>
+                        </lightning:layoutItem>
+
+                    </lightning:layout>
+
+                    <lightning:layout >
+                        <lightning:layoutItem padding="around-none">
+                            <div class="{!if(v.processStep == '0', 'slds-card__header', 'slds-hide')}" style="color: green;">Update available</div>
+                            <lightning:progressIndicator currentStep="{!v.processStep}" type="base" hasError="false" variant="base" class="{!if(v.processStep == '0', 'slds-hide', 'slds-p-left_medium')}">
+                                <lightning:progressStep label="CB Street/City Mapping updating, Budget Reporting Departments synchronization, Deleting old CB RB, creating new CB RBs" value="1"/>
+                                <lightning:progressStep label="Posting Rules recalculating" value="2"/>
+                                <lightning:progressStep label="Entries Mapping including BDG and BRDs in CB actuals" value="3"/>
+                                <lightning:progressStep label="Additional CB Reports Data recalculating" value="4"/>
+                                <lightning:progressStep label="1,2,3 LVL CB Reports Data recalculating" value="5"/>
+                                <lightning:progressStep label="Budget FF RBs updating" value="6"/>
+                                <lightning:progressStep label="Forecast FF RBs updating" value="7"/>
+                                <lightning:progressStep label="FF RB BDG, BRD updating" value="8"/>
+                            </lightning:progressIndicator>
+                        </lightning:layoutItem>
+                    </lightning:layout>
+
+                    <div class="slds-m-left_medium slds-m-right_medium">
+                        <lightning:layout>
+                            <lightning:layoutItem padding="around-none" size="9">
+                                <lightning:input label="Email Recipients" value="{!v.emailRecipients}"
+                                                 title="Comma separated addresses without spaces"
+                                                 placeholder="sample@gmail.com,sample2@gmail.com"/>
+                            </lightning:layoutItem>
+                            <lightning:layoutItem padding="around-none" size="3">
+                                <lightning:buttonGroup>
+                                    <lightning:button label="" iconName="utility:save" class="slds-m-top_large"
+                                                      title="Save Email Address(es)"
+                                                      variant="brand" onclick="{!c.changeGlobalVariable}"/>
+                                    <lightning:button label="" iconName="utility:email" class="slds-m-top_large"
+                                                      title="Send Test Email"
+                                                      variant="neutral" onclick="{!c.sendTestEmail}"/>
+                                </lightning:buttonGroup>
+                            </lightning:layoutItem>
+
+                        </lightning:layout>
+                    </div>
+
+                </lightning:tab>
+
+                <lightning:tab label="Forecast">
+
+                    <lightning:layout>
+                        <lightning:layoutItem padding="around-none" class="slds-p-top_large slds-p-left_medium">
+                            <lightning:buttonIcon iconName="utility:refresh" alternativeText="Refresh current periods lock status" onclick="{!c.refreshCurrentUpdateStatuses}" variant="brand"/>
+                        </lightning:layoutItem>
+                        <lightning:layoutItem padding="around-none">
+                            <lightning:select label="Period" value="{!v.forecastPeriod}" class="slds-p-left_medium">
+                                <!--<option label="YT end of last Q" value="upToDate"></option>
+                                <option label="Q1 Only" value="Q1"></option>
+                                <option label="Q2 Only" value="Q2"></option>
+                                <option label="Q3 Only" value="Q3"></option>
+                                <option label="Q4 Only" value="Q4"></option>-->
+                                <aura:iteration items="{!v.selectOptions.periods}" var="p">
+                                    <option label="{!p.title}" value="{!p.value}" selected="{!v.forecastPeriod == p.value}" disabled="{!p.disabled}"/>
+                                </aura:iteration>
+                            </lightning:select>
+                        </lightning:layoutItem>
+
+                        <lightning:layoutItem padding="around-none">
+                            <lightning:button label="Update Forecast with Actuals" variant="brand"
+                                              onclick="{!c.runServer}"
+                                              class="slds-m-top_large slds-m-left_medium"
+                                              value="runForecastUpdateServer"/>
+                        </lightning:layoutItem>
+                    </lightning:layout>
+
+                    <lightning:layout verticalAlign="end">
+                    <lightning:layoutItem padding="around-none">
+                        <lightning:select label="Budget Year" value="{!v.lockYear}" class="slds-p-left_medium" onchange="{!c.refreshLockedPeriods}">
+                            <aura:iteration items="{!v.selectOptions.years}" var="y">
+                                <option label="{!y.title}" value="{!y.value}"
+                                        selected="{!y.title == v.lockYear}"></option>
+                            </aura:iteration>
+                        </lightning:select>
+                    </lightning:layoutItem>
+                    <lightning:layoutItem padding="around-none">
+                        <lightning:select label="Month" value="{!v.lockMonth}" class="slds-p-left_medium">
+                            <option label="Unlock All" value="none"/>
+                            <aura:iteration items="{!v.selectOptions.lockPeriods}" var="p">
+                                <option label="{!p.title}" value="{!p.value}"
+                                        selected="{!p.title == v.lockMonth}"></option>
+                            </aura:iteration>
+                        </lightning:select>
+                    </lightning:layoutItem>
+                    <lightning:layoutItem padding="around-none" class="slds-p-left_medium">
+                        <lightning:button label="{!if(v.lockMonth == 'none', 'Unlock all Periods for BY' + v.lockYear, 'Lock BY' + v.lockYear + ' from Apr till ' + v.lockMonth)}" onclick="{!c.lockForecastBudgetsTill}" type="button" variant="brand"/>
+                    </lightning:layoutItem>
+                    </lightning:layout>
+
+                    <lightning:layout verticalAlign="end">
+                        <lightning:layoutItem class="slds-p-left_medium slds-form-element__label">Lock status : </lightning:layoutItem>
+                        <lightning:layoutItem padding="around-none" class="processContainer">
+                            <lightning:progressIndicator currentStep="{!v.lockIndicator}" type="base" hasError="false" variant="base">
+                                <aura:renderIf isTrue="{!v.lockIndicator == 'none'}"><lightning:progressStep label="Unlocked" value="none"/></aura:renderIf>
+                                <aura:iteration items="{!v.selectOptions.lockPeriods}" var="p">
+                                    <lightning:progressStep label="{!p.title}" value="{!p.value}"/>
+                                </aura:iteration>
+                            </lightning:progressIndicator>
+                        </lightning:layoutItem>
+                    </lightning:layout>
+
+                </lightning:tab>
+
+                <lightning:tab label="Update Base with Actuals">
+                    <div style="text-align: center; color: red; text-shadow: 0 0 black; font-size: large; font-weight: bold;">Update will erase user's budgets</div>
+                    <lightning:layout>
+                        <lightning:layoutItem padding="around-none">
+                            <lightning:select label="Period to update" value="{!v.updateBaseByActualsPeriod}" class="slds-p-left_medium">
+                                <option label="YT end of last Q" value="YT end of last Q"></option>
+                                <option label="Q1 Only" value="Q1"></option>
+                                <option label="Q2 Only" value="Q2"></option>
+                                <option label="Q3 Only" value="Q3"></option>
+                                <option label="Q4 Only" value="Q4"></option>
+                                <aura:iteration items="{!v.selectOptions.periods}" var="p">
+                                    <option label="{!p.title}" value="{!p.value}"></option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </lightning:layoutItem>
+                        <lightning:layoutItem padding="around-none">
+                            <div style="display: inline-block;" class="slds-m-left_medium">
+                                <lightning:select label="Select Base Budget year" value="{!v.baseBudgetYearNumber}">
+                                    <aura:iteration items="{!v.selectOptions.baseYears}" var="y">
+                                        <option label="{!y.title}" value="{!y.value}"
+                                                selected="{!y.title == v.baseBudgetYearNumber}"></option>
+                                    </aura:iteration>
+                                </lightning:select>
+                            </div>
+                        </lightning:layoutItem>
+                        <lightning:layoutItem padding="around-none">
+                            <lightning:button label="{!'Update Base ' + v.baseBudgetYearNumber + ' with '+ v.selectOptions.fy + ' ' + v.updateBaseByActualsPeriod + ' Actuals'}" variant="brand"
+                                              onclick="{!c.runServer}" disabled="{!v.disableUpdate}"
+                                              class="slds-m-top_large slds-m-left_medium"
+                                              value="runUpdateBaseWithActualsServer"/>
+                        </lightning:layoutItem>
+                    </lightning:layout>
+
+                </lightning:tab>
+
+                <lightning:tab label="Copy Budget">
+
+                    <lightning:layout>
+
+                        <lightning:layoutItem padding="around-none" size="3">
+                            <div style="display: inline-block;" class="slds-m-left_medium">
+                                <lightning:select label="From" value="{!v.sourceType}">
+                                    <option label="Forecast" value="FORECAST"></option>
+                                    <option label="Base" value="BASE"></option>
+                                </lightning:select>
+                            </div>
+                            <div style="display: inline-block;" class="slds-p-bottom_large">
+                                <lightning:helptext
+                                        content="Duplicate protection will prevent you from creating a Budget App group twice"/>
+                            </div>
+                        </lightning:layoutItem>
+
+                        <lightning:layoutItem padding="around-none" size="2">
+                            <lightning:select label="Source Year" value="{!v.sourceYear}">
+                                <aura:iteration items="{!v.selectOptions.years}" var="y">
+                                    <option label="{!y.title}" value="{!y.value}"
+                                            selected="{!y.title == v.selectOptions.fy}"></option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </lightning:layoutItem>
+
+                        <lightning:layoutItem padding="around-none" size="1">
+                            <lightning:icon iconName="utility:macros" class="slds-p-left_small slds-p-top_large"
+                                            alternativeText="Direction" title="Direction"/>
+                        </lightning:layoutItem>
+
+                        <lightning:layoutItem padding="around-none" size="3">
+                            <div style="display: inline-block;" class="slds-m-left_medium">
+                                <lightning:select label="Create" value="{!v.targetType}">
+                                    <option label="Forecast" value="FORECAST"></option>
+                                    <option label="Base" value="BASE"></option>
+                                </lightning:select>
+                            </div>
+                        </lightning:layoutItem>
+
+                        <lightning:layoutItem padding="around-none" size="2">
+                            <lightning:select label="Target Year" value="{!v.targetYear}">
+                                <aura:iteration items="{!v.selectOptions.years}" var="y">
+                                    <option label="{!y.title}" value="{!y.value}"
+                                            selected="{!y.title == v.selectOptions.fy}"></option>
+                                </aura:iteration>
+                            </lightning:select>
+                        </lightning:layoutItem>
+
+                    </lightning:layout>
+
+                    <lightning:layoutItem padding="around-none" size="4">
+                        <lightning:button label="Run Process" variant="brand" onclick="{!c.runServer}"
+                                          class="slds-m-top_large slds-m-left_medium"
+                                          value="runCopyAppBudgetServer"/>
+                    </lightning:layoutItem>
+
+                </lightning:tab>
+
+                <lightning:tab label="Manual Control">
+                    <lightning:layout>
+                        <lightning:layoutItem padding="around-small">
+                            <div>
+                                <lightning:button label="Update FF Reporting Balances" variant="brand"
+                                                  onclick="{!c.runServer}"
+                                                  class="slds-m-around_small"
+                                                  value="runReportingBalanceUpdateServer"/>
+                            </div>
+                            <div class="slds-hide" aura:id="hiddenButtons">
+                                <lightning:button label="Update 3-lvl Reports" variant="brand" onclick="{!c.runServer}"
+                                                  class="slds-m-around_small"
+                                                  value="runCBalanceGeneratorServer"/>
+                            </div>
+                            <div >
+                                <lightning:button label="Update Entry BDG/Owner" variant="brand"
+                                                  onclick="{!c.runServer}"
+                                                  class="slds-m-around_small"
+                                                  value="runEntriesBDGUpdateServer"/>
+                            </div>
+                        </lightning:layoutItem>
+                        <lightning:layoutItem padding="around-small">
+                            <div >
+                                <lightning:button label="{!'Apply Calculation Rules to all ' + v.selectOptions.fy + ' Budgets' }" variant="brand"
+                                                  onclick="{!c.runServer}"
+                                                  class="slds-m-around_small"
+                                                  value="runCalculationRulesServer"/>
+                            </div>
+                        </lightning:layoutItem>
+                        <lightning:layoutItem padding="around-small">
+                            <div class="slds-hide" aura:id="hiddenButtons">
+                                <lightning:button label="Sync Cities" variant="brand" onclick="{!c.runServer}"
+                                                  class="slds-m-around_small"
+                                                  value="runCitiesSyncServer"/>
+                            </div>
+                            <div class="slds-hide" aura:id="hiddenButtons">
+                                <lightning:button label="Sync Budget Departments" variant="brand"
+                                                  onclick="{!c.runServer}"
+                                                  class="slds-m-around_small"
+                                                  value="runBudgetDepartmentsSyncServer"/>
+                            </div>
+                        </lightning:layoutItem>
+                    </lightning:layout>
+                </lightning:tab>
+
+                <lightning:tab label="FF vs CB Sync Info" onactive="{!c.refreshFFRBvsCBRBSyncStatus}">
+                    <lightning:layout>
+                        <lightning:layoutItem padding="around-small">
+                        <div class="slds-grid_vertical">
+                            <!--<div><lightning:button label="Refresh data" onclick="{!c.refreshFFRBvsCBRBSyncStatus}" variant="brand" class="slds-m-bottom_small"/></div>-->
+                            <div><span><b>FF RBs without BDGs assigned : </b></span><span class="{!if(v.rbWithoutBDG == '0', 'cb_positive', 'cb_negative')}">{!v.rbWithoutBDG}</span></div>
+                            <div><span><b>FF RBs without at least one BRD assigned : </b></span><span class="{!if(v.rbWithoutBRD == '0', 'cb_positive', 'cb_negative')}">{!v.rbWithoutBRD}</span></div>
+                            <div><span><b>FF RB Total Amounts : </b></span><span class="{!if(v.ffcbAmountDifferences == '0', 'cb_positive', 'cb_negative')}">{!v.ffrbNumber}</span></div>
+                            <div><span><b>CB RB Total Amounts : </b></span><span class="{!if(v.ffcbAmountDifferences == '0', 'cb_positive', 'cb_negative')}">{!v.cbrbNumber}</span></div>
+                            <div><span><b>FF RB vs CB RB Total Amounts : </b></span><span class="{!if(v.ffcbAmountDifferences == '0', 'cb_positive', 'cb_negative')}">{!v.ffcbAmountDifferences}</span></div>
+                            <div><span><b>FF RB Total Amounts that are not in CB : </b></span><span class="{!if(v.amountsnotincb == '0', 'cb_positive', 'cb_negative')}">{!v.amountsnotincb}</span></div>
+                            <div><span><b>Number of FF RBs modified after last CB Master Update Process : </b></span><span class="{!if(v.ffrbWithoutLastUpdates == '0', 'cb_positive', 'cb_negative')}">{!v.ffrbWithoutLastUpdates}</span></div>
+                        </div>
+                        </lightning:layoutItem>
+                    </lightning:layout>
+                </lightning:tab>
+            </lightning:tabset>
+
+
+        </aura:set>
+    </lightning:card>
+    <!-- SUPER MODERN SPINNER -->
+    <lightning:spinner aura:id="sms" class="slds-hide"/>
+    <!-- SUPER MODERN SPINNER -->
+
+</aura:component>

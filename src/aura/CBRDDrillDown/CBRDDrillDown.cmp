@@ -1,0 +1,150 @@
+<!--
+ - Created by Alex JR on 9/25/2020.
+ -->
+
+<aura:component description="CBRDDrillDown"
+                implements="lightning:actionOverride,lightning:isUrlAddressable,force:hasSObjectName,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId"
+                access="global"
+                controller="CBRDDrillDown">
+
+
+    <ltng:require scripts="{!$Resource.cb4__JS_UTILS}" afterScriptsLoaded="{!c.doInit}"/>
+
+
+    <aura:attribute name="CBalanceKey" type="String" access="global"/>
+    <aura:attribute name="columnId" type="String" access="global"/>
+    <aura:attribute name="reportId" type="String" access="global"/>
+    <aura:attribute name="sections" type="Object[]" access="global"/>
+    <aura:attribute name="warning" type="String" access="global"/>
+    <aura:attribute name="CBalanceRuleId" type="String" access="global"/>
+    <aura:attribute name="showRedirectToCBalanceLink" type="Boolean" default="false" access="global"/>
+    <aura:attribute name="dd" type="Object" access="global"/>
+
+    <div aura:id="mainPanel" style="height:840px">
+        <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true"
+                 aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse"
+                            title="Close">
+                        <span class="slds-assistive-text">Close</span>
+                    </button>
+
+                    <div class="slds-page-header__col-title slds-float_left">
+                        <div class="slds-media">
+                            <div class="slds-media__figure">
+                              <span class="slds-icon_container slds-icon-standard-calibration" title="Drill Down">
+                                <lightning:icon iconName="standard:return_order"
+                                                alternativeText="Drill Down"/>
+                              </span>
+                            </div>
+                            <div class="slds-media__body">
+                                <div class="slds-page-header__name">
+                                    <div class="slds-page-header__name-title slds-text-align_left">
+                                        <h1>
+                                            <span class="slds-page-header__title slds-truncate slds-text-align_left">Reporting Department Drill Down</span>
+                                        </h1>
+                                        <lightning:badge label="{!'Account: ' + v.dd.account}"/>
+                                        <lightning:badge label="{!'Period: ' + v.dd.period}"/>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    </div>
+
+                </header>
+                <div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+
+                    <aura:renderIf isTrue="{!v.warning != null}">
+                        <lightning:badge label="{!v.warning}" class="slds-theme_warning"/>
+                    </aura:renderIf>
+
+                    <aura:renderIf isTrue="{!v.showRedirectToCBalanceLink}">
+                        <a onclick="{!c.redirectToCBalances}"
+                           class="slds-m-top_medium slds-align-middle slds-align_absolute-center">to CBalance
+                            Configurator</a>
+                    </aura:renderIf>
+
+                    <aura:iteration items="{!v.sections}" var="section" indexVar="idx">
+                        <div class="slds-text-title--caps slds-m-left--large slds-m-top--medium slds-truncate">{!section.name}</div>
+                        <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+                            <thead>
+                            <tr class="slds-line-height_reset">
+                                <th style="width: 12px;">
+                                    <div class="slds-truncate" title="Index">#</div>
+                                </th>
+                                <th style="width: 40%;">
+                                    <div class="slds-truncate" title="Entry Name">Entry</div>
+                                </th>
+                                <th>
+                                    <div class="slds-truncate" title="Source CB RB">CB Source</div>
+                                </th>
+                                <th>
+                                    <div class="slds-truncate" title="Source FF RB">FF RB</div>
+                                </th>
+                                <th style="width: 10%;">
+                                    <div class="slds-truncate" title="Amount YTD">Amount YTD</div>
+                                </th>
+                            </tr>
+                            </thead>
+                            <tbody>
+
+                            <aura:iteration items="{!section.rows}" var="item"  indexVar="idx">
+                                <tr class="{!item.cb4__Text1__c}">
+                                    <th>
+                                        <div title="Index">{!idx + 1}</div>
+                                    </th>
+                                    <th>
+                                        <aura:renderIf isTrue="{!item.cb4__Text1__c != 'total'}">
+                                            <button type="button" onclick="{!c.redirectLink}" id="{!item.Id}"
+                                                    class="slds-button">{!item.Name}</button>
+                                            <aura:set attribute="else">
+                                                    {!item.Name}
+                                            </aura:set>
+                                        </aura:renderIf>
+                                    </th>
+                                    <th>
+                                        <aura:renderIf
+                                                isTrue="{!and(item.cb4__Text1__c != 'total', item.cb4__ExtId__c != null)}">
+                                            <button type="button" onclick="{!c.redirectLink}" id="{!item.cb4__ExtId__c}"
+                                                    class="slds-button">CB Source
+                                            </button>
+                                            <aura:set attribute="else">
+
+                                            </aura:set>
+                                        </aura:renderIf>
+                                    </th>
+                                    <th>
+                                        <aura:renderIf
+                                                isTrue="{!and(item.cb4__Text1__c != 'total', item.cb4__Text5__c != null)}">
+                                            <button type="button" onclick="{!c.redirectLink}" id="{!item.cb4__Text5__c}"
+                                                    class="slds-button">FF RB
+                                            </button>
+                                            <aura:set attribute="else">
+
+                                            </aura:set>
+                                        </aura:renderIf>
+                                    </th>
+                                    <td class="dec">
+                                        <div>
+                                            <lightning:formattedNumber value="{!item.cb4__Decimal1__c}"/>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </aura:iteration>
+                            </tbody>
+                        </table>
+                    </aura:iteration>
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick="{!c.closeDrillDown}">Close</button>
+                </footer>
+            </div>
+        </section>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </div>
+
+
+</aura:component>

@@ -1,0 +1,2 @@
+<apex:page standardController="npsp__Batch__c" extensions="DonationsToJournalController" action="{!processBatch}">
+</apex:page>

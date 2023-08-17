@@ -1,0 +1,86 @@
+<aura:component description="CloudBudget The Mustard Seed Controller"
+                implements="lightning:actionOverride,lightning:isUrlAddressable,force:hasSObjectName,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId"
+                access="global"
+                controller="CBApprovalProcessTMS">
+
+    <ltng:require scripts="{!join(',',$Resource.cb4__JS_CONST, $Resource.cb4__JS_UTILS)}"
+                  afterScriptsLoaded="{!c.runInit}"/>
+
+    <aura:attribute name="Budgets" type="Object[]" access="global"/>
+  <!--  <div style="width: 700px;">  -->
+    <lightning:card variant="Narrow" iconName="standard:account">
+
+
+        <aura:set attribute="title">
+            Budgets to Approve
+        </aura:set>
+        <div style="width: 48px; float: right; margin-top: -38px;" class="slds-p-bottom_xx-small" >
+            <lightning:buttonIcon iconName="utility:refresh" variant="brand"
+                                  class="slds-button slds-button_success"
+                                  alternativeText="Refresh Log List" title="Refresh"
+                                  onclick="{!c.refreshTable}"/>
+        </div>
+
+        <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+        <thead>
+        <tr class="slds-line-height_reset">
+            <th class="" scope="col">
+                <div class="slds-truncate" title="eventNameColumn">Related To</div>
+            </th>
+            <th class="" scope="col">
+                <div class="slds-truncate" title="Owner">Budget Year</div>
+            </th>
+             <th class="" scope="col">
+                <div class="slds-truncate" title="Owner">Scenario</div>
+            </th>
+             <th class="" scope="col">
+                <div class="slds-truncate" title="Submitter">Owner</div>
+            </th>
+            <th class="" scope="col">
+                <div class="slds-truncate" title="Submitter">Submitter</div>
+            </th>
+             <th class="" scope="col">
+                <div class="slds-truncate" title="statusColumn">Status</div>
+            </th>
+            <th class="" scope="col">
+                <div class="slds-truncate" title="Submitter">Submitted</div>
+            </th>
+       
+        </tr>
+        </thead>
+        <tbody>
+        <aura:iteration items="{!v.Budgets}" var="budget">
+            <tr>
+            <td data-label="eventNameColumn">
+               <button class="slds-button slds-p-around_none without-border" onclick="{!c.openLog}" id="{!budget.Id}">{!budget.Name}
+               </button>  
+            </td>
+            <td data-label="Budget Year">
+               {!budget.cb4__Tag3Name__c} 
+            </td>
+            <td data-label="Scenario">
+               {!budget.cb4__Tag8Name__c} 
+            </td>  
+            <td data-label="Owner">
+               {!budget.Owner.Name} 
+            </td>     
+            <td data-label="Submitter">
+               {!budget.Submitter__r.Name} 
+            </td>  
+             <td data-label="statusColumn">
+                 {!budget.cb4__Status__c} 
+            </td>    
+            <td data-label="Submitted">
+                 {!budget.SubmittTime__c}  
+             </td>
+          
+              </tr>
+        </aura:iteration>
+        </tbody>
+    </table>
+        
+
+    </lightning:card>
+
+<!--    </div> -->
+</aura:component>

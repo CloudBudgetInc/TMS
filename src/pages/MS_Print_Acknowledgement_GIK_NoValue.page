@@ -1,0 +1,67 @@
+<apex:page controller="kell6_core.ReceiptTemplateController">
+    <apex:stylesheet value="{!salesforceBaseUrl}{!$Resource.CustomTemplateStyles}"/>
+<!--    <div style="position: absolute; top: 0px; left: 0px; width: 1cm; height: 10.8cm; background-color: red;"></div>-->
+
+    <table style="width: 100%;">
+        <td style="width: 40%; vertical-align: bottom; padding-left: 0.3cm; padding-top: 2.75cm;">
+            <h3><apex:outputField value="{!texts.kell6_core__Receipt_Title__c}" style="font-weight: bold !important;" /></h3>
+        </td>
+        <td>
+
+        </td>
+        <td style="width: 33%; text-align: right; font-size: .8em;">
+            <div style="width: 6.8cm; text-align: center;">
+                <apex:outputField value="{!texts.kell6_core__Label_Place_of_Issue__c}" />&nbsp;<apex:outputText value="{!receiptMap['ReceiptDate']}" /><br />
+                at&nbsp;<apex:outputField value="{!texts.kell6_core__Place_of_Issue__c}" />
+            </div>
+        </td>
+    </table>
+
+    <table style="width: 100%;">
+        <td style="width: 30%; padding-left: 1.55cm; padding-top: 0.3cm; vertical-align: top;">
+            <apex:outputText value="{!receiptMap['Contact_Name']}" /><br />
+            <apex:outputText value="{!receiptMap['BillingStreet']}" escape="false" /><br />
+            <apex:outputText value="{!receiptMap['BillingCity']}, {!receiptMap['BillingState']} {!receiptMap['BillingPostalCode']}" escape="false" /><br />
+            <apex:outputText value="{!receiptMap['BillingCountry']}" escape="false" />
+        </td>
+        <td style="width: 70%; padding-top: 0cm;font-size: 12px; text-align: right;">
+              <table style="width: 100%; text-align: right; padding-right: 0.75cm;">
+                <tr style="display: {!IF(NOT(ISBLANK(TRIM(receiptMap['rname']))), 'table-row', 'none')};">
+                    <td style="text-align: right; width: 100%;"><apex:outputField value="{!texts.kell6_core__Label_Receipt_Number__c}" /></td>
+                    <td class="nowrap" style="width: auto; font-weight: bold;"><apex:outputText value="{!receiptMap['rname']}" /></td>
+                </tr>
+                <tr style="display: {!IF(NOT(ISBLANK(TRIM(receiptMap['CloseDate']))), 'table-row', 'none')};">
+                    <td style="width: 100%; vertical-align: top; text-align: right;"><apex:outputField value="{!texts.kell6_core__Label_Donation_Date__c}" /></td>
+                    <td class="nowrap" style="width: auto;font-weight: bold;"><apex:outputText value="{!receiptMap['CloseDate']}" /></td>
+                </tr>
+                <tr style="display: {!IF(NOT(ISBLANK(TRIM(receiptMap['Description']))), 'table-row', 'none')};">
+                    <td class="nowrap" style="width: 100%; vertical-align: top; text-align: right;"><apex:outputField value="{!texts.kell6_core__Label_Description__c}" /></td>
+                    <td class="nowrap"><apex:outputText value="{!receiptMap['Description']}" /></td>
+                </tr>
+                <tr style="display: {!IF(NOT(ISBLANK(TRIM(receiptMap['[[GIK_DESCRIPTION]]']))), 'table-row', 'none')};">
+                    <td class="nowrap" style="width: 100%; vertical-align: top; text-align: right;">Description of Gift:</td>
+                    <td class="nowrap"><apex:outputText value="{!receiptMap['[[GIK_DESCRIPTION]]']}" /></td>
+                </tr>
+            </table>
+        </td>
+    </table>
+    <div style="text-align: center;font-style:italic;margin-top:1em;">
+        <apex:outputText value="{!texts.kell6_core__Left_Footer_Original_Receipt__c}" />
+    </div>
+
+    <div style="position: absolute; top: 10cm; left: 0cm; padding-left: 1.55cm; padding-right: 1.55cm;">
+        <apex:outputText value="{!receiptMap['accompanyingLetter']}" escape="false" /><br />
+        <img src="{!$Resource[texts.kell6_core__Static_Resource_Letter_Sender_Signature__c]}" alt="Signature" style="height: 1cm;"/><br />
+        <apex:outputField value="{!texts.kell6_core__Accompanying_Letter_Signor__c}" style="color: black !important;" />
+    </div>
+    
+    <div style="position: absolute; left: 1.05cm; bottom: 0cm; height: 3.55cm; width: 90%;">
+        <apex:outputText value="{!receiptMap['Contact_Name']}" /><br />
+        <apex:outputText value="{!receiptMap['BillingStreet']}" escape="false" /><br />
+        <apex:outputText value="{!receiptMap['BillingCity']}, {!receiptMap['BillingState']} {!receiptMap['BillingPostalCode']}" escape="false" /><br />
+        <apex:outputText value="{!receiptMap['BillingCountry']}" escape="false" />
+        <div style="width: 100%; position: absolute; left: 0cm; bottom: 0cm; text-align: left; font-family: Courier;">
+            <apex:outputText value="{!receiptMap['[[SERVICE_CODE]]']}" escape="false" />
+        </div>
+    </div>
+</apex:page>

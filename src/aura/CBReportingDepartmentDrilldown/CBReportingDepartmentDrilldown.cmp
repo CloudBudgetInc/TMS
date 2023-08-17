@@ -1,0 +1,102 @@
+<!--
+ - Created by Alex JR on 10/26/2020.
+ -->
+
+<aura:component description="CBReportingDepartmentDrilldown"
+                implements="lightning:actionOverride,lightning:isUrlAddressable,force:hasSObjectName,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId"
+                access="global"
+                controller="CBReportingBalanceDrillDown">
+
+    <ltng:require scripts="{!$Resource.cb4__JS_UTILS}" afterScriptsLoaded="{!c.doInit}"/>
+
+    <aura:attribute name="recordId" type="Id"/>
+    <aura:attribute name="FFRBName" type="String" access="global"/>
+    <aura:attribute name="result" type="Object[]" access="global"/>
+
+    <lightning:card title="FF Reporting Balance DrillDown">
+
+        <lightning:layout class="{!if(v.recordId == null, '', 'slds-hide')}">
+            <lightning:layoutItem padding="around-small">
+                <lightning:input value="{!v.FFRBName}" label="FF RB Name"/>
+            </lightning:layoutItem>
+            <lightning:layoutItem padding="around-small">
+                <lightning:button label="Find Transaction Lines" variant="brand" class="slds-m-top_large"
+                                  onclick="{!c.getDrillDown}"/>
+            </lightning:layoutItem>
+        </lightning:layout>
+
+        <table class="slds-table slds-table_cell-buffer slds-table_bordered">
+            <thead>
+            <tr>
+                <th>
+                    <div title="Index" style="width: 15%;">#</div>
+                </th>
+                <th>
+                    <div title="Name">Name</div>
+                </th>
+                <th>
+                    <div title="Transaction">Transaction</div>
+                </th>
+                <th>
+                    <div title="Period">Period</div>
+                </th>
+                <th>
+                    <div title="Account">Account</div>
+                </th>
+                <th>
+                    <div title="Dimension 1">Dimension 1</div>
+                </th>
+                <th>
+                    <div title="Dimension 2">Dimension 2</div>
+                </th>
+                <th>
+                    <div title="Total">Total, $</div>
+                </th>
+
+            </tr>
+            </thead>
+            <tbody>
+
+            <aura:iteration items="{!v.result}" var="r" indexVar="i">
+                <tr>
+                    <th>
+                        <div>
+                                {!i + 1}
+                        </div>
+                    </th>
+                    <td>
+                        <div title="Name"><a href="{!'/' + r.Id}" target="_blank">{!r.Name}</a></div>
+                    </td>
+                    <td>
+                        <div title="Transaction"><a href="{!'/' + r.c2g__Transaction__c}"
+                                                    target="_blank">{!r.c2g__Transaction__r.Name}</a></div>
+                    </td>
+                    <td>
+                        <div title="Period">{!r.c2g__Transaction__r.c2g__Period__r.Name}</div>
+                    </td>
+                    <td>
+                        <div title="Account">{!r.c2g__GeneralLedgerAccount__r.Name}</div>
+                    </td>
+                    <td>
+                        <div title="Dimension 1">{!r.c2g__Dimension1__r.Name}</div>
+                    </td>
+                    <td>
+                        <div title="Dimension 2">{!r.c2g__Dimension2__r.Name}</div>
+                    </td>
+                    <td>
+                        <div title="Total"
+                             style="width: 40px; ">{!r.c2g__HomeCredits__c}</div>
+                    </td>
+                </tr>
+            </aura:iteration>
+
+            </tbody>
+        </table>
+
+    </lightning:card>
+
+    <!-- SUPER MODERN SPINNER -->
+    <lightning:spinner aura:id="sms" class="slds-hide"/>
+    <!-- SUPER MODERN SPINNER -->
+
+</aura:component>

@@ -1,0 +1,18 @@
+<!-- extensions="StaffPayrollDonations" -->
+<apex:page standardController="c2g__codaBudget__c" recordSetVar="ExpLines" extensions="ForecastUpdate" docType="html-5.0">
+
+    <apex:form id="mForm">
+        <apex:pageBlock id="PB">
+            <apex:pageBlockSection id="PBS" title="Update Parameters" collapsible="false">
+                <apex:outputText >Forecast values will be updated with Actuals up to (including) chosen period.</apex:outputText>
+                <apex:outputText > </apex:outputText>
+                <apex:inputText title="Budget Year" label="Budget Year:" id="CYear" list="2017,2018,2019,2020,2021,2022,2023,2024,2025" value="{!CSYear}" onchange="Update()" style="{!if(CYear==1,'border-color: red','')}"/>
+                <apex:inputText title="Update Forecast up to a chosen period" label="Period:" id="CPeriod" list="001,002,003,004,005,006,007,008,009,010,011,012" value="{!CSPeriod}" onchange="Update()" style="{!if(CPeriod==1,'border-color: red','')}"/>
+                &nbsp;
+                    <apex:commandButton value="Update Balances" id="theButton" action="{!updateBalances}"/>
+            </apex:pageBlockSection>
+            <apex:actionFunction action="{!updateParameterChanges}" name="Update"/>
+        </apex:pageBlock>
+    </apex:form>
+	<apex:pageMessages />
+</apex:page>

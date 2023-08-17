@@ -1,0 +1,173 @@
+<apex:page standardController="npsp__Batch__c" showheader="false" sidebar="false">
+    <style>
+        td { 
+        	border-bottom: 1px solid #ddd;
+		}
+        ul {
+        	text-align:right;
+        	list-style-type: none; 
+        	margin-right: 20px;
+        }
+        @media print {    
+    		.no-print, .no-print * {
+        		display: none !important;
+    		}
+		}
+    </style>
+    <div class="print" style="margin:10px">
+  	<div class="printHeader no-print" align="right">
+        <div class="printControls" align="right">
+            <ul>
+                <li><a href="javascript:window.close%28%29%3B">Close Window</a></li>
+                <li><a href="javascript:window.print%28%29%3B">Print This Page</a></li>
+            </ul>
+		</div>
+		<br/>
+    </div>
+
+    <b>Business Account Deposit Slip</b><br/><br/>
+    
+    <b>BMO Bank of Montreal</b><br/>
+    350 7th Ave SW Calgary AB, T2P3N9<br/><br/>
+    
+    <b>Credit Account of:</b><br/>
+    The Mustard Seed Foundation<br/>
+    <br/>
+    00109 1930-821<br/>
+<br/>
+    <b>Date</b><br/>
+        <h1><apex:outputText value="{0,date,dd/MM/yyyy}"><apex:param value="{!npsp__Batch__c.Date__c}" /></apex:outputText><br/><br/></h1>
+        
+    <b>Depositor's Initials</b><br/><br/><br/>
+    
+    <table width="45%">
+        <caption><h1>Deposit Slip (Cash)</h1></caption>
+             <tr style="font-weight: bold;">
+                <td> <apex:outputLabel value="Number"/> </td>
+                <td> <apex:outputLabel value=""/> </td>
+                <td> <apex:outputLabel value="Rate"/> </td>
+                <td> <apex:outputLabel value=""/> </td>
+                <td> <apex:outputLabel value="Amount"/> </td>
+            </tr>
+            <tr>
+                <td> <apex:outputField value="{!npsp__Batch__c.Cash001__c}"/> </td>
+                <td> <apex:outputLabel value=" x "/> </td>
+                <td> <apex:outputLabel value="$0.01 "/> </td>
+                <td> <apex:outputLabel value=" = "/> </td>
+                <td> <apex:outputText value="$ {0, number, 0.00}"><apex:param value="{!npsp__Batch__c.Cash001__c*0.01}"/></apex:outputText></td>
+            </tr>
+            <tr>
+                <td> <apex:outputField value="{!npsp__Batch__c.Cash005__c}"/> </td>
+                <td> <apex:outputLabel value=" x "/> </td>
+                <td> <apex:outputLabel value="$0.05 "/> </td>
+                <td> <apex:outputLabel value=" = "/> </td>
+                <td> <apex:outputText value="$ {0, number, 0.00}"><apex:param value="{!npsp__Batch__c.Cash005__c*0.05}"/></apex:outputText></td>
+            </tr>
+            <tr>
+                <td> <apex:outputField value="{!npsp__Batch__c.Cash010__c}"/> </td>
+                <td> <apex:outputLabel value=" x "/> </td>
+                <td> <apex:outputLabel value="$0.10"/> </td>
+                <td> <apex:outputLabel value=" = "/> </td>
+                <td> <apex:outputText value="$ {0, number, 0.00}"><apex:param value="{!npsp__Batch__c.Cash010__c*0.1}"/></apex:outputText></td>
+            </tr>
+            <tr>
+                <td> <apex:outputField value="{!npsp__Batch__c.Cash025__c}"/> </td>
+                <td> <apex:outputLabel value=" x "/> </td>
+                <td> <apex:outputLabel value="$0.25 "/> </td>
+                <td> <apex:outputLabel value=" = "/> </td>
+                <td> <apex:outputText value="$ {0, number, 0.00}"><apex:param value="{!npsp__Batch__c.Cash025__c*0.25}"/></apex:outputText></td>
+            </tr>
+            <tr>
+                <td> <apex:outputField value="{!npsp__Batch__c.Cash100__c}"/></td>
+                <td> <apex:outputLabel value=" x "/></td>
+                <td> <apex:outputLabel value="$1.00 "/></td>
+                <td> <apex:outputLabel value=" = "/></td>
+                <td> <apex:outputText value="$ {0, number, 0.00}"><apex:param value="{!npsp__Batch__c.Cash100__c*1}"/></apex:outputText></td>    
+             </tr>
+            <tr>
+                <td> <apex:outputField value="{!npsp__Batch__c.Cash200__c}"/> </td>
+                <td> <apex:outputLabel value=" x "/> </td>
+                <td> <apex:outputLabel value="$2.00 "/> </td>
+                <td> <apex:outputLabel value=" = "/> </td>
+                <td> <apex:outputText value="$ {0, number, 0.00}"><apex:param value="{!npsp__Batch__c.Cash200__c*2}"/></apex:outputText></td>    
+            </tr>
+            <tr>
+                <td> <apex:outputField value="{!npsp__Batch__c.Cash500__c}"/> </td>
+                <td> <apex:outputLabel value=" x "/> </td>
+                <td> <apex:outputLabel value="$5.00 "/> </td>
+                <td> <apex:outputLabel value=" = "/> </td>
+                <td> <apex:outputText value="$ {0, number, 0.00}"><apex:param value="{!npsp__Batch__c.Cash500__c*5}"/></apex:outputText></td>    
+            </tr>
+            <tr>
+                <td> <apex:outputField value="{!npsp__Batch__c.Cash1000__c}"/> </td>
+                <td> <apex:outputLabel value=" x "/> </td>
+                <td> <apex:outputLabel value="$10.00 "/> </td>
+                <td> <apex:outputLabel value=" = "/> </td>
+                <td> <apex:outputText value="$ {0, number, 0.00}"><apex:param value="{!npsp__Batch__c.Cash1000__c*10}"/></apex:outputText></td>    
+            </tr>
+            <tr>
+                <td> <apex:outputField value="{!npsp__Batch__c.Cash2000__c}"/> </td>
+                <td> <apex:outputLabel value=" x "/> </td>
+                <td> <apex:outputLabel value="$20.00 "/> </td>
+                <td> <apex:outputLabel value=" = "/> </td>
+                <td> <apex:outputText value="$ {0, number, 0.00}"><apex:param value="{!npsp__Batch__c.Cash2000__c*20}"/></apex:outputText></td>    
+            </tr>
+            <tr>
+                <td> <apex:outputField value="{!npsp__Batch__c.Cash5000__c}"/> </td>
+                <td> <apex:outputLabel value=" x "/> </td>
+                <td> <apex:outputLabel value="$50.00 "/> </td>
+                <td> <apex:outputLabel value=" = "/> </td>
+                <td> <apex:outputText value="$ {0, number, 0.00}"><apex:param value="{!npsp__Batch__c.Cash5000__c*50}"/></apex:outputText></td>    
+            </tr>
+            <tr>
+                <td> <apex:outputField value="{!npsp__Batch__c.Cash10000__c}"/> </td>
+                <td> <apex:outputLabel value=" x "/> </td>
+                <td> <apex:outputLabel value="$100.00 "/> </td>
+                <td> <apex:outputLabel value=" = "/> </td>
+                <td> <apex:outputText value="$ {0, number, 0.00}"><apex:param value="{!npsp__Batch__c.Cash10000__c*100}"/></apex:outputText></td>    
+            </tr>
+    </table>
+    <br/>
+   <table width="45%" style="font-weight: bold;">
+   			<tr>
+            	<td> <apex:outputText value="Total Bills"/> </td>
+                <td> 
+                    <apex:outputText value="{0, number, 0}">
+                		<apex:param value="{!npsp__Batch__c.Cash10000__c+npsp__Batch__c.Cash5000__c+npsp__Batch__c.Cash2000__c+npsp__Batch__c.Cash1000__c+npsp__Batch__c.Cash500__c}"/>
+                    </apex:outputText>
+               	</td>    
+            </tr>           
+            <tr>
+                <td> <apex:outputText value="Total Coins"/> </td>
+                 <td> <apex:outputText value="{0, number, 0}">
+                    	<apex:param value="{!npsp__Batch__c.Cash200__c+npsp__Batch__c.Cash100__c+npsp__Batch__c.Cash025__c+npsp__Batch__c.Cash010__c+npsp__Batch__c.Cash005__c+npsp__Batch__c.Cash001__c}"/>
+                      </apex:outputText></td>    
+            </tr>           
+            <tr>
+                <td> <apex:outputText value="Total Cash"/> </td>
+                <td> <apex:outputText value="$ {0, number, 0.00}"><apex:param value="{!npsp__Batch__c.Deposit_Slip_Total_Amount__c-npsp__Batch__c.Cheques_Amount__c}"/></apex:outputText></td>    
+            </tr>           
+            <tr>
+                <td> <apex:outputText value="Total Cheques"/> </td>
+                <td> <apex:outputText value="$ {0, number, 0.00}"><apex:param value="{!npsp__Batch__c.Cheques_Amount__c}"/></apex:outputText></td>    
+            </tr>           
+            <tr>
+                <td> <apex:outputText value="Total Deposit"/> </td>
+                <td> <apex:outputText value="$ {0, number, 0.00}"><apex:param value="{!npsp__Batch__c.Deposit_Slip_Total_Amount__c}"/></apex:outputText></td>    
+           </tr>           
+       </table>
+    <br/>
+ 	<table width="45%" style="font-weight: bold;font-style: italic;">
+        <tr>
+        	<td> <apex:outputText value="Batch # {!npsp__Batch__c.Name}"/> </td>
+            <td> <apex:outputText value="from {0,date,dd/MM/yyyy}"><apex:param value="{!npsp__Batch__c.Date__c}"/></apex:outputText></td>    
+        </tr>
+        <tr>
+            <td> <apex:outputText value="# of Cheques {0, number, 0}"><apex:param value="{!npsp__Batch__c.npsp__Number_of_Items__c}"/></apex:outputText></td>    
+            <td> <apex:outputText value="Total Amount ${0, number, 0.00}"><apex:param value="{!npsp__Batch__c.Deposit_Slip_Total_Amount__c}"/></apex:outputText></td>    
+       </tr>
+    </table>
+   
+    </div>
+    
+</apex:page>

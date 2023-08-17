@@ -1,0 +1,361 @@
+<aura:component description="ReportNG"
+                implements="lightning:actionOverride,lightning:isUrlAddressable,force:hasSObjectName,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId"
+                access="global"
+                controller="CBReportNG">
+    <ltng:require scripts="{!$Resource.cb4__exceljs}"/>
+    <ltng:require scripts="{!$Resource.cb4__fileSaver}"/>
+    <ltng:require scripts="{!$Resource.cb4__jsPDF115}"/>
+
+    <ltng:require styles="{!join(',',
+            $Resource.cb4__DTjQ + '/DataTables-1.10.16/media/css/jquery.dataTables.min.css',
+            $Resource.cb4__DTjQ + '/DataTables-1.10.16/extensions/FixedColumns/css/fixedColumns.dataTables.min.css'
+            )}"
+                  scripts="{!join(',',
+                          $Resource.cb4__jquery341, $Resource.cb4__JS_UTILS, $Resource.cb4__JS_CONST,
+                          $Resource.cb4__DTjQ + '/DataTables-1.10.16/media/js/jquery.dataTables.min.js',
+                          $Resource.cb4__DTjQ + '/DataTables-1.10.16/extensions/FixedColumns/js/dataTables.fixedColumns.min.js'
+                          )
+                          }" afterScriptsLoaded="{!c.doInit}"/>
+
+
+    <aura:attribute name="recordId" type="Id" access="global"/>
+
+    <aura:attribute name="report" type="cb4__CBReport__c" access="global"/>
+    <aura:attribute name="reportColumns" type="List" access="global"/>
+    <aura:attribute name="reportColumnsOriginal" type="List" access="global"/>
+    <aura:attribute name="CBals" type="List" access="global"/>
+    <aura:attribute name="tableHeaders" type="List" access="global"/>
+    <aura:attribute name="tableHeadersOriginal" type="List" access="global"/>
+    <aura:attribute name="numberOfTextColumns" type="Integer" access="global"/>
+    <aura:attribute name="showSimpleRows" type="Boolean" default="true" access="global"/>
+    <aura:attribute name="rows" type="List" access="global"/>
+    <aura:attribute name="rowsWithoutSimple" type="List" access="global"/>
+    <aura:attribute name="rowsWithSimple" type="List" access="global"/>
+    <aura:attribute name="rowsOriginal" type="List" access="global"/>
+    <aura:attribute name="showExportButtons" type="Boolean" default="false" access="global"/>
+
+    <aura:attribute name="dimensions" type="Object" access="global"/>
+    <aura:attribute name="hiddenGroups" type="String[]" access="global" description="if Q1 is false = hide Q1 group"/>
+    <aura:attribute name="columnIds" type="String[]" access="global" description="list of period Ids"/>
+    <aura:attribute name="drillDownComponent" type="Aura.Component[]"/>
+    <aura:attribute name="isWaiting" type="Boolean" default="false"/>
+    <aura:attribute name="reportMessage" type="String"/>
+    <aura:attribute name="fitPageEnabled" type="Boolean" default="false"
+                    description="If we need to apply DataTable js library"/>
+
+    <aura:attribute name="d1SO" type="cb4.CBSO[]"/>
+    <aura:attribute name="d2SO" type="cb4.CBSO[]"/>
+    <aura:attribute name="d3SO" type="cb4.CBSO[]"/>
+    <aura:attribute name="d4SO" type="cb4.CBSO[]"/>
+    <aura:attribute name="d5SO" type="cb4.CBSO[]"/>
+    <aura:attribute name="d6SO" type="cb4.CBSO[]"/>
+    <aura:attribute name="d7SO" type="cb4.CBSO[]"/>
+
+    <aura:attribute name="d1filter" type="String"/>
+    <aura:attribute name="d2filter" type="String"/>
+    <aura:attribute name="d3filter" type="String"/>
+    <aura:attribute name="d4filter" type="String"/>
+    <aura:attribute name="d5filter" type="String"/>
+    <aura:attribute name="d6filter" type="String"/>
+    <aura:attribute name="d7filter" type="String"/>
+
+    <!-- PREVIOUS VERSION -->
+    <aura:attribute name="d1filterOld" type="String"/>
+    <aura:attribute name="d2filterOld" type="String"/>
+    <aura:attribute name="d3filterOld" type="String"/>
+    <aura:attribute name="d4filterOld" type="String"/>
+    <aura:attribute name="d5filterOld" type="String"/>
+    <aura:attribute name="d6filterOld" type="String"/>
+    <aura:attribute name="d7filterOld" type="String"/>
+    <!-- PREVIOUS VERSION -->
+
+    <aura:attribute name="columnsOptions" default="[]" type="List" description="{ label: 'All', value: '' }"/>
+    <aura:attribute name="displayedColumns" type="List"/>
+    <aura:attribute name="pdfDate" type="String"/>
+
+    <!--PDF HEADER-->
+    <div id="pdfHeader" class="slds-grid slds-grid_vertical slds-p-bottom_medium slds-hide" style="margin-top: -100px;">
+        <!--<div style="text-align: center">{!v.report.Name}</div>
+        <div >{!v.report.cb4__Description__c}</div>-->
+        <div class="slds-media">
+            <div class="slds-media__body">
+                <div class="slds-page-header__name">
+                    <div class="slds-page-header__name-title">
+                        <h1>
+                            <span class="slds-page-header__title slds-truncate">{!v.report.Name}</span>
+                            <span class="slds-truncate" style="font-size: small;">{!v.pdfDate}</span>
+                        </h1>
+                        <div style="font-size: small;">{!v.report.cb4__Description__c}</div>
+                        <div style="font-size: small;">CloudBudget2.0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--PDF HEADER-->
+
+    <!-- HEADER -->
+    <div class="slds-page-header slds-m-bottom_medium slds-hide slds-no-print" aura:id="tableHeader">
+        <div class="slds-page-header__row">
+            <div class="slds-page-header__col-title">
+                <div class="slds-media">
+                    <div class="slds-media__figure">
+                      <span class="slds-icon_container slds-icon-standard-calibration" title="Report"
+                            ondblclick="{!c.goToConfig}">
+                        <lightning:icon iconName="standard:report"
+                                        alternativeText="Report"/>
+                      </span>
+                    </div>
+                    <div class="slds-media__body">
+                        <div class="slds-page-header__name">
+                            <div class="slds-page-header__name-title">
+                                <h1>
+                                    <span class="slds-page-header__title slds-truncate">{!v.report.Name}</span>
+                                </h1>
+                                <div style="font-size: smaller;">{!v.report.cb4__Description__c}</div>
+                                <!-- <c:Currency/>-->
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+            <lightning:input type="toggle" label="Details" class="slds-p-top--medium slds-p-right--medium"
+                             messageToggleActive="Display"
+                             messageToggleInactive="Hide"
+                             checked="{!v.showSimpleRows}"
+                             onchange="{!c.showHideSimpleRows}"/>
+
+            <aura:if isTrue="{!v.dimensions.D1 != null}">
+                <div style="max-width: 170px; float: right;">
+                    <div style="display: inline-block; ">
+                        <lightning:select label="{!v.dimensions.D1}" onfocus="{!c.savePreviousFilters}"
+                                          onchange="{!c.applyFilter}"
+                                          value="{!v.d1filter}">
+                            <option value="" text="ALL"/>
+                            <aura:iteration items="{!v.d1SO}" var="option">
+                                <option value="{!option}" text="{!option}"
+                                        selected="{!v.d1filter == option}"/>
+                            </aura:iteration>
+                        </lightning:select>
+                    </div>
+                </div>
+            </aura:if>
+
+            <aura:if isTrue="{!v.dimensions.D2 != null}">
+                <div style="max-width: 170px; float: right;">
+                    <div style="display: inline-block; ">
+                        <lightning:select label="{!v.dimensions.D2}" onfocus="{!c.savePreviousFilters}"
+                                          onchange="{!c.applyFilter}"
+                                          value="{!v.d2filter}">
+                            <option value="" text="ALL"/>
+                            <aura:iteration items="{!v.d2SO}" var="option">
+                                <option value="{!option}" text="{!option}"
+                                        selected="{!v.d2filter == option}"/>
+                            </aura:iteration>
+                        </lightning:select>
+                    </div>
+                </div>
+            </aura:if>
+
+            <aura:if isTrue="{!v.dimensions.D3 != null}">
+                <div style="max-width: 170px; float: right;">
+                    <div style="display: inline-block; ">
+                        <lightning:select label="{!v.dimensions.D3}" onfocus="{!c.savePreviousFilters}"
+                                          onchange="{!c.applyFilter}"
+                                          value="{!v.d3filter}">
+                            <option value="" text="ALL"/>
+                            <aura:iteration items="{!v.d3SO}" var="option">
+                                <option value="{!option}" text="{!option}"
+                                        selected="{!v.d3filter == option}"/>
+                            </aura:iteration>
+                        </lightning:select>
+                    </div>
+                </div>
+            </aura:if>
+
+            <aura:if isTrue="{!v.dimensions.D4 != null}">
+                <div style="max-width: 170px; float: right;">
+                    <div style="display: inline-block; ">
+                        <lightning:select label="{!v.dimensions.D4}" onfocus="{!c.savePreviousFilters}"
+                                          onchange="{!c.applyFilter}"
+                                          value="{!v.d4filter}">
+                            <option value="" text="ALL"/>
+                            <aura:iteration items="{!v.d4SO}" var="option">
+                                <option value="{!option}" text="{!option}"
+                                        selected="{!v.d4filter == option}"/>
+                            </aura:iteration>
+                        </lightning:select>
+                    </div>
+                </div>
+            </aura:if>
+
+            <aura:if isTrue="{!v.dimensions.D5 != null}">
+                <div style="max-width: 170px; float: right;">
+                    <div style="display: inline-block; ">
+                        <lightning:select label="{!v.dimensions.D5}" onfocus="{!c.savePreviousFilters}"
+                                          onchange="{!c.applyFilter}"
+                                          value="{!v.d5filter}">
+                            <option value="" text="ALL"/>
+                            <aura:iteration items="{!v.d5SO}" var="option">
+                                <option value="{!option}" text="{!option}"
+                                        selected="{!v.d5filter == option}"/>
+                            </aura:iteration>
+                        </lightning:select>
+                    </div>
+                </div>
+            </aura:if>
+
+            <aura:if isTrue="{!v.dimensions.D6 != null}">
+                <div style="max-width: 170px; float: right;">
+                    <div style="display: inline-block; ">
+                        <lightning:select label="{!v.dimensions.D6}" onfocus="{!c.savePreviousFilters}"
+                                          onchange="{!c.applyFilter}"
+                                          value="{!v.d6filter}">
+                            <option value="" text="ALL"/>
+                            <aura:iteration items="{!v.d6SO}" var="option">
+                                <option value="{!option}" text="{!option}"
+                                        selected="{!v.d6filter == option}"/>
+                            </aura:iteration>
+                        </lightning:select>
+                    </div>
+                </div>
+            </aura:if>
+
+            <aura:if isTrue="{!v.dimensions.D7 != null}">
+                <div style="max-width: 170px; float: right;">
+                    <div style="display: inline-block; ">
+                        <lightning:select label="{!v.dimensions.D7}" onfocus="{!c.savePreviousFilters}"
+                                          onchange="{!c.applyFilter}"
+                                          value="{!v.d7filter}">
+                            <option value="" text="ALL"/>
+                            <aura:iteration items="{!v.d7SO}" var="option">
+                                <option value="{!option}" text="{!option}"
+                                        selected="{!v.d7filter == option}"/>
+                            </aura:iteration>
+                        </lightning:select>
+                    </div>
+                </div>
+            </aura:if>
+
+            <lightning:buttonIcon iconName="utility:cases" onclick="{!c.displayColumnsSet}" class="slds-m-top--large"
+                                  alternativeText="Columns setup"
+                                  title="Columns setup"/>
+
+            <lightning:buttonIcon iconName="utility:expand_alt" onclick="{!c.applyDT}" variant="brand"
+                                  class=" slds-m-top_large"
+                                  alternativeText="Fit to page size"
+                                  title="Fit to page size"/>
+
+            <!--<div class="slds-media__figure slds-m-top&#45;&#45;large">
+                <c:HelpDocumentation module="Report"/>
+            </div>-->
+        </div>
+    </div>
+    <!-- HEADER -->
+
+    <!-- TABLE -->
+    <div id="tableToPDF" aura:id="auraReportId">
+
+        <!-- jQuery generates report here -->
+
+    </div>
+    <!-- TABLE -->
+
+    <lightning:overlayLibrary aura:id="overlayLib"/>
+
+
+    <!-- COLUMNS SET -->
+    <div aura:id="columnsSet" class="slds-hide">
+        <div role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open ">
+            <div class="slds-modal__container">
+                <header class="slds-modal__header">
+                    <h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Columns</h2>
+                </header>
+                <div class="slds-modal__content slds-p-around_medium">
+                    <lightning:dualListbox name="languages"
+                                           value="{!v.displayedColumns}"
+                                           sourceLabel="Hide"
+                                           selectedLabel="Display"
+                                           options="{!v.columnsOptions}"/>
+                </div>
+                <footer class="slds-modal__footer">
+                    <button class="slds-button slds-button_neutral" onclick="{!c.closeColumnsFilter}">Cancel</button>
+                    <button class="slds-button slds-button_brand" onclick="{!c.applyColumnsFilter}">Apply</button>
+                </footer>
+            </div>
+        </div>
+        <div class="slds-backdrop slds-backdrop_open"></div>
+    </div>
+    <!-- COLUMNS SET -->
+
+    <!-- Drill Down Component -->
+    <div class="slds-float--right">
+            {!v.drillDownComponent}
+    </div>
+    <!-- Drill Down Component -->
+
+    <!-- EXCEL/PDF PANELS -->
+    <aura:if isTrue="{!v.showExportButtons}">
+        <div class="slds-card slds-no-print slds-p-top--small slds-p-bottom--small slds-p-left--xxx-small"
+             aura:id="excelPanel"
+             style="width: 450px; opacity: 0.9; z-index: 10 !important; position: fixed; top: 220px; right:-420px;  box-shadow: 0px 0px 5px;">
+
+            <lightning:layout>
+                <lightning:layoutItem>
+                    <div onclick="{!c.showExcelPanel}" class="excelPanel">
+                        <div>
+                            <lightning:icon iconName="doctype:excel" size="medium"
+                                            alternativeText="Excel"/>
+                        </div>
+                    </div>
+                </lightning:layoutItem>
+                <lightning:layoutItem class="slds-p-left--small">
+
+                    <lightning:button label="Download" iconName="utility:download" class="" iconPosition="left"
+                                      onclick="{!c.downloadExcel}"/>
+                    <lightning:button label="Download All" iconName="utility:download" class="" iconPosition="left"
+                                      onclick="{!c.downloadAllToExcel}"/>
+                    <lightning:button label="Split by Sheet" iconName="utility:download" class="" iconPosition="left"
+                                      onclick="{!c.downloadAllBySheetToExcel}"/>
+
+                </lightning:layoutItem>
+            </lightning:layout>
+        </div>
+        <!-- EXCEL PANEL -->
+
+        <!-- PDF PANEL -->
+        <div class="slds-card slds-no-print slds-p-top--small slds-p-bottom--small slds-p-left--xxx-small"
+             aura:id="PDFPanel"
+             style="width: 280px; opacity: 0.9; z-index: 10 !important; position: fixed; top: 270px; right:-250px;  box-shadow: 0px 0px 5px;">
+
+            <lightning:layout>
+                <lightning:layoutItem>
+                    <div onclick="{!c.showPDFPanel}" class="PDFPanel">
+                        <div>
+                            <lightning:icon iconName="doctype:pdf" size="medium"
+                                            alternativeText="PDF"/>
+                        </div>
+                    </div>
+                </lightning:layoutItem>
+                <lightning:layoutItem class="slds-p-left--small">
+                    <lightning:button label="Download" iconName="utility:download" class="" iconPosition="left"
+                                      onclick="{!c.downloadPDF}"/>
+                </lightning:layoutItem>
+            </lightning:layout>
+        </div>
+    </aura:if>
+    <!-- PDF PANEL -->
+
+    <!-- SUPER MODERN SPINNER -->
+    <div aura:id="sms" class="slds-hide" style="z-index: 7000;">
+        <lightning:spinner/>
+        <div id="picDiv" style="z-index: 7000; ">
+        </div>
+    </div>
+    <!-- SUPER MODERN SPINNER -->
+
+
+</aura:component>

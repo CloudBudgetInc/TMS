@@ -1,0 +1,58 @@
+<apex:page standardController="Scanned_Payable_Invoice__c" recordSetVar="ConfirmedRecords" tabStyle="Scanned_Payable_Invoice__c" docType="html-5.0" >
+    
+    <script type="text/javascript">
+    // on browser window changes size - we need to resize EnhancedList as well
+    function Resizer() {
+        var iName='';
+        for (let key of Object.keys(ListViewport.instances)) {
+            iName = key;
+            if (iName.indexOf('ScannedInvoiceEnhancedList') >=0) {
+                break;
+            }
+        }
+        
+         ListViewport.instances[iName]['height']=window.innerHeight-150;
+    }
+    // hide buttons user don't need with current filter
+    function buttonHider() {
+        
+        var buttonInvoice = document.getElementsByName('to_invoices')[0];
+        var buttonPreview = document.getElementsByName('preview_scanned_invoices')[0];
+        
+        var SelFilter=document.getElementsByTagName('select');
+        
+        var filterName='';
+        
+        for (i = 0; i < SelFilter.length; i++) {
+            if(SelFilter[i].id.includes('listSelect')){
+                filterName = SelFilter[i].options[SelFilter[i].selectedIndex].text;
+                break;
+            }
+        }
+        
+        switch(filterName) {
+            case "Confirmed":
+                buttonInvoice.style.display = 'block';
+                buttonPreview.style.display = 'none';
+                break;
+            case "Not confirmed":
+                buttonInvoice.style.display = 'none';
+                buttonPreview.style.display = 'block';
+                break;
+            default:
+                buttonInvoice.style.display = 'none';
+                buttonPreview.style.display = 'none';
+        }
+    }
+    
+    window.addEventListener("resize", Resizer);
+    
+    </script>
+    
+    <apex:enhancedList type="Scanned_Payable_Invoice__c" id="ScannedInvoiceEnhancedList" height="775" oncomplete="buttonHider()" />
+    
+    <script type="text/javascript">
+    	Resizer();
+    </script>
+    
+</apex:page>

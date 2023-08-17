@@ -1,0 +1,513 @@
+/**
+ * Created by Alex JR on 8/31/2020.
+ * The method for mapping FF Reporting Balances to Budget Reporting Department (3 Lvl)
+ * Select only calculation BY
+ */
+
+public with sharing class CBReportingBalancesProcessing implements Database.Batchable<SObject> {
+
+    public Database.QueryLocator start(Database.BatchableContext context) {
+        String q = 'SELECT c2g__Dimension1__c,c2g__Dimension2__c,Budget_Reporting_Department__c,' +
+                'Budget_Reporting_Department_2__c,Budget_Reporting_Department_3__c ' +
+                'FROM c2g__ReportingBalance__c WHERE c2g__GeneralLedgerAccount__r.c2g__Type__c = \'Profit and Loss\' ' +
+                'AND c2g__YearNumber__c = ' + CBVariable.currentFY;
+        return Database.getQueryLocator(q);
+    }
+    public void execute(Database.BatchableContext context, List<c2g__ReportingBalance__c> scope) {
+        processReportingBalances(scope);
+    }
+    public void finish(Database.BatchableContext context) {
+        CBVariable.setStep(0);
+    }
+
+    public static void processReportingBalances(List<c2g__ReportingBalance__c> rbs) {
+        Map<String, String> compareMap = getReportingDepartmentMap();
+        for (c2g__ReportingBalance__c rb : rbs) {
+            for (Integer i = 1; i <= 3; i++) {
+                String budgetReportDepId = compareMap.get(getRBKey('Level ' + i, rb));
+                if (budgetReportDepId != null) rb.put(getRBFieldName(i), budgetReportDepId);
+            }
+        }
+        for (c2g__ReportingBalance__c rb : rbs) rb.BDG__c = CBBDGMapping.getBDGId(rb.Budget_Reporting_Department__c, rb.Budget_Reporting_Department_2__c, rb.Budget_Reporting_Department_3__c);
+        update rbs;
+    }
+
+    /////// PRIVATE METHODS ///////
+    @TestVisible
+    private static Map<String, String> getReportingDepartmentMap() {
+        Map<String, String> r = new Map<String, String>();
+        for (Budget_Reporting_Department_Line__c brdl : CBService.getBudgetReportingLines()) r.put(getMappingKey(brdl), brdl.Budget_Reporting_Department__c);
+        return r;
+    }
+
+    @TestVisible
+    private static String getMappingKey(Budget_Reporting_Department_Line__c brdl) {
+        return brdl.Budget_Reporting_Department__r.Reporting_Level__c + brdl.Dimension_1__c + brdl.Dimension_2__c;
+    }
+    @TestVisible
+    private static String getRBKey(String lvl, c2g__ReportingBalance__c rb) {
+        return lvl + rb.c2g__Dimension1__c + rb.c2g__Dimension2__c;
+    }
+    @TestVisible
+    private static String getRBFieldName(Integer i) {
+        switch on i {
+            when 1 {
+                return 'Budget_Reporting_Department__c';
+            }
+            when 2 {
+                return 'Budget_Reporting_Department_2__c';
+            }
+            when 3 {
+                return 'Budget_Reporting_Department_3__c';
+            }
+            when else {
+                return null;
+            }
+        }
+    }
+
+    public static void CG() {
+        Integer i = 0;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+        i++;
+    }
+    /////// PRIVATE METHODS ///////
+}

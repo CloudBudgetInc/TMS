@@ -1,0 +1,85 @@
+<apex:page standardController="Expense_Report__c" recordSetVar="ExpLines" extensions="uploadCSVcontroller">
+    <script type = "text/javascript">
+    function showFn(fna, lbl) {
+        if (fna== "") {
+            lbl.innerHTML = 'No file chosen...';
+        } else {
+            lbl.innerHTML =fna;
+        }
+    }
+    // function to show file name... As after rerendering FileInput gonna be empty...
+    function GetFileName() {
+        var inputF = document.getElementById('{!$Component.mForm.PB.fileInput}');
+        var labelF = document.getElementById('fileLabel');
+        var fn = '{!nameFile}';
+        
+        if ('files' in inputF) {
+            if (inputF.files.length > 0) {
+                labelF.innerHTML = inputF.files[0].name;
+            } else {
+                showFn(fn, labelF);
+            }   
+        } else {   
+            showFn(fn, labelF);
+        }
+    }
+    </script>    
+    <apex:pageMessages />
+    <apex:form id="mForm">
+        <apex:pageBlock id="PB">
+            <apex:pageBlockSection id="PBS" title="Upload Settings" collapsible="true">
+                <apex:inputText title="Use 'D' for day, 'M' for month, 'Y' for year to set correct date format!" label="Date format:" id="DateFormat" value="{!DateFormat}" onchange="Update()" style="{!if(ReportDate==null,'border-color: red','')}"/>
+                <apex:inputText title="This information is case sensitive!" label="Transaction Date:" id="CDate" value="{!CSDate}" onchange="Update()" style="{!if(CDate==null,'border-color: red','')}"/>
+                <apex:inputText title="This information is case sensitive!" label="Customer Reference Number:" id="CReference" value="{!CSReference}" onchange="Update()" style="{!if(CReference==null,'border-color: red','')}"/>
+                <apex:inputText title="This information is case sensitive!" label="Debit Amount:" id="CDebit" value="{!CSDebit}" onchange="Update()" style="{!if(CDebit==null,'border-color: red','')}"/>
+                <apex:inputText title="This information is case sensitive!" label="Credit Amount:" id="CCredit" value="{!CSCredit}" onchange="Update()" style="{!if(CCredit==null,'border-color: red','')}"/>
+                <apex:inputText title="This information is case sensitive!" label="Description:" id="CDesc" value="{!CSDesc}" onchange="Update()" style="{!if(CText==null,'border-color: red','')}"/>
+                &nbsp;
+                <apex:commandLink value="Save Settings" action="{!saveSettings}" style="float: right;"/>
+            </apex:pageBlockSection>
+            
+            <table width="100%">
+                <td width="25%">
+                    
+                    <apex:inputFile id="fileInput" value="{!contentFile}" filename="{!nameFile}" accept=".csv" onchange="GetFileName()" style="width:90px; color:transparent;"/>
+                    <label id="fileLabel" style="color:#006600; font-weight: bold;"></label>
+                </td>
+                <td>
+                    <apex:commandButton value="Upload/Update" id="theButton" action="{!uploadFile}"/>
+                    <apex:commandButton value="Create Expense Reports" id="tBs" action="{!createReports}" disabled="{!DisableReportCreating}" />
+                </td>
+            </table>
+            
+            <apex:actionFunction action="{!updateSettingsChanges}" name="Update"/>
+            
+            <!-- Script open or close 'Upload settings' section -->
+            <script>
+            if ({!Twist}) {twistSection(document.getElementById('{!$Component.PB.PBS}').getElementsByTagName('img')[0]);}
+            </script>
+            
+        </apex:pageBlock>
+        
+        <apex:outputPanel id="results">
+            <table title="Uploaded CSV" border="1" width="100%">
+                <apex:variable value="0" var="numRow"/>
+                <apex:repeat value="{!parsedCSVH}" var="row">
+                    <!-- Make the Header in bold -->
+                    <tr style="{!if(numRow=='0','font-weight: bold;','')}">
+                        <apex:variable value="0" var="num"/>
+                        <apex:repeat value="{!row}" var="cell">
+                            <!-- If column was selected for data extraction paint it in green -->
+                            <td style="{!if(VALUE(num)==CDate || VALUE(num)==CReference || VALUE(num)==CDebit|| VALUE(num)==CCredit|| VALUE(num)==CText,'background-color: #ccffe5','')}"> {!cell} </td>
+                            <apex:variable var="num" value="{!VALUE(num) + 1}"/>
+                        </apex:repeat>
+                        <apex:variable value="1" var="numRow"/>
+                    </tr>
+                </apex:repeat>
+            </table>
+        </apex:outputPanel>
+    </apex:form>
+    <!-- Make sure after page rerendering we still see file name. -->
+    <script type="text/javascript">
+    	GetFileName();
+    </script>
+    
+</apex:page>

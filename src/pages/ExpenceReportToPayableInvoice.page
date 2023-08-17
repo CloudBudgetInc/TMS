@@ -1,0 +1,3 @@
+<apex:page standardController="Expense_Report__c" extensions="ExpenseReportController" action="{!CreatePayableInvoices}">
+    <apex:pageMessages />
+</apex:page>

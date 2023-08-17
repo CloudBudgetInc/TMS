@@ -1,0 +1,130 @@
+<apex:page standardController="Scanned_Payable_Invoice__c" recordSetVar="ConfirmedRecords" tabStyle="Scanned_Payable_Invoice__c" extensions="ScannedInvoicePreview" action="{!StartPreview}">
+    <apex:pageMessages />
+    <style>
+        .ABut:link, .ABut:visited {
+        background-color: #009933;
+        border-radius: 2px;
+        border: 1px solid green;
+        font-weight: bold;
+        color: white;
+        padding: 4px 4px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        }
+        
+        .ABut:hover, .ABut:active {
+        background-color: green;
+        }
+        
+        .thumbnail:hover {
+        width:35px;
+        height:auto;
+        }
+        
+        .disabled-link {
+        pointer-events: none;
+        opacity: 0.4;        
+        }
+        
+        .EditRecord {
+        display: table;
+        }
+        .EditRecord > div {
+        display: table-cell;
+        vertical-align: middle;
+        }
+        
+    </style>        
+    
+    <!-- Show only when have selected records -->
+    <apex:outputPanel rendered="{!Records!=null}">
+        
+        <apex:variable var="Rec" value="{!Record}" /> 
+        
+        <apex:form >
+            <center>
+                <h1 style="font-weight: bold; font-style: italic; font-size: 150%;">Scanned Payable Invoice (preview mode)</h1>
+            </center>
+            <apex:pageBlock >
+                <table style="width:100%">
+                    <tr style="height:45px; vertical-align: middle;" valign="middle">
+                        <td align="left" style="width:34%;vertical-align: middle;">
+                            
+                            <div class="EditRecord">
+                                <div>
+                                    <span style="font-weight: bold; font-size: 150%;padding-bottom:30px;">Scanned payable invoice: {!Rec.Name} </span> &nbsp;&nbsp;
+                                </div>
+                                <div>
+                                    <apex:commandLink title="Edit" action="{!EditIt}" styleClass="{!if(Rec.Status__c='Confirmed' || Rec.Status__c='FF PIN Generated','disabled-link','')}">
+                                        <img src="{!URLFOR($Resource.Edit_Gear)}" class="thumbnail" height="30" width="30" />
+                                    </apex:commandLink>
+                                </div>
+                                <div>
+                                    <span style="color:red">{!if(Rec.Status__c='Confirmed' || Rec.Status__c='FF PIN Generated','(Record locked!)','')}</span>  
+                                </div>
+                            </div>
+                        </td>
+                        <td align="center" style="width:33%">
+                            <apex:commandButton action="{!GoFirstRecord}" value="First" disabled="{!if(RecordNum=0,'true','false')}"/>&nbsp;&nbsp;
+                            <apex:commandButton action="{!GoPrevRecord}" value="Previous" disabled="{!if(RecordNum=0,'true','false')}"/>&nbsp;&nbsp;
+                            <apex:commandButton action="{!GoNextRecord}" value="Skip" disabled="{!if(RecordNum=Records.size-1,'true','false')}"/>&nbsp;&nbsp;
+                            <apex:commandButton action="{!GoLastRecord}" value="Last" disabled="{!if(RecordNum=Records.size-1,'true','false')}"/>&nbsp;&nbsp; 
+                            <br/>
+                        </td>
+                        <td align="right">
+                            <apex:commandButton value="Return to Scanned Invoices List" action="{!(retURL)}" />&nbsp;&nbsp;
+                        </td>
+                    </tr>
+                </table>            
+                
+                <table style="width:100%">
+                    <td align="left">
+                        <h1>Record {!RecordNum+1} of {!Records.size}</h1>
+                    </td>  
+                    <td align="right">
+                        <apex:commandLink value="Confirm" action="{!Confirm}"  immediate="true" styleClass="ABut" style="{!if(Rec.Status__c='Confirmed' || Rec.Status__c='FF PIN Generated','pointer-events: none; cursor: default; opacity: 0.3;','')}"/>
+                    </td>
+                </table>
+				
+                <apex:repeat value="{!ILayoutI.layoutSections}" var="Sec">
+                    <apex:pageBlockSection columns="2" title="{!Sec.label}" collapsible="false" rendered="{!Sec.label!='Custom Links'}">
+                        <apex:repeat value="{!Sec.layoutColumns}" var="Col">
+                                <apex:pageBlockSection columns="1">
+                            		<apex:repeat value="{!Col.layoutItems}" var="Item">
+                                        
+                                        
+                                        <apex:outputField value="{!Rec.CreatedByid}" rendered="{!Item.field='CreatedById'}"><apex:outputText value=", {!Rec.CreatedDate}" rendered="{!Item.field='CreatedById'}" /></apex:outputField> 
+                                        <apex:outputField value="{!Rec.LastModifiedById}" rendered="{!Item.field='LastModifiedById'}"><apex:outputText value=", {!Rec.LastModifiedDate}" rendered="{!Item.field='LastModifiedById'}"/></apex:outputField>
+
+                                        <apex:outputText value=" " rendered="{!Item.emptySpace=true}"/>
+                                        <apex:outputText value="{!Rec.Status__c}" rendered="{!Item.field='Status__c'}" style="{!if(Rec.Status__c='Confirmed'||Rec.Status__c='FF PIN Generated','color:green;font-weight: bold', 'color:#990000;font-weight: bold')}"/>
+                                        <apex:outputText value="${!DescTotAmount}" rendered="{!Item.field=='Descriptions_Total_Amount__c'}" label="Total Lines Net Amount" style="{!if(DescTotAmount=Rec.Total_Amount__c,'color:green;font-weight: bold', 'color:red;font-weight: bold')}" />
+                                        <apex:outputField value="{!Rec[Item.field]}" rendered="{!Item.field!='CreatedById'&&Item.field!='LastModifiedById'&&Item.field!='Status__c'&&Item.field!='Descriptions_Total_Amount__c'&&Item.emptySpace!=true}" />
+                                        
+                                    </apex:repeat>
+                                </apex:pageBlockSection>
+                            </apex:repeat>
+                    </apex:pageBlockSection>
+                </apex:repeat>
+                <apex:variable value="{!0}" var="rowNum"/>
+                <apex:pageBlockTable value="{!Record_Desc}" var="desc" title="Descriptions">
+                    <apex:column >
+                        <apex:outputText >
+                            <apex:variable value="{!rowNum + 1}" var="rowNum" />
+                            {!rowNum}
+                        </apex:outputText>
+                    </apex:column>    
+                    <apex:column value="{!desc.Payable_Control_GL__c}"/>
+                    <apex:column value="{!desc.Dimension_1__c}"/>
+                    <apex:column value="{!desc.Dimension_2__c}"/>
+                    <apex:column value="{!desc.Dimension_3__c}"/>
+                    <apex:column value="{!desc.Dimension_4__c}"/>
+                    <apex:column value="{!desc.Description__c}"/>
+                    <apex:column value="{!desc.Net_Amount__c}"/>
+                </apex:pageBlockTable>
+            </apex:pageBlock>
+        </apex:form> 
+        <apex:relatedList subject="{!Rec}" list="CombinedAttachments"/>
+    </apex:outputPanel>
+</apex:page>

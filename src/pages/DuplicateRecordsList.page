@@ -1,0 +1,118 @@
+<!-- Copyright 2019, Aria Solutions Inc.
+ -
+ - All Rights Reserved
+ - Customers of Aria Solutions are permitted to use and modify this
+ - code in all of their Salesforce Orgs (Production, Sandboxes), but
+ - any form of distribution to other Salesforce Orgs not belonging to
+ - the customer require a written permission from Aria Solutions.
+ * Created on 22-Oct-20.
+ -->
+
+
+<apex:page docType="html-5.0" controller="DuplicateRecordsListController" lightningStylesheets="true" title="Duplicate Contacts List">
+  <apex:slds />
+  <head>
+    <meta charset="utf-8" />
+    <title>Customers</title>
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <style>
+    .form_block {
+      display: block;
+      margin: 30px auto;
+    }
+    .col{
+      width:20%;
+      display:inline-block;
+      /* float: left; */
+      position: relative;
+      margin: 0 10px;
+    }
+    .search_box {
+      height: 200px;
+    }
+    .flight_list  {
+      max-height: 700px;
+      overflow: auto;
+      margin: auto;
+    }
+  </style>
+  <body>
+  <div>
+    <apex:form styleClass="slds-scope form_block" id="form">
+      <apex:pageBlock title="Search Contacts" id="pageBlock">
+        <div class="col">
+          <div class="slds-form-element">
+            <label class="slds-form-element__label">Start Date: </label>
+            <div class="slds-form-element__control">
+              <apex:input type="date" style="width:200px;" html-placeholder="Origin" styleClass="textInput" id="StartDateTimeSelector" value="{!startDate}" required="true" />
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="slds-form-element">
+            <label class="slds-form-element__label">End Date:</label>
+            <div class="slds-form-element__control">
+              <apex:input type="date" style="width:200px;" html-placeholder="Destination" styleClass="textInput" id="EndDateTimeSelector" value="{!endDate}" required="true" />
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="slds-form-element">
+            <label class="slds-form-element__label"></label>
+            <div class="slds-form-element__control">
+              <apex:commandButton action="{!searchContacts}" value="Search Duplicate Contacts" styleClass="slds-button slds-button_brand" />
+            </div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="slds-form-element">
+            <label class="slds-form-element__label"></label>
+            <div class="slds-form-element__control">
+              <apex:commandButton action="{!getNextBlock}" value="Next Block" styleClass="slds-button slds-button_neutral" />
+            </div>
+          </div>
+        </div>
+      </apex:pageBlock>
+    </apex:form>
+  </div>
+  <div class="flight_list">
+    <div style="{!IF(showResults, 'display:block', 'display:none')}">
+      <apex:form >
+        <apex:variable value="{!0}" var="index" />
+        <apex:pageBlock title="Contact Information" >
+          <apex:repeat value="{!thousandBlocks}" var="block">
+            <apex:pageBlockTable value="{!block.contacts}" var="contact" title="Results">
+              <apex:column >
+                <apex:outputText >
+                  <apex:variable value="{!index + 1}" var="index" />
+                  {!index}
+                </apex:outputText>
+              </apex:column>
+              <apex:column >
+                <apex:outputLink value="{! URLFOR($Action.Contact.Edit, contact.Id) }">
+                  Edit
+                </apex:outputLink>
+                &nbsp;
+                <apex:outputLink value="{! URLFOR($Action.Contact.Delete, contact.Id) }">
+                  Del
+                </apex:outputLink>
+              </apex:column>
+              <apex:column headerValue="CONTACT ID">
+                <apex:outputLink value="{! URLFOR($Action.Contact.View, contact.Id) }">
+                  {!contact.Id}
+                </apex:outputLink>
+              </apex:column>
+              <apex:column value="{!contact.Name}"/>
+              <apex:column value="{!contact.Type__c}"/>
+              <apex:column value="{!contact.Account.Name}"/>
+              <apex:column value="{!contact.CreatedDate}"/>
+            </apex:pageBlockTable>
+          </apex:repeat>
+        </apex:pageBlock>
+      </apex:form>
+    </div>
+  </div>
+  </body>
+</apex:page>

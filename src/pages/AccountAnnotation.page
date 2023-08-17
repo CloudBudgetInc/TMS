@@ -1,0 +1,5 @@
+<apex:page standardController="Account" showHeader="false" sidebar="false" extensions="AnnotationFieldController">      
+    <apex:form id="theform">            
+        <apex:outputField value="{!account.Annotation__c}" style="background-color:#FEE27A;width:98%;"/>
+    </apex:form>
+</apex:page>

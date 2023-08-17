@@ -1,0 +1,34 @@
+<apex:page standardController="c2g__codaInvoice__c" extensions="SalesInvoiceTaxCalculationController">
+
+    <apex:form id="theForm">
+        <apex:actionStatus id="saveStatus" onstart="showDefaultMessage();" onstop="hideDefaultMessage();"/>
+
+        <apex:actionfunction name="generateLinesJS" action="{!generateLines}" status="saveStatus" rerender="theForm" />
+
+        <div id="defaultMessageSummary" style="display: none;">
+            <apex:pageMessage summary="Calculating the taxes, please wait the page will be refreseh at the end." severity="warning" strength="3" />
+            <apex:pageMessages />
+        </div>
+
+
+	    <apex:outputpanel id="theMessages">
+		    <apex:pagemessages />
+	    </apex:outputpanel>
+
+    </apex:form>
+    <script>
+        window.onload = function() {
+          generateLinesJS();
+        };
+        function showDefaultMessage()
+        {
+            document.getElementById("defaultMessageSummary").style.display = "block";
+        }
+        function hideDefaultMessage()
+        {
+            document.getElementById("defaultMessageSummary").style.display = "none";
+        }
+
+    </script>
+
+</apex:page>
