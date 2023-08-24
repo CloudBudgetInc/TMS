@@ -3,7 +3,7 @@
     <apiVersion>48.0</apiVersion>
     <packageVersions>
         <majorNumber>2</majorNumber>
-        <minorNumber>214</minorNumber>
+        <minorNumber>344</minorNumber>
         <namespace>cb4</namespace>
     </packageVersions>
     <status>Active</status>

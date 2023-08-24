@@ -2,6 +2,7 @@
  * Created by Alex JR on 22/02/19.
  */
 ({
+
     doInit: function (cmp, event, helper) {
         helper.helpGetReport(cmp);
         helper.helpGetTableHeaders(cmp);

@@ -98,7 +98,8 @@ public with sharing class CBalanceGenerator implements Database.Batchable<SObjec
             );
 
             balance = addDrillDownLink(balance, ea);
-            Decimal amount = (ea.cb4__Tag2__r.cb4__Tag1__r.cb4__Tag1Name__c == typeOfPositiveSign ? ea.cb4__Decimal1__c * -1 : ea.cb4__Decimal1__c);
+            //Decimal amount = (ea.cb4__Tag2__r.cb4__Tag1__r.cb4__Tag1Name__c == typeOfPositiveSign ? ea.cb4__Decimal1__c * -1 : ea.cb4__Decimal1__c);
+            Decimal amount = ea.cb4__Decimal1__c;
             if (ea.cb4__Tag1__r.cb4__Tag4Name__c == 'Actual') {
                 balance.cb4__Amount2__c += amount;
             } else {
