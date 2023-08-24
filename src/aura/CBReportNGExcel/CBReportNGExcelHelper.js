@@ -1002,22 +1002,22 @@
 	subTotal1Fill: { // first lvl subtotal
 		type: 'pattern',
 		pattern: 'solid',
-		fgColor: {argb: 'aec7ec'}
+		fgColor: {argb: 'd6dadf'}
 	},
 	subTotal2Fill: {
 		type: 'pattern',
 		pattern: 'solid',
-		fgColor: {argb: 'd8e4f7'}
+		fgColor: {argb: 'eaedf1'}
 	},
 	subTotal3Fill: {
 		type: 'pattern',
 		pattern: 'solid',
-		fgColor: {argb: 'eef2f8'}
+		fgColor: {argb: 'f1f3f7'}
 	},
 	totalFill: {
 		type: 'pattern',
 		pattern: 'solid',
-		fgColor: {argb: '16325c'}
+		fgColor: {argb: 'bdc2c8'}
 	},
 	totalFont: {
 		size: 11,
@@ -1033,7 +1033,7 @@
 			const customFormat = report.cb4__Description__c === 'Custom Excel';
 			const tableRows = cmp.get('v.rows');
 			const getRowAmount = (val) => {
-				if (val === '-') return val;
+				if (val === '-' || val.includes('%')) return val;
 				if (parseInt(val.replace(' %').replace(/,/g, '')) === 0) return '-';
 				if (val.includes(' %')) parseFloat(val.replace(' %').replace(/,/g, '')) + ' %';
 				return parseFloat(val.replace(/,/g, ''));
@@ -1073,7 +1073,12 @@
 			for (let idx = 1; idx <= 5; idx++) subtotalTypes.push(`subTotal${idx}`);
 			let rowPosition = 6; // start position is 6
 			let cellPosition;
-			let subtotalFillMap = {1: this.subTotal1Fill, 2: this.subTotal1Fill, 3: this.subTotal3Fill};
+			let subtotalFillMap = {
+				1: this.subTotal1Fill,
+				2: this.subTotal1Fill,
+				3: this.subTotal3Fill,
+				4: this.totalFill
+			};
 			tableRows.push(tableRows.shift()); // move global total line to the end of list
 			tableRows.forEach(row => {
 				try {
@@ -1081,13 +1086,14 @@
 					rowPosition++;
 					cellPosition = 1;
 					const rowIsSubTotal = subtotalTypes.includes(row.type);
-					const subtotalFill = row.type ? subtotalFillMap[row.type.replace('subTotal', '')] : undefined;
-					if (row.type) console.log('row.type = ' + row.type.replace('subTotal', '') + '  ' + subtotalFillMap[row.type.replace('subTotal')]);
+					const subtotalFill = row.type ? subtotalFillMap[row.type.replace('subTotal', '').replace('total', '4')] : undefined;
+
 					departmentName[row[`l1Long`]] = true;
 					for (let j = 0; j < n; j++) {
 						const cell = excelRow.getCell(cellPosition++);
-						const value = row[`l${j + 1}Long`];
+						let value = row[`l${j + 1}Long`];
 						if (rowIsSubTotal) {
+							value = value === '-' ? null : value;
 							setCell(cell, value, subtotalFill, this.totalFont, null, null, this.borderTopBottom);
 						} else {
 							setCell(cell, value);
@@ -1120,7 +1126,6 @@
 
 	addReportHeaderLines: function (worksheet, customFormat, departmentName, displayedMonth) {
 		if (customFormat) {
-			const reportColumnsNumber = worksheet.actualColumnCount;
 			displayedMonth = displayedMonth[0].substring(0, 3);
 			const monthsNumber = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR'].indexOf(displayedMonth) + 1;
 			[
@@ -1132,12 +1137,17 @@
 				const i = idx + 1;
 				worksheet.getRow(i).values = [val];
 				worksheet.getRow(i).alignment = {horizontal: 'center'};
-				worksheet.mergeCells(i, 1, i, reportColumnsNumber); // merge by start row, start column, end row, end column (equivalent to K10:M12)
+				worksheet.mergeCells(i, 1, i, 4); // merge by start row, start column, end row, end column (equivalent to K10:M12)
 			});
 		} else {
-			worksheet.addRow(['CloudBudget Report']);
-			worksheet.addRow([departmentName]);
-			worksheet.addRow([`Creating Date:`, this.getCurrentFormattedDate()]);
+			[
+				'CloudBudget Report',
+				`Creating Date: (${this.getCurrentFormattedDate()})`,
+				''
+			].forEach((val, idx) => {
+				const i = idx + 1;
+				worksheet.getRow(i).values = [val];
+			});
 		}
 		const reportNameCell = worksheet.getRow(1).getCell(1);
 		reportNameCell.font = {
@@ -1161,7 +1171,10 @@
 				const currentValues = [1, 2, 3].map(idx => currentRow.getCell(idx).value);
 				[0, 1, 2].forEach(idx => {
 					if (previousValues[idx] === currentValues[idx]) {
-						previousRow.getCell(idx + 1).value = '';
+						//previousRow.getCell(idx + 1).value = '';
+						const cell = previousRow.getCell(idx + 1);
+						const bgColor = cell.fill && cell.fill.fgColor ? cell.fill.fgColor.argb : "ffffff";
+						cell.font = {color: {argb: bgColor}};
 					}
 				});
 			}
@@ -1204,16 +1217,13 @@
 	},
 
 	setColumnsWidth: function (worksheet) {
-		const minWidth = 15;
 		worksheet.columns.forEach((column, i) => {
-			let maxLength = 0;
-			column["eachCell"]({includeEmpty: true}, cell => {
-				let columnLength = cell.value ? cell.value.toString().length : minWidth;
-				if (columnLength > maxLength) {
-					maxLength = columnLength;
-				}
-			});
-			column.width = maxLength < minWidth ? minWidth : maxLength;
+			if (i > 3) {
+				column.width = 17;
+			}
+			if (i === 3) {
+				column.width = 40; // GL Account column
+			}
 		});
 	},
 
