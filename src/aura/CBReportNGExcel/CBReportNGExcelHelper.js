@@ -980,7 +980,7 @@
 			}, 10));
 	},
 
-	NUM_FORMAT: '$ #,##0;[Black]($ #,##0)',
+	NUM_FORMAT: '$ #,##0;[Black]$ -#,##0',
 	borderUnderline: {
 		bottom: {style: "thin"},
 	},
@@ -1024,6 +1024,7 @@
 		bold: true
 	},
 	decAlign: {horizontal: 'right'},
+	centralAlign: {horizontal: 'center'},
 
 
 	helpDownloadExcel: function (cmp) {
@@ -1058,19 +1059,22 @@
 				]
 			});
 
-			this.addReportHeaderLines(worksheet, customFormat, cmp.get("v.d1filter"), cmp.get('v.displayedColumns'));
 
+			/** HEADERS  Reporting Dep	Type	Subtype ....**/
 			const headerTitlesRow = worksheet.getRow(5);
-			headerTitlesRow.values = tableHeaders;
-			headerTitlesRow.eachCell({includeEmpty: true}, cell => setCell(cell, cell.value, this.headerFill, this.totalFont, null, null, this.borderTopBottom));
+			headerTitlesRow.values = tableHeaders; // header values like ['Reporting Dep', 'Type', 'Subtype' ....]
+			headerTitlesRow.eachCell({includeEmpty: true}, cell => setCell(cell, cell.value, this.headerFill, this.totalFont, null, this.centralAlign, this.borderTopBottom)); // header styles
+			/** HEADERS  Reporting Dep	Type	Subtype ....**/
 
-			// ROWS
+				// ROWS
 			const n = cmp.get("v.numberOfTextColumns"); // the number of text columns
+			const departmentName = {};
 			const subtotalTypes = ['total'];
 			for (let idx = 1; idx <= 5; idx++) subtotalTypes.push(`subTotal${idx}`);
 			let rowPosition = 6; // start position is 6
 			let cellPosition;
 			let subtotalFillMap = {1: this.subTotal1Fill, 2: this.subTotal1Fill, 3: this.subTotal3Fill};
+			tableRows.push(tableRows.shift()); // move global total line to the end of list
 			tableRows.forEach(row => {
 				try {
 					const excelRow = worksheet.getRow(rowPosition); // one row
@@ -1079,6 +1083,7 @@
 					const rowIsSubTotal = subtotalTypes.includes(row.type);
 					const subtotalFill = row.type ? subtotalFillMap[row.type.replace('subTotal', '')] : undefined;
 					if (row.type) console.log('row.type = ' + row.type.replace('subTotal', '') + '  ' + subtotalFillMap[row.type.replace('subTotal')]);
+					departmentName[row[`l1Long`]] = true;
 					for (let j = 0; j < n; j++) {
 						const cell = excelRow.getCell(cellPosition++);
 						const value = row[`l${j + 1}Long`];
@@ -1102,11 +1107,11 @@
 				}
 			});
 			this.setColumnsWidth(worksheet);
-			if (customFormat) {
-				this.deleteExtraExcelTitles(worksheet, tableRows.length);
-				this.mergeTextExcelColumns(worksheet, tableRows.length);
-			}
+			this.deleteExtraExcelTitles(worksheet, tableRows.length);
+			delete departmentName['TOTAL'];
+			this.addReportHeaderLines(worksheet, customFormat, Object.keys(departmentName).join(', '), cmp.get('v.displayedColumns'));
 			this.addBottomLines(worksheet);
+			worksheet.autoFilter = 'A5:D5';
 			workbook.xlsx.writeBuffer().then(buffer => saveAs(new Blob([buffer]), cmp.get('v.report.Name') + '.xlsx')).catch(err => alert('Error writing excel export', err));
 		} catch (e) {
 			alert(e);
@@ -1115,12 +1120,20 @@
 
 	addReportHeaderLines: function (worksheet, customFormat, departmentName, displayedMonth) {
 		if (customFormat) {
+			const reportColumnsNumber = worksheet.actualColumnCount;
 			displayedMonth = displayedMonth[0].substring(0, 3);
-			const idx = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR'].indexOf(displayedMonth) + 1;
-			worksheet.addRow(['TMS Progress Report']);
-			worksheet.addRow([departmentName]);
-			worksheet.addRow([`For the ${idx} months ending`, this.getCurrentFormattedDate()]);
-			worksheet.addRow([]); // empty row
+			const monthsNumber = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR'].indexOf(displayedMonth) + 1;
+			[
+				'TMS Progress Report',
+				departmentName,
+				`For the ${monthsNumber} months ending (${this.getCurrentFormattedDate()})`,
+				''
+			].forEach((val, idx) => {
+				const i = idx + 1;
+				worksheet.getRow(i).values = [val];
+				worksheet.getRow(i).alignment = {horizontal: 'center'};
+				worksheet.mergeCells(i, 1, i, reportColumnsNumber); // merge by start row, start column, end row, end column (equivalent to K10:M12)
+			});
 		} else {
 			worksheet.addRow(['CloudBudget Report']);
 			worksheet.addRow([departmentName]);
@@ -1141,7 +1154,7 @@
 
 	deleteExtraExcelTitles: function (worksheet, numberOfColumns) {
 		try {
-			for (let rowIndex = 8; rowIndex < numberOfColumns + 8; rowIndex++) {
+			for (let rowIndex = 7; rowIndex < numberOfColumns + 7; rowIndex++) {
 				const previousRow = worksheet.getRow(rowIndex - 1);
 				const currentRow = worksheet.getRow(rowIndex);
 				const previousValues = [1, 2, 3].map(idx => previousRow.getCell(idx).value);
@@ -1160,7 +1173,7 @@
 	 * Method in using only if custom formatting enabled
 	 * Method merge titles from all columns to the first columns, make spaces and deletes extra columns
 	 */
-	mergeTextExcelColumns: function (worksheet, numberOfColumns) {
+	/*mergeTextExcelColumns: function (worksheet, numberOfColumns) {
 		try {
 			let spaces = '';
 			for (let rowIndex = 7; rowIndex < numberOfColumns + 8; rowIndex++) {
@@ -1182,7 +1195,7 @@
 		} catch (e) {
 			alert('Combine columns error :' + e);
 		}
-	},
+	},*/
 
 	addBottomLines: function (worksheet) {
 		worksheet.addRow([]);
