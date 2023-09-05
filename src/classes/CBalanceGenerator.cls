@@ -43,8 +43,8 @@ public with sharing class CBalanceGenerator implements Database.Batchable<SObjec
     }
 
     public Database.QueryLocator start(Database.BatchableContext context) {
-        String q = 'SELECT cb4__Tag1__c,cb4__Tag2__c,cb4__Tag3__c,cb4__Tag6__c,cb4__Tag7__c,cb4__Tag8__c,cb4__Tag9__c,cb4__Tag1__r.cb4__Tag9__c,' +
-                'cb4__Tag1__r.cb4__Tag7__c, cb4__Tag1__r.cb4__Tag6__c, cb4__Decimal1__c,' +
+        String q = 'SELECT cb4__Tag1__c,cb4__Tag2__c,cb4__Tag3__c,cb4__Tag6__c,cb4__Tag7__c,cb4__Tag8__c,cb4__Tag9__c, ' +
+                'cb4__Tag1__r.cb4__Tag7__c, cb4__Tag1__r.cb4__Tag6__c, cb4__Decimal1__c, cb4__Tag1__r.cb4__Tag9__c, ' +
                 'cb4__Tag2__r.cb4__Tag1__r.cb4__Tag1__c,cb4__Tag2__r.cb4__Tag1__c, cb4__Tag1__r.cb4__Tag8Name__c, ' +
                 'cb4__Tag2__r.cb4__Tag1__r.cb4__Tag1Name__c,cb4__Tag1__r.cb4__Tag4Name__c,OwnerId ' +
                 'FROM cb4__CBTag__c ' +
@@ -87,6 +87,7 @@ public with sharing class CBalanceGenerator implements Database.Batchable<SObjec
                     cb4__Lvl2__c = ea.cb4__Tag2__r.cb4__Tag1__r.cb4__Tag1__c,
                     cb4__Lvl3__c = ea.cb4__Tag2__r.cb4__Tag1__c,
                     cb4__Lvl4__c = ea.cb4__Tag2__c,
+                    cb4__Lvl5__c = ea.cb4__Tag1__r.cb4__Tag9__c,
                     cb4__Column__c = ea.cb4__Tag3__c,
                     cb4__Amount1__c = 0,
                     cb4__Amount2__c = 0,

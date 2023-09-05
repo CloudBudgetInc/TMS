@@ -1,8 +1,4 @@
-/**
- * Created by Alex JR on 22/02/19.
- */
 ({
-
 	/**
 	 * cb4__CBReport__c object by Id
 	 */
@@ -190,9 +186,11 @@
 			theadtr.append(idxth);
 
 			tableHeaders.forEach(function (header) {
-				let headElem = $("<th></th>");
-				headElem.append($("<div> " + header + " </div>").addClass("slds-truncate topRow header"));
-				theadtr.append(headElem);
+				if(header !== 'BDG') {
+					let headElem = $("<th></th>");
+					headElem.append($("<div> " + header + " </div>").addClass("slds-truncate topRow header"));
+					theadtr.append(headElem);
+				}
 			});
 
 			thead.append(theadtr);
@@ -211,7 +209,7 @@
 				if (row.l2 !== undefined) oneTableRow.append($("<td></td>").addClass("slds-truncate tableText").append(row.l2));
 				if (row.l3 !== undefined) oneTableRow.append($("<td></td>").addClass("slds-truncate tableText").append(row.l3));
 				if (row.l4 !== undefined) oneTableRow.append($("<td></td>").addClass("slds-truncate tableText").append(row.l4));
-				if (row.l5 !== undefined) oneTableRow.append($("<td></td>").addClass("slds-truncate tableText").append(row.l5));
+				if (row.l5 !== undefined && tableHeaders[4] !== 'BDG') oneTableRow.append($("<td></td>").addClass("slds-truncate tableText").append(row.l5));
 				if (row.l6 !== undefined) oneTableRow.append($("<td></td>").addClass("slds-truncate tableText").append(row.l6));
 				if (row.l7 !== undefined) oneTableRow.append($("<td></td>").addClass("slds-truncate tableText").append(row.l7));
 
@@ -363,6 +361,8 @@
 				}
 				//if (balAmount4YTD !== 0 && rl[k.key4YTD] !== undefined) rl[k.key4YTD] = _isInvalid(rl[k.key4YTD]) ? balAmount4YTD : rl[k.key4YTD] - 0 + balAmount4YTD - 0;
 				if (rl[k.key2YTD] !== undefined && rl[k.key1YTD] !== undefined) rl[k.key4YTD] = rl[k.key1YTD] !== 0 ? (rl[k.key2YTD] / rl[k.key1YTD] * 100) : 0;
+				if (rl[k.key2] !== undefined && rl[k.key1] !== undefined) rl[k.key4] = rl[k.key1] !== 0 ? (rl[k.key2] / rl[k.key1] * 100) : 0;
+
 				if (balAmount5YTD !== 0 && rl[k.key5YTD] !== undefined) rl[k.key5YTD] = _isInvalid(rl[k.key5YTD]) ? balAmount5YTD : rl[k.key5YTD] - 0 + balAmount5YTD - 0;
 
 				if (balAmount2_1 !== 0 && rl[k.key2_1] !== undefined) rl[k.key2_1] = (_isInvalid(rl[k.key2]) ? 0 : rl[k.key2]) - 0 - (_isInvalid(rl[k.key1]) ? 0 : rl[k.key1]) - 0;
@@ -370,7 +370,6 @@
 
 				//if (balPercent1 !== 0 && rl[k.percent1] !== undefined) rl[k.percent1] = _isInvalid(rl[k.percent1]) ? balPercent1 : rl[k.percent1] - 0 + balPercent1 - 0;
 			});
-
 			/*    //_cl('BEFORE = ' + JSON.stringify(reportLineObj), 'red');*/
 			//_cl("reportLineObj size=" + Object.keys(reportLineObj).length, 'green');
 
@@ -851,7 +850,6 @@
 				if (!indexToHide.includes(j)) newRowValues.push(tableHeaders[i]);
 				j++
 			}
-
 			cmp.set("v.tableHeaders", newRowValues);
 
 			for (i = 0; i < columns.length; i++) if (!indexToHide.includes(i)) newColumnsValues.push(columns[i]);
@@ -980,7 +978,7 @@
 			}, 10));
 	},
 
-	NUM_FORMAT: '$ #,##0;[Black]$ -#,##0',
+	NUM_FORMAT: '#,##0;[Black] (#,##0)',
 	borderUnderline: {
 		bottom: {style: "thin"},
 	},
@@ -1032,6 +1030,7 @@
 			const report = cmp.get("v.report");
 			const customFormat = report.cb4__Description__c === 'Custom Excel';
 			const tableRows = cmp.get('v.rows');
+			let n = cmp.get("v.numberOfTextColumns"); // the number of text columns
 			const getRowAmount = (val) => {
 				if (val === '-' || val.includes('%')) return val;
 				if (parseInt(val.replace(' %').replace(/,/g, '')) === 0) return '-';
@@ -1051,7 +1050,15 @@
 			let sheetName = report.Name;
 			let fixedColumns = report.cb4__FixedColumns__c;
 			if (!fixedColumns) fixedColumns = 1; else fixedColumns--;
-			const tableHeaders = cmp.get("v.tableHeaders");
+			let tableHeaders = cmp.get("v.tableHeaders");
+			let bdgI = null;
+			for(let i = 0; i < tableHeaders.length; i++){
+				if(tableHeaders[i] === "BDG"){
+					bdgI = i;
+					n--;
+				}
+			}
+			if(bdgI !== null) tableHeaders.splice(bdgI,1);
 			sheetName = sheetName.substring(0, 30).replace(':', '\uA789');
 			const worksheet = workbook.addWorksheet(sheetName, {
 				views: [
@@ -1067,7 +1074,6 @@
 			/** HEADERS  Reporting Dep	Type	Subtype ....**/
 
 				// ROWS
-			const n = cmp.get("v.numberOfTextColumns"); // the number of text columns
 			const departmentName = {};
 			const subtotalTypes = ['total'];
 			for (let idx = 1; idx <= 5; idx++) subtotalTypes.push(`subTotal${idx}`);
@@ -1126,13 +1132,12 @@
 
 	addReportHeaderLines: function (worksheet, customFormat, departmentName, displayedMonth) {
 		if (customFormat) {
-			displayedMonth = displayedMonth[0].substring(0, 3);
+			displayedMonth = displayedMonth[0].substring(0, 3); // "JUN"
 			const monthsNumber = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR'].indexOf(displayedMonth) + 1;
 			[
 				'TMS Progress Report',
 				departmentName,
-				`For the ${monthsNumber} months ending (${this.getCurrentFormattedDate()})`,
-				''
+				`For the ${monthsNumber} months ending ${this.getCurrentFormattedDate(displayedMonth)}`//“For the 5 months ending August 31, 2023”
 			].forEach((val, idx) => {
 				const i = idx + 1;
 				worksheet.getRow(i).values = [val];
@@ -1142,7 +1147,7 @@
 		} else {
 			[
 				'CloudBudget Report',
-				`Creating Date: (${this.getCurrentFormattedDate()})`,
+				``,
 				''
 			].forEach((val, idx) => {
 				const i = idx + 1;
@@ -1156,10 +1161,30 @@
 		};
 	},
 
-	getCurrentFormattedDate: function () {
-		const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+	getCurrentFormattedDate: function (selectedMonth) {
+		/*const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+		const monthsFullName = ["January", "February", "March", "April", "May", "Jun", "July", "August", "September", "October", "November", "December"];
 		const currentDate = new Date();
-		return `${months[currentDate.getMonth()]} ${currentDate.getDate()}, ${currentDate.getFullYear()}`;
+		const monthName = months[currentDate.getMonth()];
+		const dateIdNeeded = selectedMonth ? monthName.toLowerCase() === selectedMonth.toLowerCase() : false;
+		const fullMonthName = monthsFullName[currentDate.getMonth()];
+		return `${selectedMonth}${dateIdNeeded ? ' ' + currentDate.getDate() : ''}, ${currentDate.getFullYear()}`;*/
+		const monthNameMapping = {
+			JAN: 'January',
+			FEB: 'February',
+			MAR: 'March',
+			APR: 'April',
+			MAY: 'May',
+			JUN: 'June',
+			JUL: 'July',
+			AUG: 'August',
+			SEP: 'September',
+			OCT: 'October',
+			NOV: 'November',
+			DEC: 'December'
+		};
+		const currentDate = new Date();
+		return ` ${monthNameMapping[selectedMonth]}, ${currentDate.getFullYear()}`;
 	},
 
 	deleteExtraExcelTitles: function (worksheet, numberOfColumns) {
@@ -1470,25 +1495,5 @@
 			_hideSpinner(cmp);
 		}
 	}
-	,
-
-	helpShowExcelPanel: function (cmp) {
-		let exPanel = $(cmp.find("excelPanel").getElement());
-		if (exPanel.css('right') === '-420px') {
-			exPanel.animate({right: '0', opacity: 1});
-		} else {
-			exPanel.animate({right: '-420px', opacity: 0.9});
-		}
-	}
-	,
-	helpShowPDFPanel: function (cmp) {
-		let pdfPanel = $(cmp.find("PDFPanel").getElement());
-		if (pdfPanel.css('right') === '-250px') {
-			pdfPanel.animate({right: '0', opacity: 1});
-		} else {
-			pdfPanel.animate({right: '-250px', opacity: 0.9});
-		}
-	}
-
 
 });

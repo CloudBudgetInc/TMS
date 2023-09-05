@@ -1,8 +1,4 @@
-/**
- * Created by Alex JR on 22/02/19.
- */
 ({
-
     doInit: function (cmp, event, helper) {
         helper.helpGetReport(cmp);
         helper.helpGetTableHeaders(cmp);
@@ -33,19 +29,27 @@
         helper.helpRefreshReportDataAfterSpinner(cmp);
     },
 
-    showExcelPanel: function (cmp, event, helper) {
-        helper.helpShowExcelPanel(cmp);
+    showModalToDownloadExcelForSpecificBDGs: function(cmp, evt, h) {
+        let bdgSO = cmp.get('v.d5SO');
+        bdgSO.sort();
+        let bdgColumnsSO = [];
+        for(let i= 0; i < bdgSO.length; i++){
+            bdgColumnsSO.push({
+                label : bdgSO[i],
+                value : bdgSO[i]
+            });
+        }
+        cmp.set('v.bdgSetSO', bdgColumnsSO);
+        $A.util.removeClass(cmp.find("bdgSet"), "slds-hide");
     },
-    showPDFPanel: function (cmp, event, helper) {
-        helper.helpShowPDFPanel(cmp);
+    downloadExcelForSelectedBDGs: function(cmp, evt, h) {
+        alert('downloadExcelForSelectedBDGs handler');
     },
     downloadExcel: function (cmp, event, helper) {
         helper.helpDownloadExcel(cmp);
-        helper.helpShowExcelPanel(cmp);
     },
     downloadAllToExcel: function (cmp, event, helper) {
         helper.helpDownloadAllToExcel(cmp);
-        helper.helpShowExcelPanel(cmp);
     },
     downloadAllBySheetToExcel: function (cmp, evt, h) {
         let report = cmp.get("v.report");
@@ -215,6 +219,7 @@
     },
     closeColumnsFilter: function (cmp, event, helper) {
         $A.util.addClass(cmp.find("columnsSet"), "slds-hide");
+        $A.util.addClass(cmp.find("bdgSet"), "slds-hide");
     },
     showDrillDown: function (cmp, event, helper) {
         let t = event.target.id;

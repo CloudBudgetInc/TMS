@@ -1,4 +1,4 @@
-<aura:component description="ReportNGNew"
+<aura:component description="ReportNGExcel"
 				implements="lightning:actionOverride,lightning:isUrlAddressable,force:hasSObjectName,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId"
 				access="global"
 				controller="CBReportNG">
@@ -72,6 +72,8 @@
 	<aura:attribute name="columnsOptions" default="[]" type="List" description="{ label: 'All', value: '' }"/>
 	<aura:attribute name="displayedColumns" type="List"/>
 	<aura:attribute name="pdfDate" type="String"/>
+	<aura:attribute name="bdgSetSO" default="[]" type="List" description="{ label: 'All', value: '' }"/>
+	<aura:attribute name="selectedBDGs" type="List"/>
 
 	<!--PDF HEADER-->
 	<div id="pdfHeader" class="slds-grid slds-grid_vertical slds-p-bottom_medium slds-hide" style="margin-top: -100px;">
@@ -82,7 +84,7 @@
 				<div class="slds-page-header__name">
 					<div class="slds-page-header__name-title">
 						<h1>
-							<span class="slds-page-header__title slds-truncate">{!v.report.Name}</span>
+							<span class="slds-page-header__title slds-truncate">{!v.report.Name} </span>
 							<span class="slds-truncate" style="font-size: small;">{!v.pdfDate}</span>
 						</h1>
 						<div style="font-size: small;">{!v.report.cb4__Description__c}</div>
@@ -110,6 +112,7 @@
 						<div class="slds-page-header__name">
 							<div class="slds-page-header__name-title">
 								<h1>
+									<div style="color: red; font-size: large;">EXCEL DEVELOPMENT</div>
 									<span class="slds-page-header__title slds-truncate">{!v.report.Name}</span>
 								</h1>
 								<div style="font-size: smaller;">{!v.report.cb4__Description__c}</div>
@@ -128,7 +131,7 @@
 							 checked="{!v.showSimpleRows}"
 							 onchange="{!c.showHideSimpleRows}"/>
 
-			<aura:if isTrue="{!v.dimensions.D1 != null}">
+			<aura:if isTrue="{!and(v.dimensions.D1 != null, v.dimensions.D1 != 'BDG')}">
 				<div style="max-width: 170px; float: right;">
 					<div style="display: inline-block; ">
 						<lightning:select label="{!v.dimensions.D1}" onfocus="{!c.savePreviousFilters}"
@@ -144,7 +147,7 @@
 				</div>
 			</aura:if>
 
-			<aura:if isTrue="{!v.dimensions.D2 != null}">
+			<aura:if isTrue="{!and(v.dimensions.D2 != null, v.dimensions.D2 != 'BDG')}">
 				<div style="max-width: 170px; float: right;">
 					<div style="display: inline-block; ">
 						<lightning:select label="{!v.dimensions.D2}" onfocus="{!c.savePreviousFilters}"
@@ -160,7 +163,7 @@
 				</div>
 			</aura:if>
 
-			<aura:if isTrue="{!v.dimensions.D3 != null}">
+			<aura:if isTrue="{!and(v.dimensions.D3 != null, v.dimensions.D3 != 'BDG')}">
 				<div style="max-width: 170px; float: right;">
 					<div style="display: inline-block; ">
 						<lightning:select label="{!v.dimensions.D3}" onfocus="{!c.savePreviousFilters}"
@@ -176,7 +179,7 @@
 				</div>
 			</aura:if>
 
-			<aura:if isTrue="{!v.dimensions.D4 != null}">
+			<aura:if isTrue="{!and(v.dimensions.D4 != null, v.dimensions.D4 != 'BDG')}">
 				<div style="max-width: 170px; float: right;">
 					<div style="display: inline-block; ">
 						<lightning:select label="{!v.dimensions.D4}" onfocus="{!c.savePreviousFilters}"
@@ -192,7 +195,7 @@
 				</div>
 			</aura:if>
 
-			<aura:if isTrue="{!v.dimensions.D5 != null}">
+			<aura:if isTrue="{!and(v.dimensions.D5 != null, v.dimensions.D5 != 'BDG')}">
 				<div style="max-width: 170px; float: right;">
 					<div style="display: inline-block; ">
 						<lightning:select label="{!v.dimensions.D5}" onfocus="{!c.savePreviousFilters}"
@@ -208,7 +211,7 @@
 				</div>
 			</aura:if>
 
-			<aura:if isTrue="{!v.dimensions.D6 != null}">
+			<aura:if isTrue="{!and(v.dimensions.D6 != null, v.dimensions.D6 != 'BDG')}">
 				<div style="max-width: 170px; float: right;">
 					<div style="display: inline-block; ">
 						<lightning:select label="{!v.dimensions.D6}" onfocus="{!c.savePreviousFilters}"
@@ -224,7 +227,7 @@
 				</div>
 			</aura:if>
 
-			<aura:if isTrue="{!v.dimensions.D7 != null}">
+			<aura:if isTrue="{!and(v.dimensions.D7 != null, v.dimensions.D7 != 'BDG')}">
 				<div style="max-width: 170px; float: right;">
 					<div style="display: inline-block; ">
 						<lightning:select label="{!v.dimensions.D7}" onfocus="{!c.savePreviousFilters}"
@@ -248,6 +251,19 @@
 								  class=" slds-m-top_large"
 								  alternativeText="Fit to page size"
 								  title="Fit to page size"/>
+
+			<lightning:buttonMenu alternativeText="Show menu" class="slds-button_last slds-m-top_large slds-p-left_xx-small"
+								  iconName="doctype:excel" menuAlignment="right">
+				<lightning:menuItem label="Download" iconName="utility:download" onactive="{!c.downloadExcel}"/>
+				<lightning:menuItem label="Download All" iconName="utility:download" onactive="{!c.downloadAllToExcel}"/>
+				<lightning:menuItem label="Split by Sheet" iconName="utility:download" onactive="{!c.downloadAllBySheetToExcel}"/>
+				<lightning:menuItem class="{!if(v.dimensions.D5 != 'BDG', 'slds-hide', '')}" label="BDG mode" iconName="utility:download" onactive="{!c.showModalToDownloadExcelForSpecificBDGs}"/>
+			</lightning:buttonMenu>
+
+			<lightning:buttonMenu alternativeText="Show menu" class="slds-button_last slds-m-top_large slds-p-left_xx-small"
+								  iconName="doctype:pdf" menuAlignment="right">
+				<lightning:menuItem label="Download" iconName="utility:download" onactive="{!c.downloadPDF}"/>
+			</lightning:buttonMenu>
 
 			<!--<div class="slds-media__figure slds-m-top&#45;&#45;large">
 				<c:HelpDocumentation module="Report"/>
@@ -291,63 +307,37 @@
 	</div>
 	<!-- COLUMNS SET -->
 
+	<!-- BDGS SET -->
+	<div aura:id="bdgSet" class="slds-hide">
+		<div role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open ">
+			<div class="slds-modal__container">
+				<header class="slds-modal__header">
+					<h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Columns</h2>
+				</header>
+				<div class="slds-modal__content slds-p-around_medium">
+					<lightning:dualListbox name="languages"
+										   value="{!v.selectedBDGs}"
+										   sourceLabel="Hide"
+										   selectedLabel="Display"
+										   options="{!v.bdgSetSO}"/>
+				</div>
+				<footer class="slds-modal__footer">
+					<button class="slds-button slds-button_neutral" onclick="{!c.closeColumnsFilter}">Cancel</button>
+					<button class="slds-button slds-button_brand" onclick="{!c.downloadExcelForSelectedBDGs}">Apply</button>
+				</footer>
+			</div>
+		</div>
+		<div class="slds-backdrop slds-backdrop_open"></div>
+	</div>
+	<!-- BDGS SET -->
+
 	<!-- Drill Down Component -->
-	<div class="slds-float--right">
+	<div class="slds-float_right">
 		{!v.drillDownComponent}
 	</div>
 	<!-- Drill Down Component -->
 
-	<!-- EXCEL/PDF PANELS -->
-	<aura:if isTrue="{!v.showExportButtons}">
-		<div class="slds-card slds-no-print slds-p-top--small slds-p-bottom--small slds-p-left--xxx-small"
-			 aura:id="excelPanel"
-			 style="width: 450px; opacity: 0.9; z-index: 10 !important; position: fixed; top: 220px; right:-420px;  box-shadow: 0px 0px 5px;">
 
-			<lightning:layout>
-				<lightning:layoutItem>
-					<div onclick="{!c.showExcelPanel}" class="excelPanel">
-						<div>
-							<lightning:icon iconName="doctype:excel" size="medium"
-											alternativeText="Excel"/>
-						</div>
-					</div>
-				</lightning:layoutItem>
-				<lightning:layoutItem class="slds-p-left--small">
-
-					<lightning:button label="Download" iconName="utility:download" class="" iconPosition="left"
-									  onclick="{!c.downloadExcel}"/>
-					<lightning:button label="Download All" iconName="utility:download" class="" iconPosition="left"
-									  onclick="{!c.downloadAllToExcel}"/>
-					<lightning:button label="Split by Sheet" iconName="utility:download" class="" iconPosition="left"
-									  onclick="{!c.downloadAllBySheetToExcel}"/>
-
-				</lightning:layoutItem>
-			</lightning:layout>
-		</div>
-		<!-- EXCEL PANEL -->
-
-		<!-- PDF PANEL -->
-		<div class="slds-card slds-no-print slds-p-top--small slds-p-bottom--small slds-p-left--xxx-small"
-			 aura:id="PDFPanel"
-			 style="width: 280px; opacity: 0.9; z-index: 10 !important; position: fixed; top: 270px; right:-250px;  box-shadow: 0px 0px 5px;">
-
-			<lightning:layout>
-				<lightning:layoutItem>
-					<div onclick="{!c.showPDFPanel}" class="PDFPanel">
-						<div>
-							<lightning:icon iconName="doctype:pdf" size="medium"
-											alternativeText="PDF"/>
-						</div>
-					</div>
-				</lightning:layoutItem>
-				<lightning:layoutItem class="slds-p-left--small">
-					<lightning:button label="Download" iconName="utility:download" class="" iconPosition="left"
-									  onclick="{!c.downloadPDF}"/>
-				</lightning:layoutItem>
-			</lightning:layout>
-		</div>
-	</aura:if>
-	<!-- PDF PANEL -->
 
 	<!-- SUPER MODERN SPINNER -->
 	<div aura:id="sms" class="slds-hide" style="z-index: 7000;">

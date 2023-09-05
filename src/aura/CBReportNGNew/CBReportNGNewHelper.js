@@ -186,9 +186,11 @@
 			theadtr.append(idxth);
 
 			tableHeaders.forEach(function (header) {
-				let headElem = $("<th></th>");
-				headElem.append($("<div> " + header + " </div>").addClass("slds-truncate topRow header"));
-				theadtr.append(headElem);
+				if(header !== 'BDG') {
+					let headElem = $("<th></th>");
+					headElem.append($("<div> " + header + " </div>").addClass("slds-truncate topRow header"));
+					theadtr.append(headElem);
+				}
 			});
 
 			thead.append(theadtr);
@@ -207,7 +209,7 @@
 				if (row.l2 !== undefined) oneTableRow.append($("<td></td>").addClass("slds-truncate tableText").append(row.l2));
 				if (row.l3 !== undefined) oneTableRow.append($("<td></td>").addClass("slds-truncate tableText").append(row.l3));
 				if (row.l4 !== undefined) oneTableRow.append($("<td></td>").addClass("slds-truncate tableText").append(row.l4));
-				if (row.l5 !== undefined) oneTableRow.append($("<td></td>").addClass("slds-truncate tableText").append(row.l5));
+				if (row.l5 !== undefined && tableHeaders[4] !== 'BDG') oneTableRow.append($("<td></td>").addClass("slds-truncate tableText").append(row.l5));
 				if (row.l6 !== undefined) oneTableRow.append($("<td></td>").addClass("slds-truncate tableText").append(row.l6));
 				if (row.l7 !== undefined) oneTableRow.append($("<td></td>").addClass("slds-truncate tableText").append(row.l7));
 
@@ -345,7 +347,7 @@
 
 				if (balAmount1YTD !== 0 && rl[k.key1YTD] !== undefined) rl[k.key1YTD] = _isInvalid(rl[k.key1YTD]) ? balAmount1YTD : rl[k.key1YTD] - 0 + balAmount1YTD - 0;
 				if (balAmount2YTD !== 0 && rl[k.key2YTD] !== undefined) rl[k.key2YTD] = _isInvalid(rl[k.key2YTD]) ? balAmount2YTD : rl[k.key2YTD] - 0 + balAmount2YTD - 0;
-				if(rl[k.key2YTD] !== undefined && rl[k.key1YTD] !== undefined) {
+				if (rl[k.key2YTD] !== undefined && rl[k.key1YTD] !== undefined) {
 					rl[k.key3YTD] = rl[k.key2YTD] - rl[k.key1YTD];
 					if (Math.abs(rl[k.key3YTD]) <= 0.5) rl[k.key3YTD] = 0;
 					if (rl[k.key2_1YTD] !== undefined) {
@@ -358,19 +360,23 @@
 					}
 				}
 				//if (balAmount4YTD !== 0 && rl[k.key4YTD] !== undefined) rl[k.key4YTD] = _isInvalid(rl[k.key4YTD]) ? balAmount4YTD : rl[k.key4YTD] - 0 + balAmount4YTD - 0;
-				if(rl[k.key2YTD] !== undefined && rl[k.key1YTD] !== undefined) rl[k.key4YTD] = rl[k.key1YTD] !== 0 ? (rl[k.key2YTD] / rl[k.key1YTD] * 100) : 0;
-				if(rl[k.key2] !== undefined && rl[k.key1] !== undefined) rl[k.key4] = rl[k.key1] !== 0 ? (rl[k.key2] / rl[k.key1] * 100) : 0;
-				console.group('DEBUG');
-				console.log('rl[k.key4]', rl[k.key4]);
-				console.groupEnd();
+				if (rl[k.key1YTD] !== undefined && rl[k.key1YTD] !== 0 && rl[k.key2YTD] !== undefined) rl[k.key4YTD] = rl[k.key1YTD] !== 0 ? (rl[k.key2YTD] / rl[k.key1YTD] * 100) : 0;
+
+				if (rl[k.key5YTD] !== undefined && rl[k.key5YTD] !== 0 && rl[k.key2YTD] !== undefined) rl[k.key2_1YTD] = rl[k.key5YTD] !== 0 ? (rl[k.key2YTD] / rl[k.key5YTD] * 100) : 0;
+
+				if (rl[k.key5] !== undefined && rl[k.key5] !== 0 && rl[k.key2] !== undefined) rl[k.key2_1] = rl[k.key5] !== 0 ? (rl[k.key2] / rl[k.key5] * 100) : 0;
+
+				if (rl[k.key2] !== undefined && rl[k.key1] !== 0 && rl[k.key1] !== undefined) rl[k.key4] = rl[k.key1] !== 0 ? (rl[k.key2] / rl[k.key1] * 100) : 0;
+
 				if (balAmount5YTD !== 0 && rl[k.key5YTD] !== undefined) rl[k.key5YTD] = _isInvalid(rl[k.key5YTD]) ? balAmount5YTD : rl[k.key5YTD] - 0 + balAmount5YTD - 0;
 
-				if (balAmount2_1 !== 0 && rl[k.key2_1] !== undefined) rl[k.key2_1] = (_isInvalid(rl[k.key2]) ? 0 : rl[k.key2]) - 0 - (_isInvalid(rl[k.key1]) ? 0 : rl[k.key1]) - 0;
-				//if (balAmount2_1YTD !== 0 && rl[k.key2_1YTD] !== undefined) rl[k.key2_1YTD] = (_isInvalid(rl[k.key2YTD]) ? 0 : rl[k.key2YTD]) - 0 - (_isInvalid(rl[k.key1YTD]) ? 0 : rl[k.key1YTD]) - 0;
+				if (!report.cb4__Description__c.match('Custom Excel')){
+					if(balAmount2_1 !== 0 && rl[k.key2_1] !== undefined) rl[k.key2_1] = (_isInvalid(rl[k.key2]) ? 0 : rl[k.key2]) - 0 - (_isInvalid(rl[k.key1]) ? 0 : rl[k.key1]) - 0;
+					if (balAmount2_1YTD !== 0 && rl[k.key2_1YTD] !== undefined) rl[k.key2_1YTD] = (_isInvalid(rl[k.key2YTD]) ? 0 : rl[k.key2YTD]) - 0 - (_isInvalid(rl[k.key1YTD]) ? 0 : rl[k.key1YTD]) - 0;
+				}
 
 				//if (balPercent1 !== 0 && rl[k.percent1] !== undefined) rl[k.percent1] = _isInvalid(rl[k.percent1]) ? balPercent1 : rl[k.percent1] - 0 + balPercent1 - 0;
 			});
-
 			/*    //_cl('BEFORE = ' + JSON.stringify(reportLineObj), 'red');*/
 			//_cl("reportLineObj size=" + Object.keys(reportLineObj).length, 'green');
 
@@ -447,8 +453,8 @@
 				numberOfSourceCols.forEach(function (item) {
 					total += item.s === '+' ? amounts[item.v] - 0 : amounts[item.v] * -1;
 				});
-				if(numberOfSourceCols.length === 2){
-					if((Math.abs(amounts[numberOfSourceCols[1].v]) >= Math.abs(amounts[numberOfSourceCols[0].v])) || Math.abs(total) < 0.6){
+				if (numberOfSourceCols.length === 2) {
+					if ((Math.abs(amounts[numberOfSourceCols[1].v]) >= Math.abs(amounts[numberOfSourceCols[0].v])) || Math.abs(total) < 0.6) {
 						total = 0;
 					}
 				}
@@ -851,7 +857,6 @@
 				if (!indexToHide.includes(j)) newRowValues.push(tableHeaders[i]);
 				j++
 			}
-
 			cmp.set("v.tableHeaders", newRowValues);
 
 			for (i = 0; i < columns.length; i++) if (!indexToHide.includes(i)) newColumnsValues.push(columns[i]);
@@ -974,130 +979,289 @@
 
 					cmp.set("v.report.cb4__MaxRowNumber__c", maxNumber);
 					_this.helpRefreshReportData(cmp);
-
 				} catch (e) {
 					alert("ERROR : " + e);
-
 				}
-
 			}, 10));
 	},
 
+	NUM_FORMAT: '#,##0;[Black] (#,##0)',
+	borderUnderline: {
+		bottom: {style: "thin"},
+	},
+	borderTopBottom: {
+		top: {style: "thin"},
+		bottom: {style: "thin"},
+	},
+	headerBorderStyles: {
+		top: {style: "thin"},
+		left: {style: "thin"},
+		bottom: {style: 'double', color: {argb: '005493'}},
+		right: {style: "thin"}
+	},
+	headerFill: {
+		type: 'pattern',
+		pattern: 'solid',
+		fgColor: {argb: '88acc7'}
+	},
+	subTotal1Fill: { // first lvl subtotal
+		type: 'pattern',
+		pattern: 'solid',
+		fgColor: {argb: 'd6dadf'}
+	},
+	subTotal2Fill: {
+		type: 'pattern',
+		pattern: 'solid',
+		fgColor: {argb: 'eaedf1'}
+	},
+	subTotal3Fill: {
+		type: 'pattern',
+		pattern: 'solid',
+		fgColor: {argb: 'f1f3f7'}
+	},
+	totalFill: {
+		type: 'pattern',
+		pattern: 'solid',
+		fgColor: {argb: 'bdc2c8'}
+	},
+	totalFont: {
+		size: 11,
+		bold: true
+	},
+	decAlign: {horizontal: 'right'},
+	centralAlign: {horizontal: 'center'},
+
+
 	helpDownloadExcel: function (cmp) {
 		try {
-			let report = cmp.get("v.report");
-			let tableRows = cmp.get('v.rows');
+			const report = cmp.get("v.report");
+			const customFormat = report.cb4__Description__c === 'Custom Excel';
+			const tableRows = cmp.get('v.rows');
+			let n = cmp.get("v.numberOfTextColumns"); // the number of text columns
+			const getRowAmount = (val) => {
+				if (val === '-' || val.includes('%')) return val;
+				if (parseInt(val.replace(' %').replace(/,/g, '')) === 0) return '-';
+				if (val.includes(' %')) parseFloat(val.replace(' %').replace(/,/g, '')) + ' %';
+				return parseFloat(val.replace(/,/g, ''));
+			};
+			const setCell = (cell, value, fill, font, numFmt, alignment, border) => {
+				cell.value = value;
+				cell.fill = fill;
+				cell.font = font;
+				cell.numFmt = numFmt;
+				cell.alignment = alignment;
+				cell.border = border;
+			};
 
-			let workbook = new ExcelJS.Workbook();
+			const workbook = new ExcelJS.Workbook();
 			let sheetName = report.Name;
 			let fixedColumns = report.cb4__FixedColumns__c;
-			if (_isInvalid(fixedColumns)) fixedColumns = 1; else fixedColumns--;
+			if (!fixedColumns) fixedColumns = 1; else fixedColumns--;
 			let tableHeaders = cmp.get("v.tableHeaders");
+			let bdgI = null;
+			for(let i = 0; i < tableHeaders.length; i++){
+				if(tableHeaders[i] === "BDG"){
+					bdgI = i;
+					n--;
+				}
+			}
+			if(bdgI !== null) tableHeaders.splice(bdgI,1);
 			sheetName = sheetName.substring(0, 30).replace(':', '\uA789');
-			let worksheet = workbook.addWorksheet(sheetName, {
+			const worksheet = workbook.addWorksheet(sheetName, {
 				views: [
-					{state: 'frozen', ySplit: 1, xSplit: fixedColumns}
+					{state: 'frozen', ySplit: 5, xSplit: fixedColumns}
 				]
 			});
 
-			// COLUMNS
-			let arr = [];
-			tableHeaders.forEach(function (h) {
-				//arr.push({header: h, key: h, width: 16, style: {numFmt: '$ #,##0.00;[Red]($ #,##0.00)'}});
-				if(h === 'Actual vs Budget YTD') {
-					arr.push({header: h, key: h, width: 16, style: {numFmt: '#,##0.00;[Red](#,##0.00)'}});
-				}else{
-					arr.push({header: h, key: h, width: 16, style: {numFmt: '#,##0.00;[Black](#,##0.00)'}});
+
+			/** HEADERS  Reporting Dep	Type	Subtype ....**/
+			const headerTitlesRow = worksheet.getRow(5);
+			headerTitlesRow.values = tableHeaders; // header values like ['Reporting Dep', 'Type', 'Subtype' ....]
+			headerTitlesRow.eachCell({includeEmpty: true}, cell => setCell(cell, cell.value, this.headerFill, this.totalFont, null, this.centralAlign, this.borderTopBottom)); // header styles
+			/** HEADERS  Reporting Dep	Type	Subtype ....**/
+
+				// ROWS
+			const departmentName = {};
+			const subtotalTypes = ['total'];
+			for (let idx = 1; idx <= 5; idx++) subtotalTypes.push(`subTotal${idx}`);
+			let rowPosition = 6; // start position is 6
+			let cellPosition;
+			let subtotalFillMap = {
+				1: this.subTotal1Fill,
+				2: this.subTotal1Fill,
+				3: this.subTotal3Fill,
+				4: this.totalFill
+			};
+			tableRows.push(tableRows.shift()); // move global total line to the end of list
+			tableRows.forEach(row => {
+				try {
+					const excelRow = worksheet.getRow(rowPosition); // one row
+					rowPosition++;
+					cellPosition = 1;
+					const rowIsSubTotal = subtotalTypes.includes(row.type);
+					const subtotalFill = row.type ? subtotalFillMap[row.type.replace('subTotal', '').replace('total', '4')] : undefined;
+
+					departmentName[row[`l1Long`]] = true;
+					for (let j = 0; j < n; j++) {
+						const cell = excelRow.getCell(cellPosition++);
+						let value = row[`l${j + 1}Long`];
+						if (rowIsSubTotal) {
+							value = value === '-' ? null : value;
+							setCell(cell, value, subtotalFill, this.totalFont, null, null, this.borderTopBottom);
+						} else {
+							setCell(cell, value);
+						}
+					}// text part of a row
+					row.v.forEach(val => {
+						const cell = excelRow.getCell(cellPosition++);
+						const value = getRowAmount(val);
+						if (rowIsSubTotal) {
+							setCell(cell, value, subtotalFill, this.totalFont, this.NUM_FORMAT, this.decAlign, this.borderTopBottom);
+						} else {
+							setCell(cell, value, null, null, this.NUM_FORMAT, this.decAlign);
+						}
+					});
+				} catch (e) {
+					alert('ERROR: ' + e);
 				}
 			});
-			worksheet.columns = arr;
-			// COLUMNS
-
-			let subTotalRowNumbers = [];
-			let i = 2;
-
-			// ROWS
-			const n = cmp.get("v.numberOfTextColumns"); // the number of text columns
-			tableRows.forEach(function (row, idx) {
-				if (row.type === 'subTotal1' || row.type === 'subTotal2' || row.type === 'subTotal3' || row.type === 'subTotal4') subTotalRowNumbers.push(i);
-				i++;
-
-				let r = {}; // one row
-				for (let j = 0; j < n; j++) r[tableHeaders[j]] = row["l" + (j + 1) + "Long"];
-
-				let k = n;
-				row.v.forEach(function (val) {
-					r[tableHeaders[k]] = getRowAmount(val);
-					k++;
-				});
-
-				worksheet.addRow(r);
-			});
-
-			function getRowAmount(val) {
-				if (val === '-') return val;
-				if (val.includes(' %')) parseFloat(val.replace(' %').replace(/,/g, '')) + ' %';
-				return parseFloat(val.replace(/,/g, ''));
-			}
-
-			// ROWS
-
-			const borderStyles = {
-				top: {style: "thin"},
-				left: {style: "thin"},
-				bottom: {style: "thin"},
-				right: {style: "thin"}
-			};
-			const headerBorderStyles = {
-				top: {style: "thin"},
-				left: {style: "thin"},
-				bottom: {style: 'double', color: {argb: '005493'}},
-				right: {style: "thin"}
-			};
-			const headerFill = {
-				type: 'pattern',
-				pattern: 'solid',
-				fgColor: {argb: '0080DF'}
-			};
-			const totalFill = {
-				type: 'pattern',
-				pattern: 'solid',
-				fgColor: {argb: '16325c'}
-			};
-			worksheet.eachRow({includeEmpty: true}, function (row, rowNumber) { // all rows
-				row.eachCell({includeEmpty: true}, function (cell, cellNumber) {
-					cell.border = borderStyles;
-					cell.font = {color: {argb: '4a4a4a'}};
-				});
-			});
-			worksheet.getRow(1).eachCell({includeEmpty: false}, function (cell, cellNumber) { // table header
-				cell.font = {bold: true, color: {argb: 'FFFFFF'},};
-				cell.border = headerBorderStyles;
-				cell.fill = headerFill;
-			});
-
-			subTotalRowNumbers.forEach(function (index) {
-				worksheet.getRow(index).eachCell({includeEmpty: false}, function (cell, cellNumber) { // subtotal lines
-					cell.font = {bold: true};
-				});
-			});
-
-			worksheet.getRow(2).eachCell({includeEmpty: false}, function (cell, cellNumber) { // Total
-				cell.font = {bold: true, color: {argb: 'FFFFFF'}};
-				cell.fill = totalFill;
-			});
-
-			// BOTTOM LINE
-			worksheet.addRow([]);
-			worksheet.addRow(['CloudBudget 2.0']);
-			worksheet.addRow([new Date().toJSON().slice(0, 10).replace(/-/g, '/')]);
-
+			this.setColumnsWidth(worksheet);
+			this.deleteExtraExcelTitles(worksheet, tableRows.length);
+			delete departmentName['TOTAL'];
+			this.addReportHeaderLines(worksheet, customFormat, Object.keys(departmentName).join(', '), cmp.get('v.displayedColumns'));
+			this.addBottomLines(worksheet);
+			worksheet.autoFilter = 'A5:D5';
 			workbook.xlsx.writeBuffer().then(buffer => saveAs(new Blob([buffer]), cmp.get('v.report.Name') + '.xlsx')).catch(err => alert('Error writing excel export', err));
 		} catch (e) {
 			alert(e);
 		}
 	},
 
+	addReportHeaderLines: function (worksheet, customFormat, departmentName, displayedMonth) {
+		if (customFormat) {
+			displayedMonth = displayedMonth[0].substring(0, 3); // "JUN"
+			const monthsNumber = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR'].indexOf(displayedMonth) + 1;
+			[
+				'TMS Progress Report',
+				departmentName,
+				`For the ${monthsNumber} months ending ${this.getCurrentFormattedDate(displayedMonth)}`//“For the 5 months ending August 31, 2023”
+			].forEach((val, idx) => {
+				const i = idx + 1;
+				worksheet.getRow(i).values = [val];
+				worksheet.getRow(i).alignment = {horizontal: 'center'};
+				worksheet.mergeCells(i, 1, i, 4); // merge by start row, start column, end row, end column (equivalent to K10:M12)
+			});
+		} else {
+			[
+				'CloudBudget Report',
+				``,
+				''
+			].forEach((val, idx) => {
+				const i = idx + 1;
+				worksheet.getRow(i).values = [val];
+			});
+		}
+		const reportNameCell = worksheet.getRow(1).getCell(1);
+		reportNameCell.font = {
+			size: 14,
+			bold: true
+		};
+	},
+
+	getCurrentFormattedDate: function (selectedMonth) {
+		/*const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+		const monthsFullName = ["January", "February", "March", "April", "May", "Jun", "July", "August", "September", "October", "November", "December"];
+		const currentDate = new Date();
+		const monthName = months[currentDate.getMonth()];
+		const dateIdNeeded = selectedMonth ? monthName.toLowerCase() === selectedMonth.toLowerCase() : false;
+		const fullMonthName = monthsFullName[currentDate.getMonth()];
+		return `${selectedMonth}${dateIdNeeded ? ' ' + currentDate.getDate() : ''}, ${currentDate.getFullYear()}`;*/
+		const monthNameMapping = {
+			JAN: 'January',
+			FEB: 'February',
+			MAR: 'March',
+			APR: 'April',
+			MAY: 'May',
+			JUN: 'June',
+			JUL: 'July',
+			AUG: 'August',
+			SEP: 'September',
+			OCT: 'October',
+			NOV: 'November',
+			DEC: 'December'
+		};
+		const currentDate = new Date();
+		return ` ${monthNameMapping[selectedMonth]}, ${currentDate.getFullYear()}`;
+	},
+
+	deleteExtraExcelTitles: function (worksheet, numberOfColumns) {
+		try {
+			for (let rowIndex = 7; rowIndex < numberOfColumns + 7; rowIndex++) {
+				const previousRow = worksheet.getRow(rowIndex - 1);
+				const currentRow = worksheet.getRow(rowIndex);
+				const previousValues = [1, 2, 3].map(idx => previousRow.getCell(idx).value);
+				const currentValues = [1, 2, 3].map(idx => currentRow.getCell(idx).value);
+				[0, 1, 2].forEach(idx => {
+					if (previousValues[idx] === currentValues[idx]) {
+						//previousRow.getCell(idx + 1).value = '';
+						const cell = previousRow.getCell(idx + 1);
+						const bgColor = cell.fill && cell.fill.fgColor ? cell.fill.fgColor.argb : "ffffff";
+						cell.font = {color: {argb: bgColor}};
+					}
+				});
+			}
+		} catch (e) {
+			alert('EXTRA TITLES ERROR : ' + e);
+		}
+	},
+	/**
+	 * Method in using only if custom formatting enabled
+	 * Method merge titles from all columns to the first columns, make spaces and deletes extra columns
+	 */
+	/*mergeTextExcelColumns: function (worksheet, numberOfColumns) {
+		try {
+			let spaces = '';
+			for (let rowIndex = 7; rowIndex < numberOfColumns + 8; rowIndex++) {
+				const row = worksheet.getRow(rowIndex);
+				[2, 3, 4].forEach(idx => {
+					const val = row.getCell(idx).value;
+					if (val && val.length > 2) {
+						if (idx === 2) spaces = '  ';
+						if (idx === 3) spaces = '     ';
+						if (idx === 4) spaces = '       ';
+						row.getCell(1).value = spaces + val;
+					}
+				});
+			}
+			worksheet.spliceColumns(2, 4); // delete Type, Subtype, Account name columns
+			worksheet.getColumn(1).width = 50; // single text column width
+			worksheet.views[0].xSplit = 1; // remove vertical scroll line to the single text column
+			worksheet.getCell('A5').value = 'Title';
+		} catch (e) {
+			alert('Combine columns error :' + e);
+		}
+	},*/
+
+	addBottomLines: function (worksheet) {
+		worksheet.addRow([]);
+		worksheet.addRow(['CloudBudget 2.0']);
+		worksheet.addRow([new Date().toJSON().slice(0, 10).replace(/-/g, '/')]);
+	},
+
+	setColumnsWidth: function (worksheet) {
+		worksheet.columns.forEach((column, i) => {
+			if (i > 3) {
+				column.width = 17;
+			}
+			if (i === 3) {
+				column.width = 40; // GL Account column
+			}
+		});
+	},
+
+	/**
+	 * PDF part
+	 */
 	helpCreatePDF: function (cmp) {
 		let form = $('.letter'),
 			cache_width = form.width(),
@@ -1338,25 +1502,5 @@
 			_hideSpinner(cmp);
 		}
 	}
-	,
-
-	helpShowExcelPanel: function (cmp) {
-		let exPanel = $(cmp.find("excelPanel").getElement());
-		if (exPanel.css('right') === '-420px') {
-			exPanel.animate({right: '0', opacity: 1});
-		} else {
-			exPanel.animate({right: '-420px', opacity: 0.9});
-		}
-	}
-	,
-	helpShowPDFPanel: function (cmp) {
-		let pdfPanel = $(cmp.find("PDFPanel").getElement());
-		if (pdfPanel.css('right') === '-250px') {
-			pdfPanel.animate({right: '0', opacity: 1});
-		} else {
-			pdfPanel.animate({right: '-250px', opacity: 0.9});
-		}
-	}
-
 
 });
