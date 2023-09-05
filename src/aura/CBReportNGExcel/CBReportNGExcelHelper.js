@@ -186,7 +186,7 @@
 			theadtr.append(idxth);
 
 			tableHeaders.forEach(function (header) {
-				if(header !== 'BDG') {
+				if (header !== 'BDG') {
 					let headElem = $("<th></th>");
 					headElem.append($("<div> " + header + " </div>").addClass("slds-truncate topRow header"));
 					theadtr.append(headElem);
@@ -1017,6 +1017,11 @@
 		pattern: 'solid',
 		fgColor: {argb: 'bdc2c8'}
 	},
+	topHeaderFill: { // Expense top header row
+		type: 'pattern',
+		pattern: 'solid',
+		fgColor: {argb: 'fdeada'}
+	},
 	totalFont: {
 		size: 11,
 		bold: true
@@ -1028,6 +1033,7 @@
 	helpDownloadExcel: function (cmp) {
 		try {
 			const report = cmp.get("v.report");
+			this.restructureLines(cmp);
 			const customFormat = report.cb4__Description__c === 'Custom Excel';
 			const tableRows = cmp.get('v.rows');
 			let n = cmp.get("v.numberOfTextColumns"); // the number of text columns
@@ -1052,13 +1058,13 @@
 			if (!fixedColumns) fixedColumns = 1; else fixedColumns--;
 			let tableHeaders = cmp.get("v.tableHeaders");
 			let bdgI = null;
-			for(let i = 0; i < tableHeaders.length; i++){
-				if(tableHeaders[i] === "BDG"){
+			for (let i = 0; i < tableHeaders.length; i++) {
+				if (tableHeaders[i] === "BDG") {
 					bdgI = i;
 					n--;
 				}
 			}
-			if(bdgI !== null) tableHeaders.splice(bdgI,1);
+			if (bdgI !== null) tableHeaders.splice(bdgI, 1);
 			sheetName = sheetName.substring(0, 30).replace(':', '\uA789');
 			const worksheet = workbook.addWorksheet(sheetName, {
 				views: [
@@ -1075,26 +1081,26 @@
 
 				// ROWS
 			const departmentName = {};
-			const subtotalTypes = ['total'];
+			const subtotalTypes = ['total', 'topHeader'];
 			for (let idx = 1; idx <= 5; idx++) subtotalTypes.push(`subTotal${idx}`);
 			let rowPosition = 6; // start position is 6
 			let cellPosition;
 			let subtotalFillMap = {
-				1: this.subTotal1Fill,
-				2: this.subTotal1Fill,
-				3: this.subTotal3Fill,
-				4: this.totalFill
+				subTotal1: this.subTotal1Fill,
+				subTotal2: this.subTotal1Fill,
+				subTotal3: this.subTotal3Fill,
+				total: this.totalFill,
+				topHeader: this.topHeaderFill,
 			};
-			tableRows.push(tableRows.shift()); // move global total line to the end of list
 			tableRows.forEach(row => {
 				try {
 					const excelRow = worksheet.getRow(rowPosition); // one row
 					rowPosition++;
 					cellPosition = 1;
 					const rowIsSubTotal = subtotalTypes.includes(row.type);
-					const subtotalFill = row.type ? subtotalFillMap[row.type.replace('subTotal', '').replace('total', '4')] : undefined;
+					const subtotalFill = row.type ? subtotalFillMap[row.type] : undefined;
 
-					departmentName[row[`l1Long`]] = true;
+					departmentName[row[`l1Long`]] = true; // collection of department names
 					for (let j = 0; j < n; j++) {
 						const cell = excelRow.getCell(cellPosition++);
 						let value = row[`l${j + 1}Long`];
@@ -1130,9 +1136,50 @@
 		}
 	},
 
+	restructureLines: function (cmp) {
+		const tableRows = cmp.get('v.rows');
+		const globalTotal = tableRows.shift();
+		const emptyAmounts = [];
+		for (let i = 0; i < globalTotal.v.length; i++) emptyAmounts.push('0');
+		const getTopRow = type => ({
+			l1Long: type,
+			l2Long: '-',
+			l3Long: '-',
+			l4Long: '-',
+			v: emptyAmounts,
+			isTotal: true,
+			type: 'topHeader'
+		});
+
+		const expenses = tableRows.filter(row => row.l2 === 'Expense');
+		const revenues = tableRows.filter(row => row.l2 === 'Revenue');
+		if (expenses.length > 0) expenses.unshift(getTopRow('Expense'));
+		if (revenues.length > 0) revenues.unshift(getTopRow('Revenue'));
+		const updatedRows = [...revenues, ...expenses, globalTotal];
+		//console.log(updatedRows.length);
+		//updatedRows.forEach(row => console.log(JSON.stringify(row)));
+		cmp.set('v.rows', updatedRows);
+	},
+
+	/**
+	 * Header over the table
+	 */
 	addReportHeaderLines: function (worksheet, customFormat, departmentName, displayedMonth) {
 		if (customFormat) {
 			displayedMonth = displayedMonth[0].substring(0, 3); // "JUN"
+			const headerBackgroundColors = [{
+				type: 'pattern',
+				pattern: 'solid',
+				fgColor: {argb: 'f2dcdb'}
+			}, {
+				type: 'pattern',
+				pattern: 'solid',
+				fgColor: {argb: 'ebf1de'}
+			}, {
+				type: 'pattern',
+				pattern: 'solid',
+				fgColor: {argb: 'dbeef4'}
+			}, {}];
 			const monthsNumber = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC', 'JAN', 'FEB', 'MAR'].indexOf(displayedMonth) + 1;
 			[
 				'TMS Progress Report',
@@ -1140,8 +1187,10 @@
 				`For the ${monthsNumber} months ending ${this.getCurrentFormattedDate(displayedMonth)}`//“For the 5 months ending August 31, 2023”
 			].forEach((val, idx) => {
 				const i = idx + 1;
-				worksheet.getRow(i).values = [val];
-				worksheet.getRow(i).alignment = {horizontal: 'center'};
+				const cell = worksheet.getRow(i);
+				cell.values = [val];
+				cell.alignment = {horizontal: 'center'};
+				cell.fill = headerBackgroundColors[idx];
 				worksheet.mergeCells(i, 1, i, 4); // merge by start row, start column, end row, end column (equivalent to K10:M12)
 			});
 		} else {
@@ -1162,13 +1211,6 @@
 	},
 
 	getCurrentFormattedDate: function (selectedMonth) {
-		/*const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-		const monthsFullName = ["January", "February", "March", "April", "May", "Jun", "July", "August", "September", "October", "November", "December"];
-		const currentDate = new Date();
-		const monthName = months[currentDate.getMonth()];
-		const dateIdNeeded = selectedMonth ? monthName.toLowerCase() === selectedMonth.toLowerCase() : false;
-		const fullMonthName = monthsFullName[currentDate.getMonth()];
-		return `${selectedMonth}${dateIdNeeded ? ' ' + currentDate.getDate() : ''}, ${currentDate.getFullYear()}`;*/
 		const monthNameMapping = {
 			JAN: 'January',
 			FEB: 'February',
@@ -1207,33 +1249,6 @@
 			alert('EXTRA TITLES ERROR : ' + e);
 		}
 	},
-	/**
-	 * Method in using only if custom formatting enabled
-	 * Method merge titles from all columns to the first columns, make spaces and deletes extra columns
-	 */
-	/*mergeTextExcelColumns: function (worksheet, numberOfColumns) {
-		try {
-			let spaces = '';
-			for (let rowIndex = 7; rowIndex < numberOfColumns + 8; rowIndex++) {
-				const row = worksheet.getRow(rowIndex);
-				[2, 3, 4].forEach(idx => {
-					const val = row.getCell(idx).value;
-					if (val && val.length > 2) {
-						if (idx === 2) spaces = '  ';
-						if (idx === 3) spaces = '     ';
-						if (idx === 4) spaces = '       ';
-						row.getCell(1).value = spaces + val;
-					}
-				});
-			}
-			worksheet.spliceColumns(2, 4); // delete Type, Subtype, Account name columns
-			worksheet.getColumn(1).width = 50; // single text column width
-			worksheet.views[0].xSplit = 1; // remove vertical scroll line to the single text column
-			worksheet.getCell('A5').value = 'Title';
-		} catch (e) {
-			alert('Combine columns error :' + e);
-		}
-	},*/
 
 	addBottomLines: function (worksheet) {
 		worksheet.addRow([]);
@@ -1243,7 +1258,9 @@
 
 	setColumnsWidth: function (worksheet) {
 		worksheet.columns.forEach((column, i) => {
-			if (i > 3) {
+			if (i < 3) {
+				column.width = 2;
+			} else {
 				column.width = 17;
 			}
 			if (i === 3) {
