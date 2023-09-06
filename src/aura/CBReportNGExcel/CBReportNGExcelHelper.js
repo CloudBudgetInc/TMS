@@ -978,7 +978,7 @@
 			}, 10));
 	},
 
-	NUM_FORMAT: '#,##0;[Black] (#,##0)',
+	NUM_FORMAT: '#,##0; (#,##0)',
 	borderUnderline: {
 		bottom: {style: "thin"},
 	},
@@ -986,16 +986,18 @@
 		top: {style: "thin"},
 		bottom: {style: "thin"},
 	},
-	headerBorderStyles: {
+	borderTopBottomRight: {
 		top: {style: "thin"},
-		left: {style: "thin"},
-		bottom: {style: 'double', color: {argb: '005493'}},
+		bottom: {style: "thin"},
+		right: {style: "thin"}
+	},
+	borderRight: {
 		right: {style: "thin"}
 	},
 	headerFill: {
 		type: 'pattern',
 		pattern: 'solid',
-		fgColor: {argb: '88acc7'}
+		fgColor: {argb: 'ebf1de'}
 	},
 	subTotal1Fill: { // first lvl subtotal
 		type: 'pattern',
@@ -1022,12 +1024,22 @@
 		pattern: 'solid',
 		fgColor: {argb: 'fdeada'}
 	},
+	overHeaderHeaderFill: { // Row over header (Current Month					YTD				12 Months		)
+		type: 'pattern',
+		pattern: 'solid',
+		fgColor: {argb: '4f6228'}
+	},
+	overHeaderHeaderFont: {
+		color: {argb: 'FFFFFFFF'},
+		bold: true,
+		size: 11
+	},
 	totalFont: {
 		size: 11,
 		bold: true
 	},
 	decAlign: {horizontal: 'right'},
-	centralAlign: {horizontal: 'center'},
+	centralAlign: {horizontal: 'center', wrapText: true, vertical: 'middle'},
 
 
 	helpDownloadExcel: function (cmp) {
@@ -1068,37 +1080,49 @@
 			sheetName = sheetName.substring(0, 30).replace(':', '\uA789');
 			const worksheet = workbook.addWorksheet(sheetName, {
 				views: [
-					{state: 'frozen', ySplit: 5, xSplit: fixedColumns}
+					{state: 'frozen', ySplit: 6, xSplit: fixedColumns, showGridLines: false}
 				]
 			});
 
+			/** LINE OVER HEADER **/
+			const overHeaderTitlesRow = worksheet.getRow(5); // header row position from top
+			worksheet.mergeCells(5, 1, 5, 4); // merge by start row, start column, end row, end column (equivalent to K10:M12)
+			worksheet.mergeCells(5, 5, 5, 10); // merge by start row, start column, end row, end column (equivalent to K10:M12)
+			worksheet.mergeCells(5, 11, 5, 16); // merge by start row, start column, end row, end column (equivalent to K10:M12)
+			worksheet.mergeCells(5, 17, 5, 19); // merge by start row, start column, end row, end column (equivalent to K10:M12)
+			setCell(overHeaderTitlesRow.getCell(5), 'Current Month', this.overHeaderHeaderFill, this.overHeaderHeaderFont, null, this.centralAlign, this.borderTopBottom);
+			setCell(overHeaderTitlesRow.getCell(11), 'YTD', this.overHeaderHeaderFill, this.overHeaderHeaderFont, null, this.centralAlign, this.borderTopBottom);
+			setCell(overHeaderTitlesRow.getCell(17), '12 Months', this.overHeaderHeaderFill, this.overHeaderHeaderFont, null, this.centralAlign, this.borderTopBottom);
+			/** LINE OVER HEADER **/
 
 			/** HEADERS  Reporting Dep	Type	Subtype ....**/
-			const headerTitlesRow = worksheet.getRow(5);
+			const headerTitlesRow = worksheet.getRow(6); // header row position from top
+			headerTitlesRow.height = 38;
 			headerTitlesRow.values = tableHeaders; // header values like ['Reporting Dep', 'Type', 'Subtype' ....]
-			headerTitlesRow.eachCell({includeEmpty: true}, cell => setCell(cell, cell.value, this.headerFill, this.totalFont, null, this.centralAlign, this.borderTopBottom)); // header styles
+			headerTitlesRow.eachCell({includeEmpty: true}, (cell, i) => setCell(cell, i <= 3 ? '' : cell.value, this.headerFill, this.totalFont, null, this.centralAlign, this.borderTopBottom)); // header styles
 			/** HEADERS  Reporting Dep	Type	Subtype ....**/
 
 				// ROWS
 			const departmentName = {};
 			const subtotalTypes = ['total', 'topHeader'];
 			for (let idx = 1; idx <= 5; idx++) subtotalTypes.push(`subTotal${idx}`);
-			let rowPosition = 6; // start position is 6
+			let amountRowPosition = 7; // start position is 6
 			let cellPosition;
 			let subtotalFillMap = {
-				subTotal1: this.subTotal1Fill,
-				subTotal2: this.subTotal1Fill,
+				subTotal1: this.overHeaderHeaderFill,
+				subTotal2: this.overHeaderHeaderFill,
 				subTotal3: this.subTotal3Fill,
-				total: this.totalFill,
+				total: this.overHeaderHeaderFill,
 				topHeader: this.topHeaderFill,
 			};
 			tableRows.forEach(row => {
 				try {
-					const excelRow = worksheet.getRow(rowPosition); // one row
-					rowPosition++;
+					const excelRow = worksheet.getRow(amountRowPosition); // one row
+					amountRowPosition++;
 					cellPosition = 1;
 					const rowIsSubTotal = subtotalTypes.includes(row.type);
 					const subtotalFill = row.type ? subtotalFillMap[row.type] : undefined;
+					const subtotalFont = row.type === 'total' || row.type === 'subTotal1' || row.type === 'subTotal2' ? this.overHeaderHeaderFont : this.totalFont;
 
 					departmentName[row[`l1Long`]] = true; // collection of department names
 					for (let j = 0; j < n; j++) {
@@ -1106,16 +1130,16 @@
 						let value = row[`l${j + 1}Long`];
 						if (rowIsSubTotal) {
 							value = value === '-' ? null : value;
-							setCell(cell, value, subtotalFill, this.totalFont, null, null, this.borderTopBottom);
+							setCell(cell, value, subtotalFill, subtotalFont, null, null, this.borderTopBottom);
 						} else {
 							setCell(cell, value);
 						}
 					}// text part of a row
-					row.v.forEach(val => {
+					row.v.forEach((val, idx) => {
 						const cell = excelRow.getCell(cellPosition++);
 						const value = getRowAmount(val);
 						if (rowIsSubTotal) {
-							setCell(cell, value, subtotalFill, this.totalFont, this.NUM_FORMAT, this.decAlign, this.borderTopBottom);
+							setCell(cell, value, subtotalFill, subtotalFont, this.NUM_FORMAT, this.decAlign, this.borderTopBottom);
 						} else {
 							setCell(cell, value, null, null, this.NUM_FORMAT, this.decAlign);
 						}
@@ -1125,10 +1149,10 @@
 				}
 			});
 			this.setColumnsWidth(worksheet);
-			this.deleteExtraExcelTitles(worksheet, tableRows.length);
-			delete departmentName['TOTAL'];
+			//this.deleteExtraExcelTitles(worksheet, tableRows.length);
+			['TOTAL', 'Expense', 'Revenue'].forEach(title => delete departmentName[title]);
 			this.addReportHeaderLines(worksheet, customFormat, Object.keys(departmentName).join(', '), cmp.get('v.displayedColumns'));
-			this.addBottomLines(worksheet);
+			this.addVerticalBorders(worksheet, tableRows.length);
 			worksheet.autoFilter = 'A5:D5';
 			workbook.xlsx.writeBuffer().then(buffer => saveAs(new Blob([buffer]), cmp.get('v.report.Name') + '.xlsx')).catch(err => alert('Error writing excel export', err));
 		} catch (e) {
@@ -1136,6 +1160,9 @@
 		}
 	},
 
+	/**
+	 * The method reverts subtotal lines over a group of simple lines
+	 */
 	restructureLines: function (cmp) {
 		const tableRows = cmp.get('v.rows');
 		const globalTotal = tableRows.shift();
@@ -1150,14 +1177,38 @@
 			isTotal: true,
 			type: 'topHeader'
 		});
+		const revertRows = (rows) => {
+			let simpleRowsTemp;
+			let result = [];
+			rows.forEach(row => {
+				if (row.type === 'subTotal2') {// expense || revenue total line
+					result.push(row);
+					return null;
+				}
+				if (!simpleRowsTemp) simpleRowsTemp = [];
+				if (!row.type) { // simple line
+					simpleRowsTemp.push(row);
+				} else { // subtotal line
+					result = [...result, row, ...simpleRowsTemp];
+					simpleRowsTemp = undefined;
+				}
+			});
+			return result;
+		};
 
-		const expenses = tableRows.filter(row => row.l2 === 'Expense');
-		const revenues = tableRows.filter(row => row.l2 === 'Revenue');
-		if (expenses.length > 0) expenses.unshift(getTopRow('Expense'));
-		if (revenues.length > 0) revenues.unshift(getTopRow('Revenue'));
+		let expenses = tableRows.filter(row => row.l2 === 'Expense');
+		let revenues = tableRows.filter(row => row.l2 === 'Revenue');
+
+		if (expenses.length > 0) {
+			expenses = revertRows(expenses);
+			expenses.unshift(getTopRow('Expense'));
+		}
+		if (revenues.length > 0) {
+			revenues = revertRows(revenues);
+			revenues.unshift(getTopRow('Revenue'));
+		}
+
 		const updatedRows = [...revenues, ...expenses, globalTotal];
-		//console.log(updatedRows.length);
-		//updatedRows.forEach(row => console.log(JSON.stringify(row)));
 		cmp.set('v.rows', updatedRows);
 	},
 
@@ -1250,6 +1301,16 @@
 		}
 	},
 
+	addVerticalBorders: function (worksheet, numberOfRows) {
+		['J', 'P', 'S'].forEach(columnLetter => {
+			for (let i = 5; i < numberOfRows + 7; i++) {
+				const cell = worksheet.getCell(columnLetter + i);
+				cell.border = cell.border ? this.borderTopBottomRight : this.borderRight;
+			}
+		});
+
+	},
+
 	addBottomLines: function (worksheet) {
 		worksheet.addRow([]);
 		worksheet.addRow(['CloudBudget 2.0']);
@@ -1261,7 +1322,7 @@
 			if (i < 3) {
 				column.width = 2;
 			} else {
-				column.width = 17;
+				column.width = 10;
 			}
 			if (i === 3) {
 				column.width = 40; // GL Account column
