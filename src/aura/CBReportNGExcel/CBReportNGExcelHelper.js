@@ -1030,16 +1030,25 @@
 		fgColor: {argb: '4f6228'}
 	},
 	overHeaderHeaderFont: {
+		name: 'Calibri',
+		family: 4,
 		color: {argb: 'FFFFFFFF'},
 		bold: true,
-		size: 11
+		size: 12
+	},
+	simpleFont: {
+		name: 'Calibri',
+		family: 4
 	},
 	totalFont: {
+		name: 'Calibri',
+		family: 4,
 		size: 11,
-		bold: true
+		bold: true,
 	},
 	decAlign: {horizontal: 'right'},
-	centralAlign: {horizontal: 'center', wrapText: true, vertical: 'middle'},
+	headerTitleAlign: {horizontal: 'center', wrapText: true, vertical: 'middle'},
+	rowTitleAlign: {vertical: 'middle'},
 
 
 	helpDownloadExcel: function (cmp) {
@@ -1083,6 +1092,10 @@
 					{state: 'frozen', ySplit: 6, xSplit: fixedColumns, showGridLines: false}
 				]
 			});
+			worksheet.getCell('A1').font = {
+				name: 'Calibri',
+				family: 4
+			};
 
 			/** LINE OVER HEADER **/
 			const overHeaderTitlesRow = worksheet.getRow(5); // header row position from top
@@ -1090,16 +1103,16 @@
 			worksheet.mergeCells(5, 5, 5, 10); // merge by start row, start column, end row, end column (equivalent to K10:M12)
 			worksheet.mergeCells(5, 11, 5, 16); // merge by start row, start column, end row, end column (equivalent to K10:M12)
 			worksheet.mergeCells(5, 17, 5, 19); // merge by start row, start column, end row, end column (equivalent to K10:M12)
-			setCell(overHeaderTitlesRow.getCell(5), 'Current Month', this.overHeaderHeaderFill, this.overHeaderHeaderFont, null, this.centralAlign, this.borderTopBottom);
-			setCell(overHeaderTitlesRow.getCell(11), 'YTD', this.overHeaderHeaderFill, this.overHeaderHeaderFont, null, this.centralAlign, this.borderTopBottom);
-			setCell(overHeaderTitlesRow.getCell(17), '12 Months', this.overHeaderHeaderFill, this.overHeaderHeaderFont, null, this.centralAlign, this.borderTopBottom);
+			setCell(overHeaderTitlesRow.getCell(5), 'Current Month', this.overHeaderHeaderFill, this.overHeaderHeaderFont, null, this.headerTitleAlign, this.borderTopBottom);
+			setCell(overHeaderTitlesRow.getCell(11), 'YTD', this.overHeaderHeaderFill, this.overHeaderHeaderFont, null, this.headerTitleAlign, this.borderTopBottom);
+			setCell(overHeaderTitlesRow.getCell(17), '12 Months', this.overHeaderHeaderFill, this.overHeaderHeaderFont, null, this.headerTitleAlign, this.borderTopBottom);
 			/** LINE OVER HEADER **/
 
 			/** HEADERS  Reporting Dep	Type	Subtype ....**/
 			const headerTitlesRow = worksheet.getRow(6); // header row position from top
-			headerTitlesRow.height = 38;
+			headerTitlesRow.height = 50;
 			headerTitlesRow.values = tableHeaders; // header values like ['Reporting Dep', 'Type', 'Subtype' ....]
-			headerTitlesRow.eachCell({includeEmpty: true}, (cell, i) => setCell(cell, i <= 3 ? '' : cell.value, this.headerFill, this.totalFont, null, this.centralAlign, this.borderTopBottom)); // header styles
+			headerTitlesRow.eachCell({includeEmpty: true}, (cell, i) => setCell(cell, i <= 3 ? '' : cell.value, this.headerFill, this.totalFont, null, this.headerTitleAlign, this.borderTopBottom)); // header styles
 			/** HEADERS  Reporting Dep	Type	Subtype ....**/
 
 				// ROWS
@@ -1125,14 +1138,15 @@
 					const subtotalFont = row.type === 'total' || row.type === 'subTotal1' || row.type === 'subTotal2' ? this.overHeaderHeaderFont : this.totalFont;
 
 					departmentName[row[`l1Long`]] = true; // collection of department names
+					if (row.type === 'topHeader') excelRow.height = 23;
 					for (let j = 0; j < n; j++) {
 						const cell = excelRow.getCell(cellPosition++);
 						let value = row[`l${j + 1}Long`];
 						if (rowIsSubTotal) {
 							value = value === '-' ? null : value;
-							setCell(cell, value, subtotalFill, subtotalFont, null, null, this.borderTopBottom);
+							setCell(cell, value, subtotalFill, subtotalFont, null, this.rowTitleAlign, this.borderTopBottom);
 						} else {
-							setCell(cell, value);
+							setCell(cell, value, null, this.simpleFont);
 						}
 					}// text part of a row
 					row.v.forEach((val, idx) => {
@@ -1141,7 +1155,7 @@
 						if (rowIsSubTotal) {
 							setCell(cell, value, subtotalFill, subtotalFont, this.NUM_FORMAT, this.decAlign, this.borderTopBottom);
 						} else {
-							setCell(cell, value, null, null, this.NUM_FORMAT, this.decAlign);
+							setCell(cell, value, null, this.simpleFont, this.NUM_FORMAT, this.decAlign);
 						}
 					});
 				} catch (e) {
@@ -1149,7 +1163,7 @@
 				}
 			});
 			this.setColumnsWidth(worksheet);
-			//this.deleteExtraExcelTitles(worksheet, tableRows.length);
+			this.makeTransparentExtraExcelTitles(worksheet, tableRows);
 			['TOTAL', 'Expense', 'Revenue'].forEach(title => delete departmentName[title]);
 			this.addReportHeaderLines(worksheet, customFormat, Object.keys(departmentName).join(', '), cmp.get('v.displayedColumns'));
 			this.addVerticalBorders(worksheet, tableRows.length);
@@ -1166,10 +1180,13 @@
 	restructureLines: function (cmp) {
 		const tableRows = cmp.get('v.rows');
 		const globalTotal = tableRows.shift();
+		console.log('Global total ' + JSON.stringify(globalTotal));
+		delete globalTotal.l2Long;
+		delete globalTotal.l3Long;
 		const emptyAmounts = [];
 		for (let i = 0; i < globalTotal.v.length; i++) emptyAmounts.push('0');
-		const getTopRow = type => ({
-			l1Long: type,
+		const getTopRow = type => ({ // top splitter EXPENSE or REVENUE
+			l1Long: type.toUpperCase(),
 			l2Long: '-',
 			l3Long: '-',
 			l4Long: '-',
@@ -1182,6 +1199,7 @@
 			let result = [];
 			rows.forEach(row => {
 				if (row.type === 'subTotal2') {// expense || revenue total line
+					row.l2Long = 'TOTAL ' + row.l2Long.toUpperCase();
 					result.push(row);
 					return null;
 				}
@@ -1238,10 +1256,16 @@
 				`For the ${monthsNumber} months ending ${this.getCurrentFormattedDate(displayedMonth)}`//“For the 5 months ending August 31, 2023”
 			].forEach((val, idx) => {
 				const i = idx + 1;
-				const cell = worksheet.getRow(i);
-				cell.values = [val];
+				const cell = worksheet.getRow(i).getCell(1);
+				cell.value = val;
 				cell.alignment = {horizontal: 'center'};
 				cell.fill = headerBackgroundColors[idx];
+				cell.font = {
+					name: 'Calibri',
+					family: 4,
+					size: 12,
+					bold: true,
+				};
 				worksheet.mergeCells(i, 1, i, 4); // merge by start row, start column, end row, end column (equivalent to K10:M12)
 			});
 		} else {
@@ -1254,11 +1278,6 @@
 				worksheet.getRow(i).values = [val];
 			});
 		}
-		const reportNameCell = worksheet.getRow(1).getCell(1);
-		reportNameCell.font = {
-			size: 14,
-			bold: true
-		};
 	},
 
 	getCurrentFormattedDate: function (selectedMonth) {
@@ -1280,22 +1299,33 @@
 		return ` ${monthNameMapping[selectedMonth]}, ${currentDate.getFullYear()}`;
 	},
 
-	deleteExtraExcelTitles: function (worksheet, numberOfColumns) {
+	/**
+	 * Method makes extra titles transparent
+	 */
+	makeTransparentExtraExcelTitles: function (worksheet, tableRows) {
 		try {
-			for (let rowIndex = 7; rowIndex < numberOfColumns + 7; rowIndex++) {
-				const previousRow = worksheet.getRow(rowIndex - 1);
-				const currentRow = worksheet.getRow(rowIndex);
-				const previousValues = [1, 2, 3].map(idx => previousRow.getCell(idx).value);
-				const currentValues = [1, 2, 3].map(idx => currentRow.getCell(idx).value);
-				[0, 1, 2].forEach(idx => {
-					if (previousValues[idx] === currentValues[idx]) {
-						//previousRow.getCell(idx + 1).value = '';
-						const cell = previousRow.getCell(idx + 1);
-						const bgColor = cell.fill && cell.fill.fgColor ? cell.fill.fgColor.argb : "ffffff";
-						cell.font = {color: {argb: bgColor}};
-					}
+			const makeCellTextTransparent = (cell) => {
+				const bgColor = cell.fill && cell.fill.fgColor ? cell.fill.fgColor.argb : "ffffff";
+				cell.font = {color: {argb: bgColor}};
+			};
+			tableRows.forEach((row, rowIdx) => {
+				const excelRow = worksheet.getRow(rowIdx + 7);
+				let celIndexArray;
+				if (!row.type) {
+					celIndexArray = [1, 2, 3];
+				} else if (row.type === 'subTotal3') {
+					celIndexArray = [1, 2];
+				} else if (row.type === 'subTotal2') {
+					celIndexArray = [1];
+				} else {
+					return null;
+				}
+				celIndexArray.forEach(cellIdx => {
+					const cell = excelRow.getCell(cellIdx);
+					makeCellTextTransparent(cell);
 				});
-			}
+
+			});
 		} catch (e) {
 			alert('EXTRA TITLES ERROR : ' + e);
 		}
@@ -1320,12 +1350,12 @@
 	setColumnsWidth: function (worksheet) {
 		worksheet.columns.forEach((column, i) => {
 			if (i < 3) {
-				column.width = 2;
+				column.width = 3;
 			} else {
 				column.width = 10;
 			}
 			if (i === 3) {
-				column.width = 40; // GL Account column
+				column.width = 35; // GL Account column
 			}
 		});
 	},
