@@ -2,6 +2,7 @@
 /*
 How do we actually test?
 Let's run the scheduled batch and then do assertions afterwards!!
+RFM Score is calculated as: 
 */
 public class EngScTestClass {	    
     @testSetup
@@ -12,7 +13,7 @@ public class EngScTestClass {
         // Monetary -> Set root field npo02__TotalOppAmount__c
         Account acc = new Account(  Name = 'johntest1', Officer_Rating__c = '9',npo02__TotalOppAmount__c=1200,
                                     npo02__LastCloseDate__c = System.today(), npo02__FirstCloseDate__c = System.today(), npo02__NumberOfClosedOpps__c = 1);                                 
-        insert acc;   
+        insert acc;
 
     }    
 	@isTest
@@ -27,7 +28,7 @@ public class EngScTestClass {
                                         npo02__NumberOfClosedOpps__c,Monetary__c,Recency__c,Frequency__c,Days_Since_Last_Gift__c
                                         FROM Account];
 
-        // ** Test if account inserted and all Fields inserted into acc ** //
+        // ** Test if first account inserted and all Fields inserted into acc ** //
         System.assertEquals(1, AllInsertedAccs.size()); 
         System.assertEquals('9', AllInsertedAccs[0].Officer_Rating__c); 
         System.assertEquals(1200, AllInsertedAccs[0].npo02__TotalOppAmount__c);
@@ -41,7 +42,7 @@ public class EngScTestClass {
         System.assertEquals('4', AllInsertedAccs[0].Recency__c); // I expected 5
         System.assertEquals('1', AllInsertedAccs[0].Frequency__c);
 
-
+        
 
 
 

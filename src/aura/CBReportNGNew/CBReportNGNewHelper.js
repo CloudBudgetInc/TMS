@@ -312,6 +312,8 @@
 			let balKey, balPeriod, rl,
 				balAmount1, balAmount2, balAmount3, balAmount4, balAmount5, balAmount2_1,
 				balAmount1YTD, balAmount2YTD, balAmount3YTD, balAmount4YTD, balAmount5YTD, balAmount2_1YTD;
+			console.clear();
+			console.group('DEBUG');
 			balances.forEach(function (bal) {
 				balKey = bal.cb4__Key__c;
 				balPeriod = bal.cb4__Column__c;
@@ -336,9 +338,7 @@
 					reportLineObj[balKey] = rl; //cb4__notSpecifiedTitle__c
 					updateRLLevels(rl, ns, num, bal)
 				}
-
 				let k = getKeyObject(balPeriod); // key storage   key1 =  balPeriod + 'cb4__Amount1__c'. Mapping for shorting the field name
-
 				if (balAmount1 !== 0 && rl[k.key1] !== undefined) rl[k.key1] = _isInvalid(rl[k.key1]) ? balAmount1 : rl[k.key1] - 0 + balAmount1 - 0;
 				if (balAmount2 !== 0 && rl[k.key2] !== undefined) rl[k.key2] = _isInvalid(rl[k.key2]) ? balAmount2 : rl[k.key2] - 0 + balAmount2 - 0;
 				if (balAmount3 !== 0 && rl[k.key3] !== undefined) rl[k.key3] = _isInvalid(rl[k.key3]) ? balAmount3 : rl[k.key3] - 0 + balAmount3 - 0;
@@ -360,9 +360,8 @@
 					}
 				}
 				//if (balAmount4YTD !== 0 && rl[k.key4YTD] !== undefined) rl[k.key4YTD] = _isInvalid(rl[k.key4YTD]) ? balAmount4YTD : rl[k.key4YTD] - 0 + balAmount4YTD - 0;
-				if (rl[k.key1YTD] !== undefined && rl[k.key1YTD] !== 0 && rl[k.key2YTD] !== undefined) rl[k.key4YTD] = rl[k.key1YTD] !== 0 ? (rl[k.key2YTD] / rl[k.key1YTD] * 100) : 0;
 
-				if (rl[k.key5YTD] !== undefined && rl[k.key5YTD] !== 0 && rl[k.key2YTD] !== undefined) rl[k.key2_1YTD] = rl[k.key5YTD] !== 0 ? (rl[k.key2YTD] / rl[k.key5YTD] * 100) : 0;
+				if (rl[k.key1YTD] !== undefined && rl[k.key1YTD] !== 0 && rl[k.key2YTD] !== undefined) rl[k.key4YTD] = rl[k.key1YTD] !== 0 ? (rl[k.key2YTD] / rl[k.key1YTD] * 100) : 0;
 
 				if (rl[k.key5] !== undefined && rl[k.key5] !== 0 && rl[k.key2] !== undefined) rl[k.key2_1] = rl[k.key5] !== 0 ? (rl[k.key2] / rl[k.key5] * 100) : 0;
 
@@ -370,13 +369,16 @@
 
 				if (balAmount5YTD !== 0 && rl[k.key5YTD] !== undefined) rl[k.key5YTD] = _isInvalid(rl[k.key5YTD]) ? balAmount5YTD : rl[k.key5YTD] - 0 + balAmount5YTD - 0;
 
+				if(rl[k.key2_1YTD] !== undefined) rl[k.key2_1YTD] = 0;
+				if (rl[k.key5YTD] !== 0 && rl[k.key5YTD] !== undefined && rl[k.key2YTD] !== undefined && rl[k.key2_1YTD] !== undefined) rl[k.key2_1YTD] = (rl[k.key2YTD] / rl[k.key5YTD] * 100);
+
 				if (!report.cb4__Description__c.match('Custom Excel')){
 					if(balAmount2_1 !== 0 && rl[k.key2_1] !== undefined) rl[k.key2_1] = (_isInvalid(rl[k.key2]) ? 0 : rl[k.key2]) - 0 - (_isInvalid(rl[k.key1]) ? 0 : rl[k.key1]) - 0;
 					if (balAmount2_1YTD !== 0 && rl[k.key2_1YTD] !== undefined) rl[k.key2_1YTD] = (_isInvalid(rl[k.key2YTD]) ? 0 : rl[k.key2YTD]) - 0 - (_isInvalid(rl[k.key1YTD]) ? 0 : rl[k.key1YTD]) - 0;
 				}
-
 				//if (balPercent1 !== 0 && rl[k.percent1] !== undefined) rl[k.percent1] = _isInvalid(rl[k.percent1]) ? balPercent1 : rl[k.percent1] - 0 + balPercent1 - 0;
 			});
+			console.groupEnd();
 			/*    //_cl('BEFORE = ' + JSON.stringify(reportLineObj), 'red');*/
 			//_cl("reportLineObj size=" + Object.keys(reportLineObj).length, 'green');
 

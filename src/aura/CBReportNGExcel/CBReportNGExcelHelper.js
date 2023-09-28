@@ -326,15 +326,29 @@
 				balAmount4YTD = bal.cb4__Amount4YTD__c;
 				balAmount5YTD = bal.cb4__Amount5YTD__c;
 				balAmount2_1 = bal.cb4__Amount2_1__c;
-				balAmount2_1YTD = bal.cb4__Amount2_1YTD__c;
+				balAmount2_1YTD = balAmount5YTD - balAmount2YTD;
 				//balPercent1 = bal.cb4__Percent1__c;
 				//rl - is one report line. {period1 + 'cb4__Amount1__c' :  54, period1 + 'cb4__Amount2__c' : 5 }
 				rl = reportLineObj[balKey]; // CBalance try to finds its reportLine
+
 				if (rl === undefined) { // the first meeting -> clone object
 					rl = JSON.parse(JSON.stringify(reportLine));
 					rl.key = balKey;
 					reportLineObj[balKey] = rl; //cb4__notSpecifiedTitle__c
 					updateRLLevels(rl, ns, num, bal)
+				}
+
+				//Actual vs Budget Amount (reverse for Expenses)
+				if(rl.l2 === 'Expense') {
+					if (balAmount3YTD !== null && balAmount3YTD !== undefined) {
+						balAmount3YTD = balAmount3YTD * -1;
+					}
+					if (balAmount3 !== null && balAmount3 !== undefined) {
+						balAmount3 = balAmount3 * -1;
+					}
+					if (balAmount2_1YTD !== null && balAmount2_1YTD !== undefined) {
+						balAmount2_1YTD = balAmount2_1YTD * -1;
+					}
 				}
 
 				let k = getKeyObject(balPeriod); // key storage   key1 =  balPeriod + 'cb4__Amount1__c'. Mapping for shorting the field name
@@ -349,25 +363,40 @@
 				if (balAmount2YTD !== 0 && rl[k.key2YTD] !== undefined) rl[k.key2YTD] = _isInvalid(rl[k.key2YTD]) ? balAmount2YTD : rl[k.key2YTD] - 0 + balAmount2YTD - 0;
 				if (rl[k.key2YTD] !== undefined && rl[k.key1YTD] !== undefined) {
 					rl[k.key3YTD] = rl[k.key2YTD] - rl[k.key1YTD];
+					if(rl.l2 === 'Expense') rl[k.key3YTD] = rl[k.key3YTD] * -1;
 					if (Math.abs(rl[k.key3YTD]) <= 0.5) rl[k.key3YTD] = 0;
-					if (rl[k.key2_1YTD] !== undefined) {
+					/*if (rl[k.key2_1YTD] !== undefined) {
 						if ((Math.abs(rl[k.key2YTD]) >= Math.abs(rl[k.key1YTD]))) {
 							rl[k.key2_1YTD] = 0;
 						} else {
 							rl[k.key2_1YTD] = rl[k.key1YTD] - rl[k.key2YTD];
 						}
 						if (Math.abs(rl[k.key2_1YTD]) < 0.5) rl[k.key2_1YTD] = 0;
-					}
+					}*/
 				}
 				//if (balAmount4YTD !== 0 && rl[k.key4YTD] !== undefined) rl[k.key4YTD] = _isInvalid(rl[k.key4YTD]) ? balAmount4YTD : rl[k.key4YTD] - 0 + balAmount4YTD - 0;
-				if (rl[k.key2YTD] !== undefined && rl[k.key1YTD] !== undefined) rl[k.key4YTD] = rl[k.key1YTD] !== 0 ? (rl[k.key2YTD] / rl[k.key1YTD] * 100) : 0;
-				if (rl[k.key2] !== undefined && rl[k.key1] !== undefined) rl[k.key4] = rl[k.key1] !== 0 ? (rl[k.key2] / rl[k.key1] * 100) : 0;
+
+				//if (rl[k.key1YTD] !== undefined && rl[k.key1YTD] !== 0 && rl[k.key2YTD] !== undefined) rl[k.key4YTD] = rl[k.key1YTD] !== 0 ? (rl[k.key2YTD] / rl[k.key1YTD] * 100) : 0;
+
+				//if (rl[k.key5] !== undefined && rl[k.key5] !== 0 && rl[k.key2] !== undefined) rl[k.key2_1] = rl[k.key5] !== 0 ? (rl[k.key2] / rl[k.key5] * 100) : 0;
+
+				//if (rl[k.key2] !== undefined && rl[k.key1] !== 0 && rl[k.key1] !== undefined) rl[k.key4] = rl[k.key1] !== 0 ? (rl[k.key2] / rl[k.key1] * 100) : 0;
 
 				if (balAmount5YTD !== 0 && rl[k.key5YTD] !== undefined) rl[k.key5YTD] = _isInvalid(rl[k.key5YTD]) ? balAmount5YTD : rl[k.key5YTD] - 0 + balAmount5YTD - 0;
 
-				if (balAmount2_1 !== 0 && rl[k.key2_1] !== undefined) rl[k.key2_1] = (_isInvalid(rl[k.key2]) ? 0 : rl[k.key2]) - 0 - (_isInvalid(rl[k.key1]) ? 0 : rl[k.key1]) - 0;
-				//if (balAmount2_1YTD !== 0 && rl[k.key2_1YTD] !== undefined) rl[k.key2_1YTD] = (_isInvalid(rl[k.key2YTD]) ? 0 : rl[k.key2YTD]) - 0 - (_isInvalid(rl[k.key1YTD]) ? 0 : rl[k.key1YTD]) - 0;
+				if(rl[k.key5YTD] !== undefined && rl[k.key2YTD] !== undefined){
+					if (rl[k.key2_1YTD] !== undefined) {
+						rl[k.key2_1YTD] = rl[k.key5YTD] - rl[k.key2YTD];
+					}
+				}
+				//if(balAmount2_1YTD !== 0 && rl[k.key2_1YTD] !== undefined) rl[k.key2_1YTD] = _isInvalid(rl[k.key2_1YTD]) ? balAmount2_1YTD : rl[k.key5YTD] - 0 - rl[k.key2YTD] - 0;
+				//if(rl[k.key2_1YTD] !== undefined) rl[k.key2_1YTD] = 0;
+				//if (rl[k.key5YTD] !== 0 && rl[k.key5YTD] !== undefined && rl[k.key2YTD] !== undefined && rl[k.key2_1YTD] !== undefined) rl[k.key2_1YTD] = (rl[k.key2YTD] / rl[k.key5YTD] * 100);
 
+				if (!report.cb4__Description__c.match('Custom Excel')){
+					if(balAmount2_1 !== 0 && rl[k.key2_1] !== undefined) rl[k.key2_1] = (_isInvalid(rl[k.key2]) ? 0 : rl[k.key2]) - 0 - (_isInvalid(rl[k.key1]) ? 0 : rl[k.key1]) - 0;
+					if (balAmount2_1YTD !== 0 && rl[k.key2_1YTD] !== undefined) rl[k.key2_1YTD] = (_isInvalid(rl[k.key2YTD]) ? 0 : rl[k.key2YTD]) - 0 - (_isInvalid(rl[k.key1YTD]) ? 0 : rl[k.key1YTD]) - 0;
+				}
 				//if (balPercent1 !== 0 && rl[k.percent1] !== undefined) rl[k.percent1] = _isInvalid(rl[k.percent1]) ? balPercent1 : rl[k.percent1] - 0 + balPercent1 - 0;
 			});
 			/*    //_cl('BEFORE = ' + JSON.stringify(reportLineObj), 'red');*/
@@ -480,9 +509,60 @@
 
 	getGlobalTotalRow: function (rows, columns) {
 		try {
-			let globalTotalRow = this.getSumRowFromRows(rows, columns);
+			let ytdArr = [];
+			let iObj = {
+				ytdIndex   : null,
+				mIndex     : null,
+				bmIndex    : null,
+				amIndex    : null,
+				byIndex    : null,
+				ayIndex    : null,
+				fytdIndex  : null,
+				fyIndex    : null
+			};
+			for(let j = columns.length-1; j >= 0; j--){
+				if(columns[j] !== undefined){
+
+					if(columns[j].cb4__CBalanceAmountField__c === 'cb4__Amount2_1YTD__c') iObj.fytdIndex = j;
+					if(columns[j].cb4__CBalanceAmountField__c === 'cb4__Amount5YTD__c')   iObj.fyIndex = j;
+					if(columns[j].cb4__CBalanceAmountField__c === 'cb4__Amount3YTD__c')   iObj.ytdIndex = j;
+					if(columns[j].cb4__CBalanceAmountField__c === 'cb4__Amount3__c')      iObj.mIndex = j;
+					if(columns[j].cb4__CBalanceAmountField__c === 'cb4__Amount1YTD__c')   iObj.byIndex = j;
+					if(columns[j].cb4__CBalanceAmountField__c === 'cb4__Amount1__c')      iObj.bmIndex = j;
+					if(columns[j].cb4__CBalanceAmountField__c === 'cb4__Amount2YTD__c')   iObj.ayIndex = j;
+					if(columns[j].cb4__CBalanceAmountField__c === 'cb4__Amount2__c')      iObj.amIndex = j;
+				}
+				if( iObj.ytdIndex !== null && iObj.mIndex   !== null && iObj.byIndex  !== null &&
+					iObj.bmIndex  !== null && iObj.ayIndex  !== null && iObj.amIndex  !== null &&
+					iObj.fytdIndex!== null && iObj.fyIndex  !== null
+				){
+					ytdArr.push(JSON.parse(JSON.stringify(iObj)));
+					iObj = {
+						ytdIndex   : null,
+						mIndex     : null,
+						bmIndex    : null,
+						amIndex    : null,
+						byIndex    : null,
+						ayIndex    : null,
+						fytdIndex  : null,
+						fyIndex    : null
+					};
+				}
+			}
+			let globalTotalRow = this.getSumRowFromRows(rows, columns, true);
 			globalTotalRow.l1 = globalTotalRow.l1Long = 'TOTAL';
 			for (let i = 2; i <= 7; i++) if (rows[0]["l" + i] !== undefined) globalTotalRow["l" + i] = globalTotalRow["l" + i + "Long"] = '';
+			for(let k = ytdArr.length - 1; k >= 0; k--) {
+				if (ytdArr[k].ytdIndex !== null) {
+					globalTotalRow.v[ytdArr[k].ytdIndex] = globalTotalRow.v[ytdArr[k].ayIndex] >= 0 ? globalTotalRow.v[ytdArr[k].ayIndex] - globalTotalRow.v[ytdArr[k].byIndex] : globalTotalRow.v[ytdArr[k].byIndex] - globalTotalRow.v[ytdArr[k].ayIndex];
+				}
+				if (ytdArr[k].mIndex !== null) {
+					globalTotalRow.v[ytdArr[k].mIndex] = globalTotalRow.v[ytdArr[k].amIndex] >= 0 ? globalTotalRow.v[ytdArr[k].amIndex] - globalTotalRow.v[ytdArr[k].bmIndex] : globalTotalRow.v[ytdArr[k].bmIndex] - globalTotalRow.v[ytdArr[k].amIndex];
+				}
+				if (ytdArr[k].fytdIndex !== null) {
+					globalTotalRow.v[ytdArr[k].fytdIndex] = globalTotalRow.v[ytdArr[k].ayIndex] >= 0 ? globalTotalRow.v[ytdArr[k].ayIndex] - globalTotalRow.v[ytdArr[k].fyIndex] : globalTotalRow.v[ytdArr[k].fyIndex] - globalTotalRow.v[ytdArr[k].ayIndex];
+				}
+			}
 			return globalTotalRow;
 		} catch (e) {
 			alert("getGlobalTotalRow = " + e);
@@ -520,7 +600,7 @@
 				}
 				if (mark !== newMark) {
 					mark = newMark;
-					let subTotalRow = this.getSumRowFromRows(oneTypeArray, columns);
+					let subTotalRow = this.getSumRowFromRows(oneTypeArray, columns, lvlNameField === 'l1');
 					for (j = 1; j <= num; j++) {
 						localKey = "l" + j;
 						localKeyLong = "l" + j + "Long";
@@ -537,7 +617,7 @@
 				oneTypeArray.push(row);
 			}
 
-			let subTotalRow = this.getSumRowFromRows(oneTypeArray, columns);
+			let subTotalRow = this.getSumRowFromRows(oneTypeArray, columns, lvlNameField === 'l1');
 			for (j = 1; j <= num; j++) {
 				let localKey = "l" + j;
 				let localKeyLong = "l" + j + "Long";
@@ -572,7 +652,7 @@
 		}
 	},
 
-	getSumRowFromRows: function (rows, columns) {
+	getSumRowFromRows: function (rows, columns, globalTotal) {
 		try {
 			let newRow = {};
 			newRow.v = [];
@@ -589,7 +669,9 @@
 						if (Math.abs(newRow.v[j - 4]) >= Math.abs(newRow.v[j - 1])) newRow.v[j] = 0;
 						else newRow.v[j] = parseFloat(newRow.v[j - 1]) - parseFloat(newRow.v[j - 4]);
 					} else {*/
-					newRow.v[j] += parseFloat(rows[i].v[j]);
+					if(globalTotal)	newRow.v[j] = rows[i].l2Long === 'Expense' ? (newRow.v[j] - parseFloat(rows[i].v[j])) : (newRow.v[j] + parseFloat(rows[i].v[j]));
+
+					else newRow.v[j] += parseFloat(rows[i].v[j]);
 					//}
 				}
 			}
@@ -1040,10 +1122,16 @@
 		name: 'Calibri',
 		family: 4
 	},
-	totalFont: {
+	generalFont: {
 		name: 'Calibri',
 		family: 4,
 		size: 11,
+		bold: true,
+	},
+	totalFont: {
+		name: 'Calibri',
+		family: 4,
+		size: 12,
 		bold: true,
 	},
 	decAlign: {horizontal: 'right'},
@@ -1054,9 +1142,8 @@
 	helpDownloadExcel: function (cmp) {
 		try {
 			const report = cmp.get("v.report");
-			this.restructureLines(cmp);
 			const customFormat = report.cb4__Description__c === 'Custom Excel';
-			const tableRows = cmp.get('v.rows');
+			const tableRows = this.restructureLines(cmp);
 			let n = cmp.get("v.numberOfTextColumns"); // the number of text columns
 			const getRowAmount = (val) => {
 				if (val === '-' || val.includes('%')) return val;
@@ -1078,14 +1165,21 @@
 			let fixedColumns = report.cb4__FixedColumns__c;
 			if (!fixedColumns) fixedColumns = 1; else fixedColumns--;
 			let tableHeaders = cmp.get("v.tableHeaders");
-			let bdgI = null;
+			let bdgI = cmp.get('v.bdgI');
+
 			for (let i = 0; i < tableHeaders.length; i++) {
 				if (tableHeaders[i] === "BDG") {
 					bdgI = i;
-					n--;
+					cmp.set('v.bdgI', bdgI);
 				}
 			}
-			if (bdgI !== null) tableHeaders.splice(bdgI, 1);
+			if (bdgI !== null){
+				if(tableHeaders[bdgI] ==='BDG')	{
+					tableHeaders.splice(bdgI, 1);
+				}
+				n--;
+			}
+
 			sheetName = sheetName.substring(0, 30).replace(':', '\uA789');
 			const worksheet = workbook.addWorksheet(sheetName, {
 				views: [
@@ -1099,13 +1193,13 @@
 
 			/** LINE OVER HEADER **/
 			const overHeaderTitlesRow = worksheet.getRow(5); // header row position from top
-			worksheet.mergeCells(5, 1, 5, 4); // merge by start row, start column, end row, end column (equivalent to K10:M12)
-			worksheet.mergeCells(5, 5, 5, 10); // merge by start row, start column, end row, end column (equivalent to K10:M12)
-			worksheet.mergeCells(5, 11, 5, 16); // merge by start row, start column, end row, end column (equivalent to K10:M12)
-			worksheet.mergeCells(5, 17, 5, 19); // merge by start row, start column, end row, end column (equivalent to K10:M12)
+			worksheet.mergeCells(5, 1, 5, 4); // merge by start row, start column, end row, end column (equivalent to A1:D1)
+			worksheet.mergeCells(5, 5, 5, 9); // merge by start row, start column, end row, end column (equivalent to E5:K5)
+			worksheet.mergeCells(5, 10, 5, 14); // merge by start row, start column, end row, end column (equivalent to L5:Q5)
+			worksheet.mergeCells(5, 15, 5, 17); // merge by start row, start column, end row, end column (equivalent to R5:T5)
 			setCell(overHeaderTitlesRow.getCell(5), 'Current Month', this.overHeaderHeaderFill, this.overHeaderHeaderFont, null, this.headerTitleAlign, this.borderTopBottom);
-			setCell(overHeaderTitlesRow.getCell(11), 'YTD', this.overHeaderHeaderFill, this.overHeaderHeaderFont, null, this.headerTitleAlign, this.borderTopBottom);
-			setCell(overHeaderTitlesRow.getCell(17), '12 Months', this.overHeaderHeaderFill, this.overHeaderHeaderFont, null, this.headerTitleAlign, this.borderTopBottom);
+			setCell(overHeaderTitlesRow.getCell(10), 'YTD', this.overHeaderHeaderFill, this.overHeaderHeaderFont, null, this.headerTitleAlign, this.borderTopBottom);
+			setCell(overHeaderTitlesRow.getCell(15), '12 Months', this.overHeaderHeaderFill, this.overHeaderHeaderFont, null, this.headerTitleAlign, this.borderTopBottom);
 			/** LINE OVER HEADER **/
 
 			/** HEADERS  Reporting Dep	Type	Subtype ....**/
@@ -1125,7 +1219,7 @@
 				subTotal1: this.overHeaderHeaderFill,
 				subTotal2: this.overHeaderHeaderFill,
 				subTotal3: this.subTotal3Fill,
-				total: this.overHeaderHeaderFill,
+				total: this.topHeaderFill,
 				topHeader: this.topHeaderFill,
 			};
 			tableRows.forEach(row => {
@@ -1135,7 +1229,7 @@
 					cellPosition = 1;
 					const rowIsSubTotal = subtotalTypes.includes(row.type);
 					const subtotalFill = row.type ? subtotalFillMap[row.type] : undefined;
-					const subtotalFont = row.type === 'total' || row.type === 'subTotal1' || row.type === 'subTotal2' ? this.overHeaderHeaderFont : this.totalFont;
+					const subtotalFont = row.type === 'subTotal1' || row.type === 'subTotal2' ? this.overHeaderHeaderFont : (row.type === 'total' ? this.totalFont : this.generalFont);
 
 					departmentName[row[`l1Long`]] = true; // collection of department names
 					if (row.type === 'topHeader') excelRow.height = 23;
@@ -1149,11 +1243,13 @@
 							setCell(cell, value, null, this.simpleFont);
 						}
 					}// text part of a row
+
 					row.v.forEach((val, idx) => {
 						const cell = excelRow.getCell(cellPosition++);
-						const value = getRowAmount(val);
+						const value = row.type === 'topHeader' ? '' : getRowAmount(val);
 						if (rowIsSubTotal) {
-							setCell(cell, value, subtotalFill, subtotalFont, this.NUM_FORMAT, this.decAlign, this.borderTopBottom);
+							if(row.type !== 'topHeader') setCell(cell, value, subtotalFill, subtotalFont, this.NUM_FORMAT, this.decAlign, this.borderTopBottom);
+							else setCell(cell, value, subtotalFill, subtotalFont, '@', this.decAlign, this.borderTopBottom);
 						} else {
 							setCell(cell, value, null, this.simpleFont, this.NUM_FORMAT, this.decAlign);
 						}
@@ -1164,11 +1260,11 @@
 			});
 			this.setColumnsWidth(worksheet);
 			this.makeTransparentExtraExcelTitles(worksheet, tableRows);
-			['TOTAL', 'Expense', 'Revenue'].forEach(title => delete departmentName[title]);
+			['TOTAL', 'EXPENSE', 'REVENUE'].forEach(title => delete departmentName[title]);
 			this.addReportHeaderLines(worksheet, customFormat, Object.keys(departmentName).join(', '), cmp.get('v.displayedColumns'));
 			this.addVerticalBorders(worksheet, tableRows.length);
 			worksheet.autoFilter = 'A5:D5';
-			workbook.xlsx.writeBuffer().then(buffer => saveAs(new Blob([buffer]), cmp.get('v.report.Name') + '.xlsx')).catch(err => alert('Error writing excel export', err));
+			workbook.xlsx.writeBuffer().then(buffer => saveAs(new Blob([buffer]), cmp.get('v.d1filter') + '.xlsx')).catch(err => alert('Error writing excel export', err));
 		} catch (e) {
 			alert(e);
 		}
@@ -1178,9 +1274,8 @@
 	 * The method reverts subtotal lines over a group of simple lines
 	 */
 	restructureLines: function (cmp) {
-		const tableRows = cmp.get('v.rows');
+		const tableRows = JSON.parse(JSON.stringify(cmp.get('v.rows')));
 		const globalTotal = tableRows.shift();
-		console.log('Global total ' + JSON.stringify(globalTotal));
 		delete globalTotal.l2Long;
 		delete globalTotal.l3Long;
 		const emptyAmounts = [];
@@ -1226,8 +1321,7 @@
 			revenues.unshift(getTopRow('Revenue'));
 		}
 
-		const updatedRows = [...revenues, ...expenses, globalTotal];
-		cmp.set('v.rows', updatedRows);
+		return [...revenues, ...expenses, globalTotal];
 	},
 
 	/**
@@ -1332,7 +1426,7 @@
 	},
 
 	addVerticalBorders: function (worksheet, numberOfRows) {
-		['J', 'P', 'S'].forEach(columnLetter => {
+		['I', 'N', 'Q'].forEach(columnLetter => {
 			for (let i = 5; i < numberOfRows + 7; i++) {
 				const cell = worksheet.getCell(columnLetter + i);
 				cell.border = cell.border ? this.borderTopBottomRight : this.borderRight;
@@ -1352,7 +1446,7 @@
 			if (i < 3) {
 				column.width = 3;
 			} else {
-				column.width = 10;
+				column.width = 12;
 			}
 			if (i === 3) {
 				column.width = 35; // GL Account column

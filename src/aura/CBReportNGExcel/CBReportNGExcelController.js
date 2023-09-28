@@ -53,6 +53,7 @@
     },
     downloadAllBySheetToExcel: function (cmp, evt, h) {
         let report = cmp.get("v.report");
+        const customFormat = report.cb4__Description__c === 'Custom Excel';
         let workbook = new ExcelJS.Workbook();
         let repDepartments = cmp.get('v.d1SO');
         cmp.set("v.d2filter", null);
@@ -61,6 +62,21 @@
         cmp.set("v.d5filter", null);
         cmp.set("v.d6filter", null);
         cmp.set("v.d7filter", null);
+
+        const getRowAmount = (val) => {
+            if (val === '-' || val.includes('%')) return val;
+            if (parseInt(val.replace(' %').replace(/,/g, '')) === 0) return '-';
+            if (val.includes(' %')) parseFloat(val.replace(' %').replace(/,/g, '')) + ' %';
+            return parseFloat(val.replace(/,/g, ''));
+        };
+        const setCell = (cell, value, fill, font, numFmt, alignment, border) => {
+            cell.value = value;
+            cell.fill = fill;
+            cell.font = font;
+            cell.numFmt = numFmt;
+            cell.alignment = alignment;
+            cell.border = border;
+        };
         for(let f = 0; f < repDepartments.length; f++){
             cmp.set("v.d1filter", repDepartments[f]);
 
@@ -72,7 +88,7 @@
 
             let header = JSON.parse(JSON.stringify(cmp.get("v.tableHeadersOriginal")));
             cmp.set("v.tableHeaders", header);
-
+            let n = cmp.get("v.numberOfTextColumns"); // the number of text columns
             cmp.set("v.rows", origin);
             h.helpApplyDimensionFilter(cmp); // dimension filter
             if (cmp.get("v.rows").length === 0) {
@@ -85,120 +101,110 @@
 
             h.helpShowHideSimpleRows(cmp); // total rows only filter
             h.helpApplyColumnsFilter(cmp); // display only allowed columns filter
-
             /////// ADD SHEET TO EXCELL
-            let tableRows = cmp.get('v.rows');
+            let tableRows = h.restructureLines(cmp);
             let sheetName = repDepartments[f];
 
             let fixedColumns = report.cb4__FixedColumns__c;
             if (_isInvalid(fixedColumns)) fixedColumns = 1; else fixedColumns--;
             let tableHeaders = cmp.get("v.tableHeaders");
+            let bdgI = cmp.get('v.bdgI');
+
+            for (let i = 0; i < tableHeaders.length; i++) {
+                if (tableHeaders[i] === "BDG") {
+                    bdgI = i;
+                    cmp.set('v.bdgI', bdgI);
+                }
+            }
+            if (bdgI !== null){
+                if(tableHeaders[bdgI] ==='BDG')	{
+                    tableHeaders.splice(bdgI, 1);
+                }
+                n--;
+            }
             sheetName = sheetName.substring(0, 30).replace(':', '\uA789');
-            let worksheet = workbook.addWorksheet(sheetName, {
+            const worksheet = workbook.addWorksheet(sheetName, {
                 views: [
-                    {state: 'frozen', ySplit: 1, xSplit: fixedColumns}
+                    {state: 'frozen', ySplit: 6, xSplit: fixedColumns, showGridLines: false}
                 ]
             });
+            worksheet.getCell('A1').font = {
+                name: 'Calibri',
+                family: 4
+            };
+            /** LINE OVER HEADER **/
+            const overHeaderTitlesRow = worksheet.getRow(5); // header row position from top
+            worksheet.mergeCells(5, 1, 5, 4); // merge by start row, start column, end row, end column (equivalent to A1:D1)
+            worksheet.mergeCells(5, 5, 5, 9); // merge by start row, start column, end row, end column (equivalent to E5:K5)
+            worksheet.mergeCells(5, 10, 5, 14); // merge by start row, start column, end row, end column (equivalent to L5:Q5)
+            worksheet.mergeCells(5, 15, 5, 17); // merge by start row, start column, end row, end column (equivalent to R5:T5)
+            setCell(overHeaderTitlesRow.getCell(5), 'Current Month', h.overHeaderHeaderFill, h.overHeaderHeaderFont, null, h.headerTitleAlign, h.borderTopBottom);
+            setCell(overHeaderTitlesRow.getCell(10), 'YTD', h.overHeaderHeaderFill, h.overHeaderHeaderFont, null, h.headerTitleAlign, h.borderTopBottom);
+            setCell(overHeaderTitlesRow.getCell(15), '12 Months', h.overHeaderHeaderFill, h.overHeaderHeaderFont, null, h.headerTitleAlign, h.borderTopBottom);
+            /** LINE OVER HEADER **/
+            /** HEADERS  Reporting Dep	Type	Subtype ....**/
+            const headerTitlesRow = worksheet.getRow(6); // header row position from top
+            headerTitlesRow.height = 50;
+            headerTitlesRow.values = tableHeaders; // header values like ['Reporting Dep', 'Type', 'Subtype' ....]
+            headerTitlesRow.eachCell({includeEmpty: true}, (cell, i) => setCell(cell, i <= 3 ? '' : cell.value, h.headerFill, h.totalFont, null, h.headerTitleAlign, h.borderTopBottom)); // header styles
+            /** HEADERS  Reporting Dep	Type	Subtype ....**/
+                // ROWS
+            const departmentName = {};
+            const subtotalTypes = ['total', 'topHeader'];
+            for (let idx = 1; idx <= 5; idx++) subtotalTypes.push(`subTotal${idx}`);
+            let amountRowPosition = 7; // start position is 6
+            let cellPosition;
+            let subtotalFillMap = {
+                subTotal1: h.overHeaderHeaderFill,
+                subTotal2: h.overHeaderHeaderFill,
+                subTotal3: h.subTotal3Fill,
+                total: h.topHeaderFill,
+                topHeader: h.topHeaderFill,
+            };
+            tableRows.forEach(row => {
+                try {
+                    const excelRow = worksheet.getRow(amountRowPosition); // one row
+                    amountRowPosition++;
+                    cellPosition = 1;
+                    const rowIsSubTotal = subtotalTypes.includes(row.type);
+                    const subtotalFill = row.type ? subtotalFillMap[row.type] : undefined;
+                    const subtotalFont = row.type === 'subTotal1' || row.type === 'subTotal2' ? h.overHeaderHeaderFont : (row.type === 'total' ? h.totalFont : h.generalFont);
 
-            // COLUMNS
-            let arr = [];
-            tableHeaders.forEach(function (h) {
-                //arr.push({header: h, key: h, width: 16, style: {numFmt: '$ #,##0.00;[Red]($ #,##0.00)'}});
-                if(h === 'Actual vs Budget YTD') {
-                    arr.push({header: h, key: h, width: 16, style: {numFmt: '#,##0.00;[Red](#,##0.00)'}});
-                }else{
-                    arr.push({header: h, key: h, width: 16, style: {numFmt: '#,##0.00;[Black](#,##0.00)'}});
+                    departmentName[row[`l1Long`]] = true; // collection of department names
+                    if (row.type === 'topHeader') excelRow.height = 23;
+                    for (let j = 0; j < n; j++) {
+                        const cell = excelRow.getCell(cellPosition++);
+                        let value = row[`l${j + 1}Long`];
+                        if (rowIsSubTotal) {
+                            value = value === '-' ? null : value;
+                            setCell(cell, value, subtotalFill, subtotalFont, null, h.rowTitleAlign, h.borderTopBottom);
+                        } else {
+                            setCell(cell, value, null, h.simpleFont);
+                        }
+                    }// text part of a row
+
+                    row.v.forEach((val, idx) => {
+                        const cell = excelRow.getCell(cellPosition++);
+                        const value = row.type === 'topHeader' ? '' : getRowAmount(val);
+                        if (rowIsSubTotal) {
+                            if(row.type !== 'topHeader') setCell(cell, value, subtotalFill, subtotalFont, h.NUM_FORMAT, h.decAlign, h.borderTopBottom);
+                            else setCell(cell, value, subtotalFill, subtotalFont, '@', h.decAlign, h.borderTopBottom);
+                        } else {
+                            setCell(cell, value, null, h.simpleFont, h.NUM_FORMAT, h.decAlign);
+                        }
+                    });
+                } catch (e) {
+                    alert('ERROR: ' + e);
                 }
             });
-            worksheet.columns = arr;
-            // COLUMNS
-
-            let subTotalRowNumbers = [];
-            let i = 2;
-
-            // ROWS
-            const n = cmp.get("v.numberOfTextColumns"); // the number of text columns
-            tableRows.forEach(function (row, idx) {
-                if (row.type === 'subTotal1' || row.type === 'subTotal2' || row.type === 'subTotal3' || row.type === 'subTotal4') subTotalRowNumbers.push(i);
-                i++;
-
-                let r = {}; // one row
-                for (let j = 0; j < n; j++) r[tableHeaders[j]] = row["l" + (j + 1) + "Long"];
-
-                let k = n;
-                row.v.forEach(function (val) {
-                    r[tableHeaders[k]] = getRowAmount(val);
-                    k++;
-                });
-
-                worksheet.addRow(r);
-            });
-
-            function getRowAmount(val) {
-                if (val === '-') return val;
-                if (val.includes(' %')) parseFloat(val.replace(' %').replace(/,/g, '')) + ' %';
-                return parseFloat(val.replace(/,/g, ''));
-            }
-
-            // ROWS
-
-            const borderStyles = {
-                top: {style: "thin"},
-                left: {style: "thin"},
-                bottom: {style: "thin"},
-                right: {style: "thin"}
-            };
-            const headerBorderStyles = {
-                top: {style: "thin"},
-                left: {style: "thin"},
-                bottom: {style: 'double', color: {argb: '005493'}},
-                right: {style: "thin"}
-            };
-            const headerFill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: {argb: '0080DF'}
-            };
-            const totalFill = {
-                type: 'pattern',
-                pattern: 'solid',
-                fgColor: {argb: '16325c'}
-            };
-            worksheet.eachRow({includeEmpty: true}, function (row, rowNumber) { // all rows
-                row.eachCell({includeEmpty: true}, function (cell, cellNumber) {
-                    cell.border = borderStyles;
-                    cell.font = {color: {argb: '4a4a4a'}};
-                });
-            });
-            worksheet.getRow(1).eachCell({includeEmpty: false}, function (cell, cellNumber) { // table header
-                cell.font = {bold: true, color: {argb: 'FFFFFF'},};
-                cell.border = headerBorderStyles;
-                cell.fill = headerFill;
-            });
-
-            subTotalRowNumbers.forEach(function (index) {
-                worksheet.getRow(index).eachCell({includeEmpty: false}, function (cell, cellNumber) { // subtotal lines
-                    cell.font = {bold: true};
-                });
-            });
-
-            worksheet.getRow(2).eachCell({includeEmpty: false}, function (cell, cellNumber) { // Total
-                cell.font = {bold: true, color: {argb: 'FFFFFF'}};
-                cell.fill = totalFill;
-            });
-
-            // BOTTOM LINE
-            worksheet.addRow([]);
-            worksheet.addRow(['CloudBudget 2.0']);
-            worksheet.addRow([new Date().toJSON().slice(0, 10).replace(/-/g, '/')]);
+            h.setColumnsWidth(worksheet);
+            h.makeTransparentExtraExcelTitles(worksheet, tableRows);
+            ['TOTAL', 'EXPENSE', 'REVENUE'].forEach(title => delete departmentName[title]);
+            h.addReportHeaderLines(worksheet, customFormat, Object.keys(departmentName).join(', '), cmp.get('v.displayedColumns'));
+            h.addVerticalBorders(worksheet, tableRows.length);
+            worksheet.autoFilter = 'A5:D5';
         }
-
-        const maxNumber = cmp.get("v.report.cb4__MaxRowNumber__c");
-        cmp.set("v.report.cb4__MaxRowNumber__c", 1000000);
-
-        //EXCELL
         workbook.xlsx.writeBuffer().then(buffer => saveAs(new Blob([buffer]), cmp.get('v.report.Name') + '.xlsx')).catch(err => alert('Error writing excel export', err));
-        cmp.set("v.report.cb4__MaxRowNumber__c", maxNumber);
         _hideSpinner(cmp);
     },
     downloadPDF: function (cmp, event, helper) {
