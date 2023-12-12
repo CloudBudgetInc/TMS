@@ -1,0 +1,115 @@
+<template>
+    <template lwc:if={registerModalOpen}>
+        <c-volunteer-shift-register-modal shift-id={shiftId} shift-start={shiftStart} job-name={jobName} job-id={jobId} contact-id={thisContactId} onclosemodal={closeRegisterModal}></c-volunteer-shift-register-modal>
+    </template>
+    <!-- <template lwc:if={errorModalOpen}> -->
+        <!-- <c-volunteer-shift-register-modal error="true" errormsg={modalErrorMessage}></c-volunteer-shift-register-modal> -->
+        <!-- <div class="slds-modal__container">
+            <header class="slds-modal__header">
+                <h2 class="slds-text-heading_medium slds-hyphenate">Sign In To Register</h2>
+            </header>
+            <div class="slds-scoped-notification slds-media slda-media_center slds-theme_error" role="status">
+                <lightning-icon icon-name="utility:error" alternative-text="Error" title="Error"></lightning-icon>
+                <div class="slds-media__body">
+                    <p>Please Sign In or Register before signing up for a shift</p>
+                </div>
+            </div>
+        </div> -->
+
+        <!-- <lightning-moda-header label="Cannot Complete Registration"></lightning-moda-header>
+        <lightning-modal-body>
+            <p>You are not able to register for this shift</p>
+            <p>{modalErrorMessage}</p>
+        </lightning-modal-body>
+        <lightning-modal-footer>
+
+        </lightning-modal-footer> -->
+        <!-- <div class="slds-modal__container">
+            <header class="modal__header">
+                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeErrorModal}>
+                    <lightning-icon icon-name="utility:close" variant="inverse" size="small"></lightning-icon>
+                    <label><span class="slds-assistive-text">Close</span></label>
+                </button>
+                <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Cannot Complete Registration</h2>
+            </header>
+            <div class="slds-scoped-notification slds-media slds-media_center slds-theme_error" role="status">
+                <lightning-icon icon-name="utility:error" alternative-text="Error" title="Error"></lightning-icon>
+                <div class="slds-media__body">
+                    <p>You are not able to register for this shift</p>
+                    <p>{modalErrorMessage}</p>
+                </div>
+            </div>
+        </div> -->
+    <!-- </template> -->
+    <template if:true={loading}>
+        <div class="spinnerHolder">
+            <lightning-spinner alternative-text="Loading" size="large" variant="brand" class=""></lightning-spinner>
+        </div>
+    </template>
+
+    <lightning-card>
+        <h2 slot="title" class="slds-var-m-vertical_small">
+            <lightning-icon slot="media" icon-name="standard:employee_job"></lightning-icon>
+            <lightning-formatted-text value={jobName} class="slds-text-heading_large slds-var-m-horizontal_large"></lightning-formatted-text>
+        </h2>
+
+        <div class="slds-grid slds-wrap">
+            <div class="slds-col slds-size_1-of-1 slds-large-size_8-of-12 slds-var-p-vertical_medium slds-var-p-horizontal_large">
+                <h3>Description</h3>
+                <lightning-formatted-rich-text value={jobDescription}></lightning-formatted-rich-text>
+
+                <lightning-tile>
+                    <div class="slds-clearfix slds-var-m-vertical_medium">
+                        <h3>
+                           <p class="slds-text-heading_medium slds-text-title_bold">{shiftStart}</p>
+                           <template lwc:if={userIsGuest}>
+                                <lightning-button label="Sign In to Register" class="slds-float_right" onclick={handleRegisterClicked} data-start={shiftStart}></lightning-button>
+                            </template>
+                            <template lwc:else>
+                                <div class="slds-var-m-vertical_small">
+                                    <lightning-button label="Register" class="slds-float_right" onclick={handleRegisterClicked} variant="brand"></lightning-button>
+                                </div><br />
+                            </template>
+
+                        </h3>
+                    </div>
+                    <div class="slds-grid slds-wrap slds-var-m-vertical_medium">
+                        <div class="slds-col slds-size_1-of-2">
+                            <p>Desired Number of Volunteers: <lightning-formatted-number value={shiftDesired} class="slds-var-m-horizontal_large"></lightning-formatted-number></p>
+                            <p>Duration: <lightning-formatted-number value={shiftDuration} class="slds-var-m-left_large"></lightning-formatted-number>hr(s)</p>
+                            <p>Location City: <lightning-formatted-text value={shiftCity} class="slds-var-m-horizontal_large"></lightning-formatted-text></p>
+                        </div>
+                        <div class="slds-col slds-size_1-of-2">
+                            <p>Number of Volunteers Still Needed: <lightning-formatted-number value={shiftNeeded} class="slds-var-m-horizontal_large"></lightning-formatted-number></p>
+                            <p>Volunteers Already Registered: <lightning-formatted-number value={shiftTotal} class="slds-var-m-horizontal_large"></lightning-formatted-number></p>
+                        </div>
+                        Shift Notes: <br /><lightning-formatted-text value={shiftDescription} class="slds-var-m-horizontal_large"></lightning-formatted-text>
+                    </div>
+                    <div class="slds-var-m-vertical_small slds-float_right">
+                        <c-tms-volunteer-shift-add-to-calendar title={jobName} start={shfitStartRaw} end={shiftEndRaw} address={jobLocationAddress} description={jobDescription}></c-tms-volunteer-shift-add-to-calendar>
+                    </div>
+                </lightning-tile>
+            </div>
+            <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12 slds-var-p-vertical_medium slds-var-p-horizontal_large">
+                <div class="tile-bg slds-var-p-around_medium">
+                    <lightning-tile type="media">
+                        <h3 title="Location">Location</h3>
+                        <lightning-icon slot="media" icon-name="utility:checkin"></lightning-icon>
+                        <lightning-formatted-text value={jobLocationStreet} class="slds-text-body_regular"></lightning-formatted-text><br />
+                        <lightning-formatted-text value={jobCity} class="slds-text-body_regular"></lightning-formatted-text>
+                    </lightning-tile>
+                </div>
+                <div class="tile-bg slds-var-p-around_medium">
+                    <lightning-tile type="media">
+                        <h3 title="Skills and Additional Info">Skills and Additional Info</h3>
+                        <lightning-icon slot="media" icon-name="utility:thunder"></lightning-icon>
+                        <template lwc:if={skillComputer}>
+                            <p><lightning-icon slot="media" icon-name="utility:screen" alternative-text="Computer Skills"></lightning-icon></p>
+                        </template>
+                    </lightning-tile>
+                </div>
+            </div>
+        </div>
+    </lightning-card>
+
+</template>

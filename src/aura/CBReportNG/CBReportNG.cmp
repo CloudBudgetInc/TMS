@@ -75,8 +75,6 @@
 
     <!--PDF HEADER-->
     <div id="pdfHeader" class="slds-grid slds-grid_vertical slds-p-bottom_medium slds-hide" style="margin-top: -100px;">
-        <!--<div style="text-align: center">{!v.report.Name}</div>
-        <div >{!v.report.cb4__Description__c}</div>-->
         <div class="slds-media">
             <div class="slds-media__body">
                 <div class="slds-page-header__name">
@@ -113,7 +111,6 @@
                                     <span class="slds-page-header__title slds-truncate">{!v.report.Name}</span>
                                 </h1>
                                 <div style="font-size: smaller;">{!v.report.cb4__Description__c}</div>
-                                <!-- <c:Currency/>-->
                             </div>
                         </div>
 
@@ -122,7 +119,7 @@
                 </div>
             </div>
 
-            <lightning:input type="toggle" label="Details" class="slds-p-top--medium slds-p-right--medium"
+            <lightning:input type="toggle" label="Details" class="slds-p-top_medium slds-p-right_medium"
                              messageToggleActive="Display"
                              messageToggleInactive="Hide"
                              checked="{!v.showSimpleRows}"
@@ -240,7 +237,7 @@
                 </div>
             </aura:if>
 
-            <lightning:buttonIcon iconName="utility:cases" onclick="{!c.displayColumnsSet}" class="slds-m-top--large"
+            <lightning:buttonIcon iconName="utility:cases" onclick="{!c.displayColumnsSet}" class="slds-m-top_large"
                                   alternativeText="Columns setup"
                                   title="Columns setup"/>
 
@@ -248,10 +245,6 @@
                                   class=" slds-m-top_large"
                                   alternativeText="Fit to page size"
                                   title="Fit to page size"/>
-
-            <!--<div class="slds-media__figure slds-m-top&#45;&#45;large">
-                <c:HelpDocumentation module="Report"/>
-            </div>-->
         </div>
     </div>
     <!-- HEADER -->
@@ -292,14 +285,14 @@
     <!-- COLUMNS SET -->
 
     <!-- Drill Down Component -->
-    <div class="slds-float--right">
+    <div class="slds-float_right">
             {!v.drillDownComponent}
     </div>
     <!-- Drill Down Component -->
 
     <!-- EXCEL/PDF PANELS -->
     <aura:if isTrue="{!v.showExportButtons}">
-        <div class="slds-card slds-no-print slds-p-top--small slds-p-bottom--small slds-p-left--xxx-small"
+        <div class="slds-card slds-no-print slds-p-top_small slds-p-bottom_small slds-p-left_xxx-small"
              aura:id="excelPanel"
              style="width: 450px; opacity: 0.9; z-index: 10 !important; position: fixed; top: 220px; right:-420px;  box-shadow: 0px 0px 5px;">
 
@@ -312,7 +305,7 @@
                         </div>
                     </div>
                 </lightning:layoutItem>
-                <lightning:layoutItem class="slds-p-left--small">
+                <lightning:layoutItem class="slds-p-left_small">
 
                     <lightning:button label="Download" iconName="utility:download" class="" iconPosition="left"
                                       onclick="{!c.downloadExcel}"/>
@@ -327,7 +320,7 @@
         <!-- EXCEL PANEL -->
 
         <!-- PDF PANEL -->
-        <div class="slds-card slds-no-print slds-p-top--small slds-p-bottom--small slds-p-left--xxx-small"
+        <div class="slds-card slds-no-print slds-p-top_small slds-p-bottom_small slds-p-left_xxx-small"
              aura:id="PDFPanel"
              style="width: 280px; opacity: 0.9; z-index: 10 !important; position: fixed; top: 270px; right:-250px;  box-shadow: 0px 0px 5px;">
 
@@ -340,7 +333,7 @@
                         </div>
                     </div>
                 </lightning:layoutItem>
-                <lightning:layoutItem class="slds-p-left--small">
+                <lightning:layoutItem class="slds-p-left_small">
                     <lightning:button label="Download" iconName="utility:download" class="" iconPosition="left"
                                       onclick="{!c.downloadPDF}"/>
                 </lightning:layoutItem>

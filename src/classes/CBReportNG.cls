@@ -69,10 +69,20 @@ public with sharing class CBReportNG {
 
         List<cb4__CBalance__c> r = Database.query('SELECT cb4__Amount1__c, cb4__Amount2__c, cb4__Amount3__c, cb4__Amount4__c, cb4__Amount5__c, cb4__Amount2_1__c, cb4__Amount1YTD__c, cb4__Amount2YTD__c, cb4__Amount3YTD__c, cb4__Amount4YTD__c, cb4__Amount5YTD__c, cb4__Amount2_1YTD__c, cb4__Column__c, cb4__Lvl1Name__c, cb4__Lvl2Name__c, cb4__Lvl3Name__c, cb4__Lvl4Name__c, cb4__Lvl5Name__c, cb4__Lvl6Name__c, cb4__Lvl7Name__c, cb4__Key__c FROM cb4__CBalance__c WHERE ' + (String.isBlank(cReport.cb4__CBalanceFilter__c) ? '' : ('(' + cReport.cb4__CBalanceFilter__c + ') AND')) + ' cb4__CBalanceRule__c IN:balIds AND cb4__Column__c IN:periodIds AND (cb4__Amount1__c != 0 OR cb4__Amount2__c != 0 OR cb4__Amount3__c != 0 OR cb4__Amount4__c != 0 OR cb4__Amount5__c != 0 OR cb4__Amount1YTD__c != 0 OR cb4__Amount2YTD__c != 0 OR cb4__Amount3YTD__c != 0 OR cb4__Amount4YTD__c != 0 OR cb4__Amount5YTD__c != 0) ORDER BY cb4__Lvl1__r.cb4__OrderNumber__c, cb4__Lvl1Name__c, cb4__Lvl2__r.cb4__OrderNumber__c, cb4__Lvl2Name__c, cb4__Lvl3__r.cb4__OrderNumber__c, cb4__Lvl3Name__c, cb4__Lvl4__r.cb4__OrderNumber__c, cb4__Lvl4Name__c, cb4__Lvl5__r.cb4__OrderNumber__c, cb4__Lvl5Name__c, cb4__Lvl6__r.cb4__OrderNumber__c, cb4__Lvl6Name__c, cb4__Lvl7__r.cb4__OrderNumber__c, cb4__Lvl7Name__c LIMIT 50000 ');
 
+        return r;
+    }
 
-        ////////////////// EXPERIMENT  ///////////////
-        //r = CBCurrency.convertAmountsToUserCurrency(r);
-        ////////////////// EXPERIMENT  ///////////////
+    @AuraEnabled
+    public static List<cb4__CBalance__c> getAllCBalancesServer(Id reportId, List<Id> periodIds) {
+        Set<Id> balIds = new Set<Id>(); //list of CBalance Rules
+        for (cb4__CBReportColumn__c col : getReportColumnsServer(reportId)) {
+            if (col.cb4__CBRule1__c != null) balIds.add(col.cb4__CBRule1__c); // restriction by CBalance Rule
+        }
+
+        cb4__CBReport__c cReport = [SELECT Id, cb4__CBalanceFilter__c FROM cb4__CBReport__c WHERE Id = :reportId];
+
+        List<cb4__CBalance__c> r = new List<cb4__CBalance__c>();
+        r = Database.query('SELECT cb4__Amount1__c, cb4__Amount2__c, cb4__Amount3__c, cb4__Amount4__c, cb4__Amount5__c, cb4__Amount2_1__c, cb4__Amount1YTD__c, cb4__Amount2YTD__c, cb4__Amount3YTD__c, cb4__Amount4YTD__c, cb4__Amount5YTD__c, cb4__Amount2_1YTD__c, cb4__Column__c, cb4__Lvl1Name__c, cb4__Lvl2Name__c, cb4__Lvl3Name__c, cb4__Lvl4Name__c, cb4__Lvl5Name__c, cb4__Lvl6Name__c, cb4__Lvl7Name__c, cb4__Key__c FROM cb4__CBalance__c WHERE ' + (String.isBlank(cReport.cb4__CBalanceFilter__c) ? '' : ('(' + cReport.cb4__CBalanceFilter__c + ') AND')) + ' cb4__CBalanceRule__c IN:balIds AND cb4__Column__c IN:periodIds AND (cb4__Amount1__c != 0 OR cb4__Amount2__c != 0 OR cb4__Amount3__c != 0 OR cb4__Amount4__c != 0 OR cb4__Amount5__c != 0 OR cb4__Amount1YTD__c != 0 OR cb4__Amount2YTD__c != 0 OR cb4__Amount3YTD__c != 0 OR cb4__Amount4YTD__c != 0 OR cb4__Amount5YTD__c != 0) ORDER BY cb4__Lvl1__r.cb4__OrderNumber__c, cb4__Lvl1Name__c, cb4__Lvl2__r.cb4__OrderNumber__c, cb4__Lvl2Name__c, cb4__Lvl3__r.cb4__OrderNumber__c, cb4__Lvl3Name__c, cb4__Lvl4__r.cb4__OrderNumber__c, cb4__Lvl4Name__c, cb4__Lvl5__r.cb4__OrderNumber__c, cb4__Lvl5Name__c, cb4__Lvl6__r.cb4__OrderNumber__c, cb4__Lvl6Name__c, cb4__Lvl7__r.cb4__OrderNumber__c, cb4__Lvl7Name__c LIMIT 49000');
 
         return r;
     }

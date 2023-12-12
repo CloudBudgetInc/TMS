@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>58.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>TMS Volunteer Portal Hero Image</masterLabel>
+    <targets>
+        <target>lightningCommunity__Page</target>
+        <target>lightningCommunity__Default</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightningCommunity__Default">
+            <property name="cmsImageInput" label="CMS Image" type="ContentReference" filter="heroImage" description="**Preferred**  Choose and image from the Salesforce CMS (Digital Experiences)."/>
+            <property name="overriedInput" label="Override properties" type="Boolean" description="Override the CMS content. Select this if you wish to override the options from the CMS content" />
+            <property name="urlInput" label="Override Image URL" type="String" description="Override the URL to the image. The image should be saved either in the community CMS or in the Static Resources to ensure it is visible publically."/>
+            <property name="titleInput" label="Override Title Text" type="String" description="Override the text that will be displayed over the hero image" />
+            <property name="imageAlignInput" label="Override Image Alignment" type="String" default="Top" datasource="Top,Middle,Bottom" description="Override the vertical alignment for the image: Possible values are: 'Top', 'Center', or 'Bottom'" />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

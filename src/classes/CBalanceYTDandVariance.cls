@@ -5,10 +5,27 @@
 public with sharing class CBalanceYTDandVariance implements Database.Batchable<SObject> {
 
     private String CBalanceRuleId;
+    private List<String> brdIds;
+    private String currBrdId;
 
     public CBalanceYTDandVariance(Id CBalanceRuleId) {
         if (CBalanceRuleId == null) Integer error = 1 / 0;
         this.CBalanceRuleId = CBalanceRuleId;
+        List<String> brdIdList = new List<String>();
+        for(AggregateResult c : [SELECT cb4__Lvl1__c FROM cb4__CBalance__c WHERE cb4__CBalanceRule__c = :CBalanceRuleId GROUP BY cb4__Lvl1__c]){
+            brdIdList.add((String) c.get('cb4__Lvl1__c'));
+        }
+        currBrdId = brdIdList[0];
+        brdIdList.remove(0);
+        this.brdIds = brdIdList;
+    }
+
+    public CBalanceYTDandVariance(Id CBalanceRuleId, List<String> brdIds) {
+        if (CBalanceRuleId == null) Integer error = 1 / 0;
+        this.CBalanceRuleId = CBalanceRuleId;
+        this.currBrdId = brdIds[0];
+        brdIds.remove(0);
+        this.brdIds = brdIds;
     }
 
 
@@ -20,6 +37,9 @@ public with sharing class CBalanceYTDandVariance implements Database.Batchable<S
         run(scope);
     }
     public void finish(Database.BatchableContext context) {
+        if(!brdIds.isEmpty()){
+            Id jobYTDId = Database.executeBatch(new CBalanceYTDandVariance(CBalanceRuleId, brdIds), 830); // 830 is 10k/12
+        }
     }
 
     public void run(List<cb4__CBalance__c> scope) {
@@ -49,7 +69,7 @@ public with sharing class CBalanceYTDandVariance implements Database.Batchable<S
         Set<String> alreadyDoneSet = new Set<String>();
         Set<String> keysSet = new Set<String>();
         for (cb4__CBalance__c b : balances) keysSet.add(b.KeyOwner__c);
-        for (List<cb4__CBalance__c> blist : [SELECT KeyOwner__c, cb4__Column__c FROM cb4__CBalance__c WHERE cb4__CBalanceRule__c = :CBalanceRuleId ORDER BY KeyOwner__c LIMIT 50000]) {
+        for (List<cb4__CBalance__c> blist : [SELECT KeyOwner__c, cb4__Column__c FROM cb4__CBalance__c WHERE cb4__CBalanceRule__c = :CBalanceRuleId AND cb4__Lvl1__c = :currBrdId ORDER BY KeyOwner__c LIMIT 50000]) {
             for (cb4__CBalance__c b : blist) { // LOOP
                 total++;
                 if (keysSet.contains(b.KeyOwner__c)) {
@@ -84,7 +104,7 @@ public with sharing class CBalanceYTDandVariance implements Database.Batchable<S
                 SELECT cb4__Amount1__c,cb4__Amount2__c,cb4__Amount3__c,cb4__Amount4__c,cb4__Amount5__c,KeyOwner__c,cb4__Column__c,cb4__CBalanceRule__c,
                         cb4__Lvl1__c,cb4__Lvl2__c,cb4__Lvl3__c,cb4__Lvl4__c,cb4__Lvl5__c,cb4__Lvl6__c,cb4__Lvl7__c,cb4__Key__c
                 FROM cb4__CBalance__c
-                WHERE KeyOwner__c IN:balanceKeys AND cb4__CBalanceRule__c = :CBalanceRuleId
+                WHERE KeyOwner__c IN:balanceKeys AND cb4__CBalanceRule__c = :CBalanceRuleId AND cb4__Lvl1__c = :currBrdId
                 ORDER BY KeyOwner__c, cb4__Column__r.cb4__OrderNumber__c
         ];
         nullifyYTDAmounts(balances);
@@ -104,7 +124,7 @@ public with sharing class CBalanceYTDandVariance implements Database.Batchable<S
         updateLastUsingDateAndDescription([SELECT Id FROM cb4__CBalanceRule__c WHERE Id = :CBalanceRuleId]);
     }
 
-    private static void updatePercentsOfTheSameKeyCBalances(List<cb4__CBalance__c> balances) {
+    /*private static void updatePercentsOfTheSameKeyCBalances(List<cb4__CBalance__c> balances) {
         Map<String, List<cb4__CBalance__c>> sortingMap = new Map<String, List<cb4__CBalance__c>>(); // key = period + balance key
         for (cb4__CBalance__c balance : balances) {
             String key = balance.cb4__Column__c + balance.cb4__Key__c;
@@ -127,10 +147,10 @@ public with sharing class CBalanceYTDandVariance implements Database.Batchable<S
         }
     }
 
-    /**
+    *//**
      * cb4__Amount3YTD__c - DIFFERENCE
      * cb4__Amount4YTD__c - PERCENT
-     */
+     *//*
     private static void calculateAveragePercent(List<cb4__CBalance__c> balances) {
         Decimal amount1 = 0, amount2 = 0;
         for (cb4__CBalance__c balance : balances) {
@@ -148,7 +168,7 @@ public with sharing class CBalanceYTDandVariance implements Database.Batchable<S
             balance.cb4__Amount3YTD__c = difference;
             balance.cb4__Amount4YTD__c = percent;
         }
-    }
+    }*/
 
     private void nullifyYTDAmounts(List<cb4__CBalance__c> balances) {
         for (cb4__CBalance__c b : balances) {
@@ -211,7 +231,7 @@ public with sharing class CBalanceYTDandVariance implements Database.Batchable<S
         return 'SELECT cb4__Amount1__c,cb4__Amount2__c,cb4__Amount3__c,cb4__Amount4__c,cb4__Amount5__c,cb4__Column__c,cb4__CBalanceRule__c,OwnerId,' +
                 'cb4__Lvl1__c,cb4__Lvl2__c,cb4__Lvl3__c,cb4__Lvl4__c,cb4__Lvl5__c,cb4__Lvl6__c,cb4__Lvl7__c,cb4__DrillDown__c,cb4__Key__c,KeyOwner__c ' +
                 'FROM cb4__CBalance__c ' +
-                'WHERE cb4__CBalanceRule__c = \'' + CBalanceRuleId + '\' ORDER BY KeyOwner__c ';
+                'WHERE cb4__CBalanceRule__c = \'' + CBalanceRuleId + '\' AND cb4__Lvl1__c = \'' + currBrdId + '\' ORDER BY KeyOwner__c ';
     }
 
 }

@@ -22,12 +22,26 @@ public with sharing class CBReportingBalancesProcessingV2 implements Database.Ba
 
 	public static void processReportingBalances(List<c2g__ReportingBalance__c> rbs) {
 		Map<String, String> compareMap = getReportingDepartmentMap();
+		System.debug('---DEBUG---');
 		for (c2g__ReportingBalance__c rb : rbs) {
 			for (Integer i = 1; i <= 3; i++) {
-				String budgetReportDepId = compareMap.get(getRBKey('Level ' + i, rb));
-				if (budgetReportDepId != null) rb.put(getRBFieldName(i), budgetReportDepId);
+				System.debug('RB Key 3 dims');
+				System.debug(getRBKey('Level ' + i, rb, false));
+				String budgetReportDepId = compareMap.get(getRBKey('Level ' + i, rb, false));
+				if (budgetReportDepId != null){
+					rb.put(getRBFieldName(i), budgetReportDepId);
+				}else{
+					System.debug('RB Key 2 dims');
+					System.debug(getRBKey('Level ' + i, rb, true));
+					budgetReportDepId = compareMap.get(getRBKey('Level ' + i, rb, true));
+					if (budgetReportDepId != null){
+						rb.put(getRBFieldName(i), budgetReportDepId);
+					}
+				}
+
 			}
 		}
+		System.debug('---END DEBUG---');
 		for (c2g__ReportingBalance__c rb : rbs) rb.BDG__c = CBBDGMapping.getBDGId(rb.Budget_Reporting_Department__c, rb.Budget_Reporting_Department_2__c, rb.Budget_Reporting_Department_3__c);
 		update rbs;
 	}
@@ -36,7 +50,12 @@ public with sharing class CBReportingBalancesProcessingV2 implements Database.Ba
 	@TestVisible
 	private static Map<String, String> getReportingDepartmentMap() {
 		Map<String, String> r = new Map<String, String>();
-		for (Budget_Reporting_Department_Line__c brdl : CBServiceV2.getBudgetReportingLines()) r.put(getMappingKey(brdl), brdl.Budget_Reporting_Department__c);
+		System.debug('---BRDL keys---');
+		for (Budget_Reporting_Department_Line__c brdl : CBServiceV2.getBudgetReportingLines()){
+			System.debug(getMappingKey(brdl));
+			r.put(getMappingKey(brdl), brdl.Budget_Reporting_Department__c);
+		}
+		System.debug('---END BRDL Keys---');
 		return r;
 	}
 
@@ -45,8 +64,8 @@ public with sharing class CBReportingBalancesProcessingV2 implements Database.Ba
 		return brdl.Budget_Reporting_Department__r.Reporting_Level__c + brdl.Dimension_1__c + brdl.Dimension_2__c + brdl.Dimension_3__c;
 	}
 	@TestVisible
-	private static String getRBKey(String lvl, c2g__ReportingBalance__c rb) {
-		return lvl + rb.c2g__Dimension1__c + rb.c2g__Dimension2__c + rb.c2g__Dimension3__c;
+	private static String getRBKey(String lvl, c2g__ReportingBalance__c rb, Boolean d2Mode) {
+		return lvl + rb.c2g__Dimension1__c + rb.c2g__Dimension2__c + (d2Mode ? null : rb.c2g__Dimension3__c);
 	}
 	@TestVisible
 	private static String getRBFieldName(Integer i) {

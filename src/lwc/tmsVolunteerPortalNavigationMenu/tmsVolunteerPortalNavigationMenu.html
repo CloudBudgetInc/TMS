@@ -1,0 +1,49 @@
+<template>
+    <div class="navbar slds-clearfix slds-show_large">
+        <nav role="navigation" class="slds-align_absolute-center slds-float_right">
+           <ul class="slds-list_horizontal slds-has-block-links_space">
+               <template for:each={menuItems} for:item="item">
+                   <li key={item.id} class="slds-item slds-m-horizontal_x-large">
+                       <c-tms-volunteer-portal-navigation-menu-item item={item}></c-tms-volunteer-portal-navigation-menu-item>
+                   </li>
+               </template>
+                    <template lwc:if={guestuser}>
+                        <!-- <li>
+                            <lightning-menu-item value="KItem" label="Register/Login" onclick={handleLoginClick}></lightning-menu-item>
+                        </li> -->
+                    </template>
+                    <template lwc:else>
+                        <li>
+                            <lightning-menu-item value="KItem" label="Logout" onclick={handleLogoutClick}></lightning-menu-item>
+                        </li>
+                </template>
+           </ul>
+       </nav>
+    </div>
+    <!-- <div class="slds-dropdown-trigger slds-dropdown-trigger_click slds-is-open slds-float_right slds-hide_medium">
+        <button class="slds-button slds-button_icon slds-button_icon-border-filled" aria-haspopup="true" aria-expanded="true" title="Show More" onclick={handleHamburgerClick}>
+            <svg class="slds-button__icon" aria-hidden="true">
+                <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#rows"></use>
+            </svg>
+            <span class="slds-assistive-text">Show More</span>
+        </button>
+        <div class="slds-dropdown slds-dropdown_right slds-dropdown_large">
+            <ul class="slds-dropdown__list slds-hide" role="menu" aria-label="Show More">
+                <template for:each={menuItems} for:item="item">
+                    <li key={item.id} class="slds-dropdown__item slds-item slds-m-vertical_xx-large" role="presentation">
+                        <c-tms-volunteer-portal-navigation-menu-item item={item}></c-tms-volunteer-portal-navigation-menu-item>
+                    </li>
+                </template>
+            </ul>
+        </div>
+    </div> -->
+    <div class="slds-m-right_large slds-hide_large slds-float_right">
+        <div class="slds-p-around_medium lgc-bg">
+            <lightning-button-menu alternative-text="Show menu" variant="container" icon-size="large" icon-name="utility:rows" menu-alignment="right" class="my-button-menu" >
+                <template for:each={menuItems} for:item="item">
+                    <c-tms-volunteer-portal-navigation-menu-item key={item.id} item={item}></c-tms-volunteer-portal-navigation-menu-item>
+                </template>
+            </lightning-button-menu>
+        </div>
+    </div>
+</template>

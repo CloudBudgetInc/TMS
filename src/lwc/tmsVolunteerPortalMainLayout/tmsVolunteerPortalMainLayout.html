@@ -1,0 +1,26 @@
+<template>
+    <header data-f6-region>
+        <lightning-layout>
+            <lightning-layout-item size="6" small-device-size="6" medium-device-size="4" large-device-size="2" class="slds-var-p-around_large">
+                <a href="/"><img src={portalLogo}/> </a>
+            </lightning-layout-item>
+            <lightning-layout-item size="6" small-device-size="6" medium-device-size="8" large-device-size="10" style="background: #FFCF03; " class="slds-var-p-around_large">
+                <slot name="header">Nav Menu</slot>
+            </lightning-layout-item>
+        </lightning-layout>
+    </header>
+    
+    <!-- <main data-f6-region class="slds-var-p-top_large"> -->
+    <main data-f6-region>
+        <slot>Main Body Content</slot>
+    </main>
+    <!-- <footer data-f6-region class="slds-var-p-around_x-large slds-docked-form-footer stickyFooter bottomfooter footer"> -->
+    <footer data-f6-region class="slds-var-p-around_x-large footer">
+        <slot name="footer">Footer Content</slot>
+        <div>
+            <!-- <p><strong><a href="https://theseed.ca/media">Media Centre</a>   |   <a href="https://theseed.ca/about/accountability">Accountability</a>   |   <a href="https://theseed.ca/legacy-giving">Legacy/Stocks</a>   |   <a href="https://theseed.ca/newsletter-subscription">Newsletter Signup</a></strong></p>
+            <p>© 2023 The Mustard Seed. All Rights Reserved. Reg Canadian Charity 87453 2518 RR0001</p> -->
+        </div>
+        
+    </footer>
+</template>

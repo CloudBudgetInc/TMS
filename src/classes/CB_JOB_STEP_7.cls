@@ -8,7 +8,7 @@ global with sharing class CB_JOB_STEP_7  implements Queueable {
     }
     public void execute(QueueableContext context) {
         sendEmailToAdmin();
-        Id jobId = Database.executeBatch(new CBReportingBalancesProcessing());
+        Id jobId = Database.executeBatch(new CBReportingBalancesProcessingV2());
     }
 
     public static void sendEmailToAdmin() {

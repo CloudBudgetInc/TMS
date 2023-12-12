@@ -12,6 +12,6 @@ global with sharing class CB_JOB_STEP_2 implements Queueable {
 
     }
     public void execute(QueueableContext context) {
-        Id jobId = Database.executeBatch(new CBEntryMapping('CB_JOB_STEP_3'), 400);
+        Id jobId = Database.executeBatch(new CBEntryMappingV2('CB_JOB_STEP_3'), 400);
     }
 }

@@ -1,0 +1,52 @@
+<template>
+    <lightning-card title="Engagement Score (Current Max Score: 5500)" icon-name="standard:document_reference">
+        <div class="mainCard">
+            <!-- <p><b>Account Name:</b> {accountName}</p>
+            <p><b>Account ID:</b> {accountNumber}</p> -->
+            <p class="ActualEngagementScore"><b></b>{accountEngagementScore}</p>            
+            <!-- <p><b>Account Soft Credit Total:</b> {accountSoftCredTotal}</p> -->
+            <!-- <p><b>&nbsp;&#x2714;&nbsp;RFM Component Score: {RFMScoreComponent} [Max Score 3600]</b> </p>
+            <p><b>&nbsp;&#x2714;&nbsp;Largest Gift Score: {LargestGiftComponent} &nbsp;[Max Score 400]</b> </p>
+            <p><b>&nbsp;&#x2714;&nbsp;Soft Credit Score: {SoftCreditComponent} &nbsp;&nbsp;&nbsp;[Max Score 1000]</b> </p>
+            <p><b>&nbsp;&#x2714;&nbsp;Volunteer Score: {VolunteerScoreComponent} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[Max Score 500]</b> </p>
+            <p><b>&nbsp;&#x2714;&nbsp;Officer Rating: {accountOfficerRating} [Scaling 1-10]</b> </p> -->
+
+
+            <table>
+                <tr>
+                    <th>Score Component</th>
+                    <th>Actual Score</th>
+                    <th>Max Score</th>
+                </tr>
+                <tr>
+                    <td>RFM Component Score</td>
+                    <td>{RFMScoreComponent}</td>
+                    <td>[Max Score 3600]</td>
+                </tr>
+                <tr>
+                    <td>Largest Gift Score</td>
+                    <td>{LargestGiftComponent}</td>
+                    <td>[Max Score 400]</td>
+                </tr>
+                <tr>
+                    <td>Soft Credit Score</td>
+                    <td>{SoftCreditComponent}</td>
+                    <td>[Max Score 1000]</td>
+                </tr>
+                <tr>
+                    <td>Volunteer Score</td>
+                    <td>{VolunteerScoreComponent}</td>
+                    <td>[Max Score 500]</td>
+                </tr>
+                <tr>
+                    <td>Officer Rating</td>
+                    <td>{accountOfficerRating}</td>
+                    <td>[Scaling 1-10]</td>
+                </tr>
+
+
+            </table>
+            
+        </div>
+    </lightning-card>
+</template>

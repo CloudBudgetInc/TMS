@@ -1,0 +1,84 @@
+<template>
+    <template if:true={loading}>
+        <div class="spinnerHolder">
+            <lightning-spinner alternative-text="Loading" variant="brand"></lightning-spinner>
+        </div>
+   </template>
+   <template lwc:if={isGuestUser}>
+        <!-- Error Banner -->
+        <div class="slds-scoped-notification slds-media slds-media_center slds-theme_error slds-var-m-bottom_x-large" role="status">
+            <lightning-icon icon-name="utility:error" alternative-text="Error" title="Error"></lightning-icon>
+            <div class="slds-media__body">
+                <p>We are not able to display your shifts. <br />Please confirm that you have logged in. <lightning-button label="Go to login" class="slds-var-m-around_medium" onclick={navigateToLogin}></lightning-button></p>
+            </div>
+        </div>
+        <!-- End Error Banner -->
+    </template>
+    <div class="slds-box">
+         <!--<lightning-layout horizontal-align="space">
+            <lightning-layout-item size="10" padding="around-medium"> -->
+                <!-- <lightning-card title="My Shifts" style="width:100%;" class="slds-var-p-around_large slds-var-m-around_x-large slds-align_absolute-center slds-size_1-of-1"> -->
+                    <div class="slds-var-p-around_medium tile-bg" style="width:100%">
+                        <ul class="slds-has-dividers_bottom-space">
+                            <li class="slds-item">
+                                <div class="slds-badge slds-badge_inverse badge">Number of shifts {totalShifts}</div>
+                            </li>
+                            <template for:each={hours} for:item="hour">
+                                <li key={hour.Id} class="slds-item slds-var-m-vertical_medium">
+                                    <lightning-tile>
+                                        <div class="slds-clearfix slds-var-m-vertical_medium">
+                                            <h3>
+                                                <div class="slds-text-title_bold slds-text-heading_large">{hour.GW_Volunteers__Volunteer_Job__r.Name}</div>
+                                                <lightning-formatted-date-time value={hour.GW_Volunteers__Shift_Start_Date_Time__c} year="2-digit" month="long" day="2-digit" hour="numeric" weekday="long" class="slds-text-heading_medium slds-text-title_bold"></lightning-formatted-date-time>
+                                                <p>{hour.duration} Hours</p>
+                                                <div class="slds-float_right">
+                                                    <template lwc:if={userIsGuest}>
+                                                        <lightning-button label="Sign In to Register" class="slds-float_right" onclick={openModal} data-id={hour.Id} data-start={hour.GW_Volunteers__Start_Date_Time__c}></lightning-button>
+                                                    </template>
+                                                    <template lwc:if={hour.displayConfirmButton}>
+                                                        <lightning-button label="Please Confirm you will be at this shift" class="slds-float_right" variant="success" onclick={handleConfirmClick} data-id={hour.Id} data-start={hour.GW_Volunteers__Start_Date_Time__c}></lightning-button>
+                                                    </template>
+                                                    <template lwc:if={hour.displayCancelButton}>
+                                                        <lightning-button label="Cancel this shift" class="slds-float_right" variant="destructive" onclick={handleCancelClick} data-id={hour.Id} data-start={hour.GW_Volunteers__Start_Date_Time__c}></lightning-button>
+                                                    </template>
+                                                    <template lwc:if={hour.displayConfirmed}>
+                                                        <div class="slds-badge">You are Confirmed for this shift</div>
+                                                    </template>
+                                                    <template lwc:if={hour.displayComplete}>
+                                                        <div class="slds-badge slds-theme_success">You have completed this shift</div>
+                                                    </template>
+                                                    <template lwc:if={hour.displayCanceled}>
+                                                        <div class="slds-badge slds-theme_error">You have canceled this shift</div>
+                                                    </template>
+                                                    <template lwc:if={hour.displayNoShow}>
+                                                        <div class="slds-badge slds-theme_warning">You were marked as a No Show for this shift</div>
+                                                    </template>
+                                                    <!-- <template lwc:else>
+                                                        <lightning-button label="Modify" class="slds-float_right" onclick={openModal} data-id={hour.Id} data-start={hour.GW_Volunteers__Start_Date_Time__c}></lightning-button>
+                                                    </template> -->
+                                                </div>
+                                            </h3>
+                                            <!-- <div class="slds-grid slds-wrap slds-var-m-vertical_medium">
+                                                <lightning-formatted-text value={hour.GW_Volunteers__Status__c} ></lightning-formatted-text>
+                                            </div> -->
+                                            <div class="slds-grid slds-wrap slds-var-m-vertical_medium">
+                                                {hour.GW_Volunteers__Volunteer_Job__r.GW_Volunteers__Location_Street__c}<br />
+                                                {hour.GW_Volunteers__Volunteer_Job__r.GW_Volunteers__Location_City__c}  {hour.GW_Volunteers__Volunteer_Job__r.GW_Volunteers__Location__c}, {hour.GW_Volunteers__Volunteer_Job__r.GW_Volunteers__Location_Zip_Postal_Code__c}
+                                            </div>
+                                            <div class="slds-grid slds-wrap slds-var-m-vertical_medium">
+                                                <p>Notes:<br /><lightning-formatted-text value={hour.GW_Volunteers__Description__c} ></lightning-formatted-text></p>
+                                            </div>
+                                            <div class="slds-float_right">
+                                                <c-tms-volunteer-shift-add-to-calendar title={hour.GW_Volunteers__Volunteer_Job__r.Name} start={hour.GW_Volunteers__Shift_Start_Date_Time__c} end={hour.endTime} description={hour.GW_Volunteers__Description__c}></c-tms-volunteer-shift-add-to-calendar>
+                                            </div>
+                                        </div>
+                                    </lightning-tile>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                <!-- </lightning-card> -->
+            <!-- </lightning-layout-item>
+        </lightning-layout>--> 
+    </div>
+</template>

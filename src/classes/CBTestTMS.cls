@@ -5,8 +5,21 @@
 public with sharing class CBTestTMS {
 
     private static List<cb4__CBDimension__c> d = new List<cb4__CBDimension__c>();
-    static Object o;
+    static Object o, o1;
     public static String CRON_EXP = '0 0 * * * ? *';
+    static Boolean ec = false;
+    static Map<String, Id> dMap = cb4.CBUtils.dimensionNameIdMap;
+    static List<cb4.CBSO> SO;
+    static Id BY_ID { // BY Tag Id
+        get {
+            if (BY_ID == null) {
+                List<cb4__CBTag__c> t = [SELECT Id FROM cb4__CBTag__c WHERE cb4__DimensionName__c = :cb4.CBConstant.BUDGET_YEAR_DIM];
+                if (t.size() > 0) BY_ID = t[0].Id;
+            }
+            return BY_ID;
+        }
+        set;
+    }
 
     @testSetup static void setup() {
         add('Account');
@@ -214,6 +227,12 @@ public with sharing class CBTestTMS {
         o = CBTMSController.checkForecastUpdatePeriods('2021', 'Apr2020');
         o = CBTMSController.getProcessStepServer();
         o = CBTMSController.getFFvsCBStatsServer();
+        String r = CBTMSController.saveGlobalVariableServer('2021','test@gmail.com');
+        CBTMSController.sendTestEmailServer();
+        o = CBTMSController.getRBStatisticServer();
+        o = CBTMSController.setMap;
+        CBTMSController.cg();
+        r = CBTMSController.getFcstLockSettings();
         System.assert(true);
     }
 
@@ -240,6 +259,9 @@ public with sharing class CBTestTMS {
         wr.rbExampleId = null;
         wr.rbExampleName = null;
         o = wr.toString();
+        o = CBServiceV2.getYearsSO();
+        o = CBServiceV2.getBaseYearsSO();
+        o = CBServiceV2.getPeriodsSO();
 
 
         List<cb4__CBalanceRule__c> rules = [SELECT Id FROM cb4__CBalanceRule__c];
@@ -265,6 +287,14 @@ public with sharing class CBTestTMS {
         o = CBReportingBalancesProcessing.getRBFieldName(4);
         o = CBReportingBalancesProcessing.getRBKey('lvl1', new c2g__ReportingBalance__c());
 
+        CBReportingBalancesProcessingV2.CG();
+        o = CBReportingBalancesProcessingV2.getReportingDepartmentMap();
+        o = CBReportingBalancesProcessingV2.getRBFieldName(1);
+        o = CBReportingBalancesProcessingV2.getRBFieldName(2);
+        o = CBReportingBalancesProcessingV2.getRBFieldName(3);
+        o = CBReportingBalancesProcessingV2.getRBFieldName(4);
+        o = CBReportingBalancesProcessingV2.getRBKey('lvl1', new c2g__ReportingBalance__c(), false);
+
         CBVariable.saveCurrentFY('2020');
         CBVariable.saveEmailRecipients('akolyadich@cloudbudget.com');
 
@@ -278,6 +308,11 @@ public with sharing class CBTestTMS {
         CB_JOB_STEP_7 s7 = new CB_JOB_STEP_7();
 
         CBReportingBalanceDrillDown.codeGen();
+        CBBudgetAppTotalsBatch.cg();
+
+        o = CBReportingDepartmentLinePageController.getBaseAnalyticsServer();
+        List<Budget_Reporting_Department_Line__c> brdls = CBReportingDepartmentLinePageController.getAllBRDLServer();
+        CBReportingDepartmentLinePageController.cg();
 
 
         System.assert(true);
@@ -447,6 +482,168 @@ public with sharing class CBTestTMS {
            CBApprovalProcessTMS.rejectTag(bossBudget0.Id, bossUser.Id);
         }
         
+    }
+
+    @isTest static void CBBudgetApplication() {
+        if (ec) return;
+        cb4__CBTag__c templ = new cb4__CBTag__c(cb4__Dimension__c = dMap.get(cb4.CBConstant.BUDGET_APP_TEMPLATE_DIM), Name = 't');
+        insert templ;
+        Id perId = [SELECT Id FROM cb4__CBTag__c WHERE cb4__DimensionName__c = 'Period'][0].Id;
+        cb4__CBTag__c app = CBBudgetApplication.getNewBudgetAppServer(null);
+        System.assert(app != null);
+        app.cb4__Tag3__c = BY_ID;
+        app.cb4__Tag2__c = templ.Id;
+        app.OwnerId = System.UserInfo.getUserId();
+        insert app;
+
+        cb4__CBTag__c acc = [SELECT Id FROM cb4__CBTag__c WHERE cb4__Dimension__c = :dMap.get(cb4.CBConstant.ACCOUNT_DIM) LIMIT 1][0];
+        cb4.CBRow expRow = new cb4.CBRow();
+        expRow.app = app.Id;
+        expRow.account = acc.Id;
+        expRow.title = 't';
+        expRow.ie = 'expense';
+        expRow.rowValues = new List<Decimal>{
+                1, 1
+        };
+        expRow.quantityValues = new List<Decimal>{
+                1, 1
+        };
+        expRow.priceValues = new List<Decimal>{
+                1, 1
+        };
+        cb4.CBRow totalRow = new cb4.CBRow();
+        totalRow.app = app.Id;
+        totalRow.title = 'expense';
+        totalRow.ie = 'expense';
+        totalRow.rowValues = new List<Decimal>{
+                1, 1
+        };
+        totalRow.quantityValues = new List<Decimal>{
+                1, 1
+        };
+        totalRow.priceValues = new List<Decimal>{
+                1, 1
+        };
+        o = CBBudgetApplication.saveAppTagsServer(app, new List<cb4__CBTag__c>{
+                new cb4__CBTag__c(Name = 'test1', cb4__Decimal1__c = 100, cb4__Decimal2__c = 200, cb4__Decimal3__c = 300, cb4__Tag3__c = perId)
+        }, new List<cb4__CBTag__c>{
+                new cb4__CBTag__c(Name = 'test2', cb4__Decimal1__c = 100, cb4__Decimal2__c = 200, cb4__Decimal3__c = 300, cb4__Tag3__c = perId)
+        }, new List<cb4__CBTag__c>{
+                new cb4__CBTag__c(Name = 'test3', cb4__Decimal1__c = 100, cb4__Decimal2__c = 200, cb4__Decimal3__c = 300, cb4__Tag3__c = perId)
+        });
+
+        List<cb4__CBTag__c> r = CBBudgetApplication.getBudgetAppsServer(app.Id, null);
+        r = CBBudgetApplication.getBudgetAppsServer(null, null);
+
+        System.assert(r.size() > 0);
+
+        templ = CBBudgetApplication.getBudgetTemplateServer(r[0].Id);
+        System.assertNotEquals(templ, null);
+        o = CBBudgetApplication.getBudgetAppDimensionServer();
+
+        o = CBBudgetApplication.getTableHeadersServer(r[0].Id);
+        o = CBBudgetApplication.getDownUpSubRowsServer(r[0].Id, 'expense');
+        o = CBBudgetApplication.getTopDownSubRowsServer(r[0].Id, 'expense');
+        o = CBBudgetApplication.getAccountsServer(r[0].Id);
+        o = CBBudgetApplication.getInitialSOServer();
+        o = CBBudgetApplication.getFilterCategoriesSOServer();
+        o = CBBudgetApplication.getAllChildrenIdsServer(r[0].Id);
+        o = CBBudgetApplication.getRowsServer(r[0].Id, null, 'total', null);
+        o = CBBudgetApplication.getDownUpSubLines(r[0].Id, 'subsidiary');
+        CBBudgetApplication.saveChatServer(r[0].Id, '');
+        o = CBBudgetApplication.saveTopDownSubLinesServer(new List<cb4.CBRow>{
+                expRow
+        });
+        o = CBBudgetApplication.getCalcRulesSyntheticLines(r[0].Id, new List<cb4.CBRow>{
+                expRow
+        }, new List<cb4.CBRow>{
+                expRow
+        }, null, 1);
+        o = CBBudgetApplication.getTagNamesServer(new List<String>{
+                BY_ID
+        });
+        o = CBBudgetApplication.getExtraDimensionsSOServer(r[0].Id);
+        o = CBBudgetApplication.getAppLineDimensionsMap(r[0].Id);
+        o = CBBudgetApplication.getAppNavigationServer(r[0].Id);
+        CBBudgetApplication.calculateAppTotals(r[0], new List<cb4__CBTag__c>());
+        CBBudgetApplication.updateApps();
+        CBBudgetApplication.cg();
+        CBBudgetApplication.insertBackupLog(r[0].Id, 'test', 'test');
+        List<cb4__CBLog__c> logList = CBBudgetApplication.getBackupLogList(r[0].Id, null, null);
+        o = CBBudgetApplication.getBackupLog(logList[0].Id);
+
+    }
+
+    @isTest static void CBBudgetApplication2() {
+        if (ec) return;
+
+        cb4__CBTag__c templ = new cb4__CBTag__c(cb4__Dimension__c = dMap.get(cb4.CBConstant.BUDGET_APP_TEMPLATE_DIM), Name = 't');
+        insert templ;
+        Id perId = [SELECT Id FROM cb4__CBTag__c WHERE cb4__DimensionName__c = 'Period'][0].Id;
+        cb4__CBTag__c app = CBBudgetApplication.getNewBudgetAppServer(null);
+        System.assert(app != null);
+        app.cb4__Tag3__c = BY_ID;
+        app.cb4__Tag2__c = templ.Id;
+        app.Name = 'TEST1';
+        app.OwnerId = System.UserInfo.getUserId();
+        app.Id = CBBudgetApplication.saveAppTagsServer(app, new List<cb4__CBTag__c>{
+                new cb4__CBTag__c(Name = 'test11', cb4__Decimal1__c = 101, cb4__Decimal2__c = 200, cb4__Decimal3__c = 300, cb4__Tag3__c = perId, cb4__Text1__c = 'expense')
+        }, new List<cb4__CBTag__c>{
+                new cb4__CBTag__c(Name = 'test22', cb4__Decimal1__c = 102, cb4__Decimal2__c = 200, cb4__Decimal3__c = 300, cb4__Tag3__c = perId, cb4__Text1__c = 'income')
+        }, new List<cb4__CBTag__c>{
+                new cb4__CBTag__c(Name = 'test33', cb4__Decimal1__c = 103, cb4__Decimal2__c = 200, cb4__Decimal3__c = 300, cb4__Tag3__c = perId, cb4__Text1__c = 'total')
+        });
+
+        CBBudgetApplication.reMapPeriodsIfNeeded(new List<cb4__CBTag__c>{
+                new cb4__CBTag__c()
+        }, app.Id);
+
+        o = CBBudgetApplication.getCurrentUserInterfaceSettingsListServer('Main');
+        o = CBBudgetApplication.getAllAccountsAndDimensionsServer();
+        o = CBBudgetApplication.getAppDimensionsMap();
+        o = CBBudgetApplication.getPriceQuantityObjectServer();
+        o = CBBudgetApplication.getEmployeeRateObjectServer();
+        o = CBBudgetApplication.refineStringToId('test');
+        o = CBBudgetApplication.getSubLineKey(new cb4__CBTag__c());
+        o = CBBudgetApplication.getAccount('test');
+
+
+        cb4__CBTag__c app2 = CBBudgetApplication.getNewBudgetAppServer(null);
+        app2.cb4__Tag1__c = app.Id;
+        app2.OwnerId = System.UserInfo.getUserId();
+        app2.Name = 'TEST2';
+        app2.Id = CBBudgetApplication.saveAppTagsServer(app2, new List<cb4__CBTag__c>{
+                new cb4__CBTag__c(Name = 'test1', cb4__Decimal1__c = 101, cb4__Decimal2__c = 200, cb4__Decimal3__c = 300, cb4__Tag3__c = perId, cb4__Text1__c = 'expense')
+        }, new List<cb4__CBTag__c>{
+                new cb4__CBTag__c(Name = 'test2', cb4__Decimal1__c = 102, cb4__Decimal2__c = 200, cb4__Decimal3__c = 300, cb4__Tag3__c = perId, cb4__Text1__c = 'income')
+        }, new List<cb4__CBTag__c>{
+                new cb4__CBTag__c(Name = 'test3', cb4__Decimal1__c = 103, cb4__Decimal2__c = 200, cb4__Decimal3__c = 300, cb4__Tag3__c = perId, cb4__Text1__c = 'total')
+        });
+
+        List<cb4__CBTag__c> r = CBBudgetApplication.getBudgetAppsServer(null, null);
+
+        System.assert(r.size() > 0);
+
+        o = CBBudgetApplication.getBAListServer(null);
+        o = CBBudgetAppTotalService.runRefreshAppsServer(1, new List<String>{
+                app2.Id
+        });
+
+        CBBudgetApplication.cg();
+        //o = CBBudgetApplication.deleteAppServer(r[0].Id);
+        o = CBBudgetApplication.voidMethod();
+        o = CBBudgetApplication.getAppPeriodsServer(app2.Id);
+        o = CBBudgetApplication.getSimpleLineKey(new cb4__CBTag__c(), app2.Id);
+        CBBudgetAppTotalService.generateAppNewTotals(new Set<Id>{
+                app.Id
+        });
+        CBBudgetAppTotalService.codGen();
+        String s = CBBudgetApplication.getUniqueLabel('PRE', dMap.get(cb4.CBConstant.BUDGET_APP_AMOUNT_DIM));
+        CBBudgetApplication.calculateAppTotals(app2, new List<cb4__CBTag__c>{
+                new cb4__CBTag__c(Name = 'test1', cb4__Decimal1__c = 101, cb4__Decimal2__c = 200, cb4__Decimal3__c = 300, cb4__Tag3__c = perId, cb4__Text2__c = 'income')
+        });
+
+        CBBudgetApplication.deleteAppServer(app.Id);
     }
 
     // SERVICE METHODS

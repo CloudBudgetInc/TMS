@@ -1,0 +1,20 @@
+<template>
+    <lightning-layout class="slds-var-m-vertical_medium slds-grid_align-end">
+        <lightning-layout-item>
+            <lightning-button-stateful class="listButton" label-when-off="List View" label-when-on="List View" label-when-hover="List View" icon-name-when-on="utility:check" icon-name-when-off="utility:preview" icon-name-when-hover="utility:preview" onclick={handleShowListClick}></lightning-button-stateful>
+        </lightning-layout-item>
+        <lightning-layout-item>
+            <lightning-button-stateful class="calendarButton" label-when-off="Calendar View" label-when-on="Calendar View" label-when-hover="Calendar View" icon-name-when-on="utility:check" icon-name-when-off="utility:preview" icon-name-when-hover="utility:preview" onclick={handleShowCalendarClick}></lightning-button-stateful>
+        </lightning-layout-item>
+
+    </lightning-layout>
+    <template lwc:if={showCalendar}>
+        <c-volunteer-calendar></c-volunteer-calendar>
+    </template>
+    <template lwc:elseif={showList}>
+        <c-tms-voluntter-portal-job-list-view></c-tms-voluntter-portal-job-list-view>
+    </template>
+    <template lwc:else>
+        <div>There was an error.</div>
+    </template>
+</template>

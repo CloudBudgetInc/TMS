@@ -10,7 +10,21 @@
 	 * cb4__CBReport__c object by Id
 	 */
 	helpGetReportColumnsServer: function (cmp) {
-		_CBRequest(cmp, "c.getReportColumnsServer", {"reportId": cmp.get("v.recordId")}, "v.reportColumns", null, null, _TEXT.REPORT.FAILED_GET_REPORT, false);
+		let _this = this;
+		function callback(){
+			_this.helpGetCBalances(cmp);
+		}
+
+		_CBRequest(
+			cmp,
+			"c.getReportColumnsServer",
+			{"reportId": cmp.get("v.recordId")},
+			"v.reportColumns",
+			callback,
+			null,
+			_TEXT.REPORT.FAILED_GET_REPORT,
+			false
+		);
 	},
 
 	helpGetTableHeaders: function (cmp) {
@@ -28,6 +42,64 @@
 	},
 
 	helpGetCBalances: function (cmp) {
+		try {
+			let _this = this;
+			let counter = 0;
+			let CBalsRes = cmp.get('v.CBals');
+			CBalsRes = _isInvalid(CBalsRes) ? [] : CBalsRes;
+			let reportColumns = cmp.get('v.reportColumns');
+			let reportColumnIds = new Set();
+			for(let i = 0; i < reportColumns.length; i++){
+				if(reportColumns[i].cb4__Column__c !== undefined) reportColumnIds.add(reportColumns[i].cb4__Column__c);
+			}
+			let periods = [...reportColumnIds];
+			console.group('DEBUG');
+			console.log('periods', periods);
+			console.groupEnd();
+			for(let i = 2; i < periods.length; i += 3){
+				_CBRequest(
+					cmp,
+					"c.getAllCBalancesServer",
+					{
+						"reportId": cmp.get("v.recordId"),
+						'periodIds' : [periods[i], periods[i-1], periods[i-2]]
+					},
+					null,
+					callback,
+					null,
+					_TEXT.REPORT.FAILED_GET_REPORT,
+					false
+				);
+			}
+
+			function callback(cmp, res) {
+				try {
+					counter += 3;
+					console.group('callback');
+					let CBals = res.getReturnValue();
+					if(CBals !== null && CBals.length !== 0) CBalsRes = CBalsRes.concat(CBals);
+					console.log('counter', counter);
+					console.log('periods.length', periods.length);
+					if(counter === periods.length){
+						console.log('CBalsRes.length', CBalsRes.length);
+						cmp.set('v.CBals', CBalsRes);
+						cmp.set("v.fitPageEnabled", cmp.get("v.report.cb4__FitToPageEnabled__c"));
+						_this.helpGenerateReportLines(cmp);
+						_this.helpGetFilterSelectOptions(cmp);
+
+						_this.helpRefreshReportData(cmp);
+					}
+					console.groupEnd();
+				} catch (e) {
+					alert("helpGetCBalances " + e);
+				}
+			}
+		} catch (e) {
+			alert(e);
+		}
+	},
+
+	helpGetCBalancesOld: function (cmp) {
 		try {
 			let _this = this;
 
@@ -1143,7 +1215,7 @@
 		try {
 			const report = cmp.get("v.report");
 			const customFormat = report.cb4__Description__c === 'Custom Excel';
-			const tableRows = this.restructureLines(cmp);
+			let tableRows = this.restructureLines(JSON.parse(JSON.stringify(cmp.get('v.rows'))));
 			let n = cmp.get("v.numberOfTextColumns"); // the number of text columns
 			const getRowAmount = (val) => {
 				if (val === '-' || val.includes('%')) return val;
@@ -1273,8 +1345,7 @@
 	/**
 	 * The method reverts subtotal lines over a group of simple lines
 	 */
-	restructureLines: function (cmp) {
-		const tableRows = JSON.parse(JSON.stringify(cmp.get('v.rows')));
+	restructureLines: function (tableRows) {
 		const globalTotal = tableRows.shift();
 		delete globalTotal.l2Long;
 		delete globalTotal.l3Long;
@@ -1396,7 +1467,7 @@
 	/**
 	 * Method makes extra titles transparent
 	 */
-	makeTransparentExtraExcelTitles: function (worksheet, tableRows) {
+	makeTransparentExtraExcelTitles: function (worksheet, tableRows, d2mode) {
 		try {
 			const makeCellTextTransparent = (cell) => {
 				const bgColor = cell.fill && cell.fill.fgColor ? cell.fill.fgColor.argb : "ffffff";
@@ -1406,11 +1477,11 @@
 				const excelRow = worksheet.getRow(rowIdx + 7);
 				let celIndexArray;
 				if (!row.type) {
-					celIndexArray = [1, 2, 3];
+					celIndexArray = d2mode ? [2, 3, 4] : [1, 2, 3];
 				} else if (row.type === 'subTotal3') {
-					celIndexArray = [1, 2];
+					celIndexArray = d2mode ? [2, 3] : [1, 2];
 				} else if (row.type === 'subTotal2') {
-					celIndexArray = [1];
+					celIndexArray = d2mode ? [2] : [1];
 				} else {
 					return null;
 				}

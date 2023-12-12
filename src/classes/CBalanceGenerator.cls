@@ -13,6 +13,7 @@ public with sharing class CBalanceGenerator implements Database.Batchable<SObjec
     private static final String financialYear = CBVariable.currentFY;
     private static final Id financialYearId = [SELECT Id FROM cb4__CBTag__c WHERE cb4__Dimension__c = :cb4.CBUtils.dimensionNameIdMap.get('Budget Year') AND Name = :CBVariable.currentFY LIMIT 1][0].Id;
     private Integer lvl;
+    private Boolean dim2Mode = false;
     private static final String ruleNameMark = 'LVL'; // CBalance rule should contain this string
     public cb4__CBalanceRule__c CBRule;
     private static final String typeOfPositiveSign = 'expense';
@@ -28,6 +29,13 @@ public with sharing class CBalanceGenerator implements Database.Batchable<SObjec
         this.lvl = lvl;
         this.afterJobClassName = afterJobClassName;
         CBRule = Database.query('SELECT Id FROM cb4__CBalanceRule__c WHERE (cb4__Label__c LIKE \'%' + ruleNameMark + String.valueOf(lvl) + '%\' AND cb4__Label__c LIKE \'%' + financialYear + '%\' ) LIMIT 1');
+    }
+
+    public CBalanceGenerator(String afterJobClassName, Boolean d2ModeOn) {
+        this.lvl = 3;
+        this.dim2Mode = d2ModeOn;
+        this.afterJobClassName = afterJobClassName;
+        CBRule = Database.query('SELECT Id FROM cb4__CBalanceRule__c WHERE (cb4__Label__c LIKE \'%Dim2%\' AND cb4__Label__c LIKE \'%' + financialYear + '%\' ) LIMIT 1');
     }
 
     public static void runJobs(String afterJobClassName) {
@@ -74,16 +82,18 @@ public with sharing class CBalanceGenerator implements Database.Batchable<SObjec
         Map<String, cb4__CBalance__c> r = new Map<String, cb4__CBalance__c>(); // key - cb2_brd, value CBalance
         for (cb4__CBalance__c balance : Database.query(getMainQuery())) r.put(balance.cb4__Column__c + balance.cb4__Key__c + balance.OwnerId, balance);
         Map<String, cb4__CBalance__c> CBalancesNeedToUpsert = new Map<String, cb4__CBalance__c>(); // New CBalance Container
-        Map<String, String> bridgeDim1Dim2Map = CBService.getBridgeDim1Dim2Map(lvl);
+        Map<String, String> bridgeDim1Dim2Map = new Map<String, String>();
+        if(!dim2Mode) bridgeDim1Dim2Map = CBServiceV2.getBridgeDim1Dim2Dim3Map(lvl);
 
         for (cb4__CBTag__c ea : scope) { // Entry Amounts
-            String CB2BRD = bridgeDim1Dim2Map.get(ea.cb4__Tag6__c + String.valueOf(ea.cb4__Tag7__c)); // FF1 and FF2
-            if (CB2BRD == null) continue;
-            String key = getCBalanceKey(CB2BRD, ea);
+            String CB2BRD = bridgeDim1Dim2Map.get(ea.cb4__Tag6__c + String.valueOf(ea.cb4__Tag7__c) + String.valueOf(ea.cb4__Tag8__c)); // FF1 and FF2 and FF3
+            if (CB2BRD == null) CB2BRD = bridgeDim1Dim2Map.get(ea.cb4__Tag6__c + String.valueOf(ea.cb4__Tag7__c) + 'null');
+            if (!dim2Mode && CB2BRD == null) continue;
+            String key = getCBalanceKey(CB2BRD, ea, dim2Mode);
             cb4__CBalance__c balance = r.get(ea.cb4__Tag3__c + key + ea.OwnerId);
             if (balance == null) balance = new cb4__CBalance__c(
                     cb4__CBalanceRule__c = CBRule.Id,
-                    cb4__Lvl1__c = CB2BRD,// Reporting Department
+                    cb4__Lvl1__c = dim2Mode ? ea.cb4__Tag7__c : CB2BRD,// Reporting Department
                     cb4__Lvl2__c = ea.cb4__Tag2__r.cb4__Tag1__r.cb4__Tag1__c,
                     cb4__Lvl3__c = ea.cb4__Tag2__r.cb4__Tag1__c,
                     cb4__Lvl4__c = ea.cb4__Tag2__c,
@@ -133,9 +143,9 @@ public with sharing class CBalanceGenerator implements Database.Batchable<SObjec
      *
      * @return
      */
-    private static String getCBalanceKey(String CB2BRD, cb4__CBTag__c ea) {
+    private static String getCBalanceKey(String CB2BRD, cb4__CBTag__c ea, Boolean d2Mode) {
         List<String> p = new List<String>{
-                CB2BRD, // Budget Reporting Department
+                d2Mode ? ea.cb4__Tag7__c : CB2BRD, // Budget Reporting Department
                 ea.cb4__Tag2__r.cb4__Tag1__r.cb4__Tag1__c, // Account Type
                 ea.cb4__Tag2__r.cb4__Tag1__c, // Account Sub Type
                 ea.cb4__Tag2__c //Account

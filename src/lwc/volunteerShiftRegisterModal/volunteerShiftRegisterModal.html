@@ -1,0 +1,69 @@
+<template>
+    <section role="dialog" tabindex="-1" aria-labelledby="modal-heading-1" aria-modal="true" aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open">
+        <div class="slds-modal__container">
+            <header class="slds-modal__header">
+                <button class="slds-button slds-button_icon slds-modal__close slds-button_icon-inverse" title="Close" onclick={closeModal}>
+                    <lightning-icon icon-name="utility:close" variant="inverse" size="small"></lightning-icon>
+                    <label><span class="slds-assistive-text">Close</span></label>
+                </button>
+                <h2 id="modal-heading-01" class="slds-text-heading_medium slds-hyphenate">Confirm Your Registration</h2>
+            </header>
+            <!-- Success Banner -->
+            <template lwc:if={showSuccess}>
+                <div class="slds-scoped-notification slds-media slds-media_center slds-theme_success" role="status">
+                    <lightning-icon icon-name="utility:success" alternative-text="Success" title="Success"></lightning-icon>
+                    <div class="slds-media__body">
+                        <p>Success! You have succesfully registered for this shift. Thank You!</p>
+                    </div>
+                </div>
+                <!-- End Success Banner -->
+            </template>
+
+            <template lwc:if={showError}>
+                <!-- Error Banner -->
+                <div class="slds-scoped-notification slds-media slds-media_center slds-theme_error" role="status">
+                    <lightning-icon icon-name="utility:error" alternative-text="Error" title="Error"></lightning-icon>
+                    <div class="slds-media__body">
+                        <p>There was an error registering you for this shift. <br />Please contact our team for assistance.</p>
+                    </div>
+                </div>
+                <!-- End Error Banner -->
+            </template>
+
+            <div class="slds-modal__content slds-var-p-around_medium" id="modal-content-id-1">
+                <p class="slds-var-m-vertical_medium">Please confirm that you wish to register for this shift:</p>
+                <p><lightning-formatted-text value={jobName}></lightning-formatted-text></p>
+                <p><lightning-formatted-date-time value={shiftStart} year="2-digit" month="short" weekday="long" hour="2-digit" minute="2-digit" time-zone-name="short" time-zone="America/Edmonton"></lightning-formatted-date-time></p>
+                <lightning-tile class="slds-var-m-vertical_medium">
+                    <h3>Group Registration</h3>
+                    <div class="slds-grid slds-wrap">
+                        <div class="slds-col slds-size_1-of-2">
+                            If you are registering a group for this shift, how many volunteers are in your group?
+                        </div>
+                        <div class="slds-col slds-size_1-of-2">
+                            <lightning-input typ="number" name="groupSize" value="1" label="Group Size"></lightning-input>
+                        </div>
+                    </div>
+                </lightning-tile>
+
+            </div>
+            <footer class="slds-modal__footer">
+                <template lwc:if={showSuccess}>
+                    <button class="slds-button slds-button_brand" onclick={closeModal} title="Close"><label>Close</label></button>
+                </template>
+                <template lwc:else>
+                    <button class="slds-button slds-button_neutral" onclick={closeModal} title="Cancel"><label>Cancel</label></button>
+                    <button class="slds-button slds-button_brand" onclick={confirmRegistration} data-id="" title="Confirm Registration"><label>Confirm Registration</label></button>
+                </template>
+            </footer>
+        </div>
+    </section>
+
+    <div class="slds-backdrop slds-backdrop_open"></div>
+    <template if:true={loading}>
+        <div class="spinnerHolder">
+            <lightning-spinner alternative-text="Loading" variant="brand"></lightning-spinner>
+        </div>
+   </template>
+
+</template>

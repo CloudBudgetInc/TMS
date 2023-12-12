@@ -49,7 +49,7 @@ global with sharing class ScanStationInputService {
        */
       switch on typedTransactionInfo.paymentMethod {
         when 'Credit Card' {
-          ChargentOrders__ChargentOrder__c newCo = createChargentOrder(typedTransactionInfo);
+          ChargentOrders__ChargentOrder__c newCo = createChargentOrder(transactionInfo, typedTransactionInfo);
 
           // TODO: wait for Transaction to complete
           // Currently there is a while loop below that looks for the Transaction every second for 8 seconds
@@ -377,9 +377,10 @@ global with sharing class ScanStationInputService {
    * @params    transactionInfo     typed variables from the REST inputs
    * @return                        Result class variable (see below)
    */
-  private static ChargentOrders__ChargentOrder__c createChargentOrder(TypedInputs transactionInfo) {
+  private static ChargentOrders__ChargentOrder__c createChargentOrder(Inputs rawInputs, TypedInputs transactionInfo) {
     ChargentOrders__ChargentOrder__c co = new ChargentOrders__ChargentOrder__c();
     
+    co.JSON_String__c = rawInputs.ToJSONString();
     co.TMS_Anonymous__c = transactionInfo.anonymous;
     co.ChargentOrders__Bank_Account_Number__c = transactionInfo.bankAccountNumber;
     co.ChargentOrders__Bank_Routing_Number__c = transactionInfo.bankRoutingNumber;
@@ -834,6 +835,52 @@ global with sharing class ScanStationInputService {
     public String slipImage;    
 
     public String tmsTransactInfo;
+    
+    public String ToJSONString() {
+        return '{\n' +
+            '\"anonymous\": \"' + anonymous + '\",\n' +
+            '\"bankAccountNumber\": \"' + bankAccountNumber + '\",\n' +
+            '\"bankRoutingNumber\": \"' + bankRoutingNumber + '\",\n' +
+            '\"batchId\": \"' + batchId + '\",\n' +
+            '\"billingName\": \"' + billingName + '\",\n' +
+            '\"cardExpirationMonth\": \"' + cardExpirationMonth + '\",\n' +
+            '\"cardExpirationYear\": \"' + cardExpirationYear + '\",\n' +
+            '\"cardNumber\": \"' + cardNumber + '\",\n' +
+            '\"campaignId\": \"' + campaignId + '\",\n' +
+            '\"chargeAmount\": \"' + chargeAmount + '\",\n' +
+            '\"chargeDate\": \"' + chargeDate + '\",\n' +
+            '\"cvc\": \"' + cvc + '\",\n' +
+            '\"exceptionBatchFlags\": \"' + exceptionBatchFlags + '\",\n' +
+            '\"fundId\": \"' + fundId + '\",\n' +
+            '\"furtherAttentionNotes\": \"' + furtherAttentionNotes + '\",\n' +
+            '\"giftChannel\": \"' + giftChannel + '\",\n' +
+            '\"giftReference\": \"' + giftReference + '\",\n' +
+            '\"noReceipt\": \"' + noReceipt + '\",\n' +
+            '\"appealId\": \"' + appealId + '\",\n' +
+            '\"packageId\": \"' + packageId + '\",\n' +
+            '\"appealTMSid\": \"' + appealTMSid + '\",\n' +
+            '\"packageTMSid\": \"' + packageTMSid + '\",\n' +
+            '\"parentOpportunity\": \"' + parentOpportunity + '\",\n' +
+            '\"paymentMethod\": \"' + paymentMethod + '\",\n' +
+            '\"recurringDonation\": \"' + recurringDonation + '\",\n' +
+            '\"TMScity\": \"' + TMScity + '\",\n' +
+            '\"type\": \"' + type + '\",\n' +
+            '\"contactId\": \"' + contactId + '\",\n' +
+            '\"accountId\": \"' + accountId + '\",\n' +
+            '\"tributeType\": \"' + tributeType + '\",\n' +
+            '\"tributeDescription\": \"' + tributeDescription + '\",\n' +
+            '\"honoreeName\": \"' + honoreeName + '\",\n' +
+            '\"honoreeContactId\": \"' + honoreeContactId + '\",\n' +
+            '\"benefitValue\": \"' + benefitValue + '\",\n' +
+            '\"inKindType\": \"' + inKindType + '\",\n' +
+            '\"inKindSubtype\": \"' + inKindSubtype + '\",\n' +
+            '\"inKindDeclaredValue\": \"' + inKindDeclaredValue + '\",\n' +
+            '\"inKindVerifiedValue\": \"' + inKindVerifiedValue + '\",\n' +
+            '\"inKindDescription\": \"' + inKindDescription + '\",\n' +
+            '\"inKindValuationNote\": \"' + inKindValuationNote + '\",\n' +
+            '\"tmsTransactInfo\": \"' + tmsTransactInfo + '\"\n' +
+            '}';
+    }
   }
 
   private class TypedInputs{

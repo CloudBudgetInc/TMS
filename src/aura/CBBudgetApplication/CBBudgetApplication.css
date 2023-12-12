@@ -1,0 +1,177 @@
+.THIS .indexTh {
+    background-color: #fafaf9;
+}
+
+.THIS .soStyle {
+    width: 180px;
+    padding-right: 10px !important;
+}
+
+.THIS .fixed {
+    background: transparent;
+    position: fixed !important;
+    top: 72px !important;
+    margin-right: 27px;
+    font-weight: bold !important;
+    z-index: 8000;
+    border-radius: 4px;
+    border: 2px solid #707070;
+    box-shadow: 2px 6px 6px grey;
+    width: 98%;
+}
+
+.THIS .titleInputStyle {
+    width: 250px;
+    padding-right: 10px !important;
+}
+
+.THIS .truehide {
+    display: none;
+}
+
+.THIS .hide {
+    display: none;
+}
+
+.THIS [id$="expand"] {
+    display: none;
+}
+
+.THIS .calcRule {
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+}
+
+.THIS.mypop {
+    padding: 20px !important;
+    color: red !important;
+}
+
+.THIS .slds-rich-text-editor__toolbar {
+    display: none !important;
+}
+
+.THIS.no-pointer .pointer {
+    visibility: hidden;
+}
+
+.THIS.popoverclass {
+    max-height: 55px;
+    width: 70%;
+}
+
+.THIS .slds-file-selector__text {
+    display: none !important;
+}
+
+.THIS .dec input {
+    text-align: right;
+    padding-right: 2px !important;
+    padding-left: 2px !important;
+    font-size: smaller !important;
+}
+
+.THIS .yellowLabel {
+    background-color: #ffb75d !important;
+}
+
+.THIS .greenLabel {
+    background-color: #4bca81 !important;
+}
+
+.THIS .total {
+    font-weight: bold !important;
+}
+
+.THIS .trtotal th{
+    font-weight: bold !important;
+}
+
+.THIS .unposted {
+    color: #ffb75d !important;
+}
+
+.THIS .slds-spinner_container {
+    z-index: 9000;
+    position: fixed !important;
+    height: 100% !important;
+}
+
+.THIS.slds-spinner_container {
+    z-index: 5000;
+    position: fixed !important;
+}
+
+.THIS .slds-badge {
+    font-size: smaller !important;
+}
+
+.THIS .hideEdge {
+    line-height: 1 !important;
+    font-stretch: ultra-condensed !important;
+    text-align: left !important;
+    max-width: 82% !important;
+    white-space: pre-wrap !important;
+}
+
+.THIS .th25percent {
+    width: 25% !important;
+}
+
+.THIS .noPaddingNoMargin {
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.THIS .showMoreDetails {
+    font-size: x-small;
+    overflow: hidden;
+    white-space: nowrap;
+    resize: horizontal;
+    margin-right: 7px;
+}
+
+.THIS .cssTrunc {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.THIS .sheetButton {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    height: 10px !important;
+}
+
+.THIS .slds-button[name="redirectToSheet"] {
+    height: 10px !important;
+}
+
+/**
+APP.cb4__Decimal6__c for rolling forecast
+ */
+.THIS .splitRow input {
+    color: firebrick !important;
+    pointer-events: none !important;
+}
+
+.THIS .slds-path__title{
+    font-size: smaller !important;
+}
+
+.THIS .cb-descr-limit{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100% !important;
+    line-height: 12px !important;
+    max-height: 25px !important;
+}
+
+.THIS .cb-bl-limit {
+    border-radius: 15px;
+}
+
+.THIS .moreBtn button{
+    margin-top: -3px;
+}

@@ -1,0 +1,334 @@
+<template>
+    <template if:true={loading}>
+         <div class="spinnerHolder">
+             <lightning-spinner alternative-text="Loading" variant="brand"></lightning-spinner>
+         </div>
+    </template>
+    <template lwc:if={isGuestUser}>
+        <!-- Error Banner -->
+        <div class="slds-scoped-notification slds-media slds-media_center slds-theme_error slds-var-m-bottom_x-large" role="status">
+            <lightning-icon icon-name="utility:error" alternative-text="Error" title="Error"></lightning-icon>
+            <div class="slds-media__body">
+                <p>We are not able to display your profile. <br />Please confirm that you have logged in. <lightning-button label="Go to login" class="slds-var-m-around_medium" onclick={navigateToLogin}></lightning-button></p>
+            </div>
+        </div>
+        <!-- End Error Banner -->
+    </template>
+    <template lwc:else>
+        <div class="slds-box">
+            <lightning-layout horizontal-align="space">
+                <lightning-layout-item size="10" padding="around-medium">
+                    <lightning-card title="My Profile" class="slds-var-p-around_large slds-var-m-around_x-large slds-align_absolute-center">
+                        <template lwc:if={displayButtons}>
+                            <div slot="footer">
+                                <lightning-button variant="neutral" label="Cancel" title="Cancel" onclick={handleCancelClick} class="slds-var-m-left_small"></lightning-button>
+                                <lightning-button variant="brand" label="Save" title="Save" onclick={handleSaveClick} disabled={saveDisabled} class="slds-var-m-left_small"></lightning-button>
+                            </div>  
+                        </template>
+                        <template lwc:if={nameError}>
+                            <div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+                                <span class="slds-assistive-text">error</span>
+                                <h2>Your First AND Last name need to be entered before you can register for a shift.</h2>
+                            </div>
+                        </template>
+                        <lightning-tile type="media" class="slds-var-p-vertical_medium slds-var-p-horizontal_x-large slds-has-dividers_bottom-space">
+    
+
+                            <lightning-icon slot="media" class="tms-icon" icon-name="utility:user"></lightning-icon>
+                            
+                            <div class="slds-grid slds-grid_align-spread slds-has-flexi-truncate">
+                                <h3 class="slds-truncate" title="Name">Name</h3>
+                                <template lwc:if={nameEditButtonDisplay}>
+                                    <div class="slds-shrink-none">
+                                        <lightning-button label="Edit" title="Edit" onclick={handleEditClick} class="slds-var-m-left_x-small"></lightning-button>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="slds-tile__detail">
+                                <template lwc:if={displayNameFields}>
+                                    <lightning-formatted-text 
+                                        value={firstName} 
+                                        class="slds-text-body_regular">
+                                    </lightning-formatted-text>&nbsp; 
+                                    <lightning-formatted-text 
+                                        value={lastName} 
+                                        class="slds-text-body_regular">
+                                    </lightning-formatted-text>
+                                </template>
+                                <template lwc:if={editNameFields}>
+                                    <lightning-input
+                                        label="First Name"
+                                        value={firstName}
+                                        data-field="FirstName"
+                                        onchange={handleChange}
+                                        class="slds-var-m-bottom_x-small">
+                                    </lightning-input>
+                                    <lightning-input
+                                        label="Last Name"
+                                        value={lastName}
+                                        data-field="LastName"
+                                        onchange={handleChange}
+                                        class="slds-var-m-bottom_x-small"
+                                        required>
+                                    </lightning-input>
+                                </template>
+                            </div>
+                        </lightning-tile>
+                        <template lwc:if={addressError}>
+                            <div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+                                <span class="slds-assistive-text">error</span>
+                                <h2>Please enter your address to be able to register for a shift.</h2>
+                            </div>
+                        </template>
+                        <lightning-tile type="media" class="slds-var-p-vertical_medium slds-var-p-horizontal_x-large slds-has-dividers_bottom-space slds-border_top">
+                            <lightning-icon slot="media" class="tms-icon" icon-name="utility:checkin"></lightning-icon>
+                            <div class="slds-grid slds-grid_align-spread slds-has-flexi-truncate">
+                                <h3 class="slds-truncate" title="Address">Address</h3>
+                                <template lwc:if={addressEditButtonDisplay}>
+                                    <div class="slds-shrink-none">
+                                        <lightning-button label="Edit" title="Edit" onclick={handleEditClick} class="slds-var-m-left_x-small"></lightning-button>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="slds-tile__detail">
+                                <template lwc:if={displayAddressFields}>
+                                    <lightning-formatted-text value={street} class="slds-text-body_regular"></lightning-formatted-text><br />
+                                    <lightning-formatted-text value={city} class="slds-text-body_regular"></lightning-formatted-text> &nbsp; <lightning-formatted-text value={state} class="slds-text-body_regular"></lightning-formatted-text> &nbsp; <lightning-formatted-text value={postal} class="slds-text-body_regular"></lightning-formatted-text><br />
+                                    <lightning-formatted-text value={country} class="slds-text-body_regular"></lightning-formatted-text><br />                            
+                                </template>
+                                <template lwc:if={editAddressFields}>
+                                    <!-- EDIT ADDRESS FIELDS -->
+                                    <lightning-input-address
+                                        address-label="Address"
+                                        street-label="Street"
+                                        city-label="City"
+                                        country-label="Country"
+                                        province-label="Province"
+                                        postal-code-label="PostalCode"    
+                                        street={street}
+                                        city={city}
+                                        province={state}
+                                        postal-code={postal}
+                                        country={country}
+                                        country-options={getCountryOptions}
+                                        province-options={getProvinceOptions}
+                                        data-field="address"
+                                        onchange={handleAddressChange}>
+                                    </lightning-input-address>
+                                </template>
+                            </div>
+                        </lightning-tile>
+                        <template lwc:if={phoneError}>
+                            <div class="slds-notify slds-notify_alert slds-alert_error" role="alert">
+                                <span class="slds-assistive-text">error</span>
+                                <h2>A home of mobile phone number need to be entered before you can register for a shift.</h2>
+                            </div>
+                        </template>
+                        <lightning-tile type="media" class="slds-var-p-vertical_medium slds-var-p-horizontal_x-large slds-has-dividers_bottom-space slds-border_top">
+                            <lightning-icon slot="media" class="tms-icon" icon-name="utility:call"></lightning-icon>
+                            <div class="slds-grid slds-grid_align-spread slds-has-flexi-truncate">
+                                <h3 class="slds-truncate" title="Contact Info">Contact Info</h3>
+                                <template lwc:if={contactInfoEditButtonDisplay}>
+                                    <div class="slds-shrink-none">
+                                        <lightning-button label="Edit" title="Edit" onclick={handleEditClick} class="slds-var-m-left_x-small"></lightning-button>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="slds-tile__detail">
+                                <template lwc:if={displayContactInfoFields}>    
+                                    Home Phone: <lightning-formatted-text value={homePhone} class="slds-text-body_regular"></lightning-formatted-text><br />
+                                    Mobile Phone: <lightning-formatted-text value={mobilePhone} class="slds-text-body_regular"></lightning-formatted-text><br /><br />
+                                    Email: <lightning-formatted-text value={email} class="slds-text-body_regular"></lightning-formatted-text><br />
+                                </template>
+                                <template lwc:if={editContactInfoFields}>
+                                    <lightning-input
+                                        type="tel"
+                                        label="Home Phone"
+                                        name="homePhone"
+                                        data-field="HomePhone"
+                                        value={homePhone}></lightning-input>
+                                    <lightning-input
+                                        type="tel"
+                                        label="Mobile Phone"
+                                        name="mobilePhone"
+                                        data-field="MobilePhone"
+                                        value={mobilePhone}></lightning-input>
+                                    <lightning-input
+                                        type="email"
+                                        label="Email Address"
+                                        data-field="Email"
+                                        value={email}
+                                        required></lightning-input>
+                                </template>
+                            </div>
+                        </lightning-tile>
+                        <lightning-tile type="media" class="slds-var-p-vertical_medium slds-var-p-horizontal_x-large slds-has-dividers_bottom-space slds-border_top">
+                            <lightning-icon slot="media" class="tms-icon" icon-name="utility:page"></lightning-icon>
+                            <div class="slds-grid slds-grid_align-spread slds-has-flexi-truncate">
+                                <h3 class="slds-truncate" title="Notes">Notes</h3>
+                                <template lwc:if={notesEditButtonDisplay}>
+                                    <div class="slds-shrink-none">
+                                        <lightning-button label="Edit" title="Edit" onclick={handleEditClick} class="slds-var-m-left_x-small"></lightning-button>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="slds-tile__detail">
+                                <template lwc:if={displayNotesFields}>  
+                                    <lightning-formatted-text value={notes} class="slds-text-body_regular"></lightning-formatted-text><br /><br />
+                                    Medical Concerns:<br /> 
+                                    <lightning-formatted-text value={medical} class="slds-text-body_regular"></lightning-formatted-text><br /><br />
+                                    Organization/Volunteer Group:<br />
+                                    <lightning-formatted-text value={organization} class="slds-text-body_regular"></lightning-formatted-text><br />
+                                </template>
+                                <template lwc:if={editNotesFields}>
+                                    <lightning-textarea
+                                        name="notes"
+                                        label="Notes to the Volunteer Team"
+                                        data-field="Notes"
+                                        value={notes}></lightning-textarea>
+                                    <lightning-textarea 
+                                        name="medicalConcerns"
+                                        label="Medical Concerns"
+                                        data-field="MedicalConcerns"
+                                        value={medical}></lightning-textarea>
+                                    <lightning-input 
+                                        type="text"
+                                        label="Volunteer Group Name"
+                                        data-field="GroupName"
+                                        value={organization}></lightning-input>
+                                </template>
+                            </div>
+                        </lightning-tile>
+                        <lightning-tile type="media" class="slds-var-p-vertical_medium slds-var-p-horizontal_x-large slds-has-dividers_bottom-space slds-border_top">
+                            <lightning-icon slot="media" class="tms-icon" icon-name="utility:ribbon"></lightning-icon>
+                            <div class="slds-grid slds-grid_align-spread slds-has-flexi-truncate">
+                                <h3 class="slds-truncate" title="Skills">Skills</h3>
+                                <template lwc:if={skillsEditButtonDisplay}>
+                                    <div class="slds-shrink-none">
+                                        <lightning-button label="Edit" title="Edit" onclick={handleEditClick} class="slds-var-m-left_x-small"></lightning-button>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="slds-tile__detail">
+                                <template lwc:if={displaySkillsFields}>
+                                    <template lwc:if={skills}>
+                                        <template for:each={skills} for:item="skill">
+                                            <p key={skill}>{skill}</p>
+                                        </template>
+                                    </template>
+                                </template>
+                                <template lwc:if={editSkillsFields}>
+                                    <lightning-dual-listbox
+                                        name="Skills"
+                                        label="Select Skills"
+                                        source-label="Available"
+                                        selected-label="Selected"
+                                        field-level-help="Select your skills"
+                                        options={skillsValues}
+                                        value={skills}
+                                        onchange={handleSkillsChange}>
+                                    </lightning-dual-listbox>
+                                </template>
+                            </div>            
+                        </lightning-tile>
+                        <lightning-tile type="media" class="slds-var-p-vertical_medium slds-var-p-horizontal_x-large slds-has-dividers_bottom-space slds-border_top">
+                            <lightning-icon slot="media" class="tms-icon" icon-name="utility:ribbon"></lightning-icon>
+                            <div class="slds-grid slds-grid_align-spread slds-has-flexi-truncate">
+                                <h3 class="slds-truncate" title="Availability">Availability</h3>
+                                <template lwc:if={availibilityEditButtonDisplay}>
+                                    <div class="slds-shrink-none">
+                                        <lightning-button label="Edit" title="Edit" onclick={handleEditClick} class="slds-var-m-left_x-small"></lightning-button>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="slds-tile__detail">
+                                <template lwc:if={displayAvailabilityFields}>
+                                    <template lwc:if={availability}>
+                                        <template for:each={availability} for:item="avail">
+                                            <p key={avail}>{avail}</p>
+                                        </template>
+                                    </template>
+                                </template>
+                                <template lwc:if={editAvailabilityFields}>
+                                    <lightning-dual-listbox
+                                        name="availability"
+                                        label="Select Availability"
+                                        source-label="Available"
+                                        selected-label="Selected"
+                                        field-level-help="Select the availability that apply to you"
+                                        options={availabilityValues}
+                                        value={availability}
+                                        onchange={handleAvailabilityChange}></lightning-dual-listbox>
+                                </template>
+
+                            </div>
+                        </lightning-tile>          
+                        <lightning-tile type="media" class="slds-var-p-vertical_medium slds-var-p-horizontal_x-large slds-has-dividers_bottom-space slds-border_top">
+                            <lightning-icon slot="media" class="tms-icon" icon-name="utility:location"></lightning-icon>
+                            <div class="slds-grid slds-grid_align-spread slds-has-flexi-truncate">
+                                <h3 class="slds-truncate" title="Availability">Preferred City</h3>
+                                <template lwc:if={cityEditButtonDisplay}>
+                                    <div class="slds-shrink-none">
+                                        <lightning-button label="Edit" title="Edit" onclick={handleEditClick} class="slds-var-m-left_x-small"></lightning-button>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="slds-tile__detail">
+                                <template lwc:if={displayCityFields}>
+                                    <template lwc:if={tmsCity}>
+                                            <p>{tmsCity}</p>
+                                    </template>
+                                </template>
+                                <template lwc:if={editCityFields}>
+                                    <lightning-combobox
+                                        name="Preferred City"
+                                        value={tmsCity}
+                                        placeholder="Select your preferred City"
+                                        options={cityValues}
+                                        onchange={handleCityChange} ></lightning-combobox>
+                                </template>
+
+                            </div>
+                        </lightning-tile>          
+                        <lightning-tile type="media" class="slds-var-p-vertical_medium slds-var-p-horizontal_x-large slds-has-dividers_bottom-space slds-border_top">
+                            <lightning-icon slot="media" class="tms-icon" icon-name="utility:success"></lightning-icon>
+                            <div class="slds-grid slds-grid_align-spread slds-has-flexi-truncate">
+                                <h3 class="slds-truncate" title="Status">Status</h3>
+                                <p><lightning-formatted-text value={status} class="slds-text-body_regular"></lightning-formatted-text></p>
+
+                            </div>
+                            <div class="slds-tile__detail">
+                                <lightning-formatted-text value={availability} class="slds-text-body_regular"></lightning-formatted-text><br /><br />
+                                <template lwc:if={displayLiabilityWaiverAlert}>
+                                    <div class="slds-var-p-around_medium slds-var-m-vertical_medium tile-alert">
+                                        <lightning-tile type="media">
+                                            <lightning-icon slot="media" icon-name="utility:warning" variant="inverse"></lightning-icon>
+                                            <h3>Medical Waiver Required</h3>
+                                            <p class="slds-var-p-horizontal_small">We need your completed Liability Waiver</p>
+                                            <p class="slds-var-p-horizontal_small">Please contact the Volunteer Team to submit your Liability Waiver</p>
+                                        </lightning-tile> 
+                                    </div>
+                                </template>
+                                <template lwc:if={displayBackgroundCheckAlert}>
+                                    <div class="slds-var-p-around_medium slds-var-m-vertical_medium tile-alert">
+                                        <lightning-tile type="media">
+                                            <lightning-icon slot="media" icon-name="utility:warning" variant="inverse"></lightning-icon>
+                                            <h3>Background Check Required</h3>
+                                            <p class="slds-var-p-horizontal_small">We need your completed Background Check</p>
+                                            <p class="slds-var-p-horizontal_small">Please contact the Volunteer Team to submit your Background Check</p>
+                                        </lightning-tile> 
+                                    </div>
+                                </template>
+
+                            </div>
+                        </lightning-tile>          
+
+                    </lightning-card>
+
+                </lightning-layout-item>
+            </lightning-layout>
+        </div>
+    </template> 
+ 
+
+</template>

@@ -1,0 +1,579 @@
+<!--
+ - Created by Alex JR on 21/08/19.
+ -->
+
+<aura:component description="BudgetApplicationSheet"
+				implements="lightning:actionOverride,lightning:isUrlAddressable,force:hasRecordId,force:hasSObjectName,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId"
+				access="global" controller="CBBudgetApplication">
+
+	<ltng:require scripts="{!join(',',$Resource.cb4__jquery341, $Resource.cb4__jqueryui, $Resource.cb4__exceljs, $Resource.cb4__fileSaver, $Resource.cb4__maskMoney,
+                    $Resource.cb4__JS_CONST, $Resource.cb4__JS_UTILS,
+                    $Resource.cb4__DTjQ + '/DataTables-1.10.16/media/js/jquery.dataTables.min.js',
+                    $Resource.cb4__DTjQ + '/DataTables-1.10.16/extensions/FixedColumns/js/dataTables.fixedColumns.min.js'
+                    )}" styles="{!join(',',
+                    $Resource.cb4__DTjQ + '/DataTables-1.10.16/media/css/jquery.dataTables.min.css',
+                    $Resource.cb4__DTjQ + '/DataTables-1.10.16/extensions/FixedColumns/css/fixedColumns.dataTables.min.css',
+                    $Resource.cb4__jqueryuicss
+                    )}" afterScriptsLoaded="{!c.doInit}" />
+
+
+	<aura:attribute name="recordId" type="Id" default="" />
+	<aura:attribute name="headerTitle" type="String" access="global" />
+	<aura:attribute name="headers" type="String[]" description="list of headers for single table" />
+	<aura:attribute name="rootApp" type="cb4__CBTag__c" description="Root application of the sheet" />
+	<aura:attribute name="apps" type="cb4__CBTag__c[]" description="All applications" />
+	<aura:attribute name="app" type="cb4__CBTag__c" description="Head app" />
+	<aura:attribute name="totalData" type="cb4.CBRow[]" description="total lines" />
+	<aura:attribute name="incomeData" type="cb4.CBRow[]" description="income lines" />
+	<aura:attribute name="expenseData" type="cb4.CBRow[]" description="expense lines" />
+	<aura:attribute name="productData" type="cb4.CBRow[]" description="Special structure lines" />
+	<aura:attribute name="employeeData" type="cb4.CBRow[]" description="Special structure lines" />
+	<aura:attribute name="incomeDataOriginal" type="cb4.CBRow[]" description="income lines Original" />
+	<aura:attribute name="expenseDataOriginal" type="cb4.CBRow[]" description="expense lines Original" />
+	<aura:attribute name="allAccAndDims" type="Object" description="Map of all accounts and dimensions" />
+	<aura:attribute name="groupFilter" type="List" />
+	<aura:attribute name="selectedGroup" type="String" default="dim8Name"
+					description="accName,accountST,product,employee" />
+	<aura:attribute name="groupByApps" type="Boolean" default="false" />
+	<aura:attribute name="showDetails" type="Boolean" default="true" />
+	<aura:attribute name="showDetailsDisabled" type="Boolean" default="false" />
+
+	<aura:attribute name="doDownloadExcelOnload" type="Boolean" default="false" />
+
+	<aura:attribute name="priceQuantityObject" type="Object" />
+	<aura:attribute name="employeeRateObject" type="Object" />
+
+	<aura:attribute name="incomeRowsOfApps" type="Object" description="raw rows from server " />
+	<aura:attribute name="expenseRowsOfApps" type="Object" description="raw rows from server " />
+	<aura:attribute name="allApps" type="List" description="" />
+	<aura:attribute name="usersNameIdList" type="Object" description="" />
+
+	<!-- BA dimensions -->
+	<aura:attribute name="appDim4name" type="String" description="App Dimension 4 name" />
+	<aura:attribute name="appDim5name" type="String" description="App Dimension 5 name" />
+	<aura:attribute name="appDim6name" type="String" description="App Dimension 6 name" />
+	<aura:attribute name="appDim7name" type="String" description="App Dimension 7 name" />
+	<aura:attribute name="appDim8name" type="String" description="App Dimension 8 name" />
+	<aura:attribute name="appDim9name" type="String" description="App Dimension 9 name" />
+	<aura:attribute name="appDim10name" type="String" description="App Dimension 10 name" />
+
+	<aura:attribute name="appsStructure" type="List" description="All Apps list structured" />
+
+	<!-- HEADER -->
+	<div class="slds-page-header slds-m-bottom_medium">
+		<div class="slds-page-header__row">
+			<div class="slds-page-header__col-title">
+				<div class="slds-media">
+					<div class="slds-media__figure">
+                        <span class="slds-icon_container slds-icon-standard-calibration" title="Budget App Sheet">
+                            <lightning:icon iconName="standard:poll" alternativeText="Budget App Sheet" />
+                        </span>
+					</div>
+					<div class="slds-media__body">
+						<div class="slds-page-header__name">
+							<div class="slds-page-header__name-title">
+								<h1>
+                                    <span class="slds-page-header__title slds-truncate" title="{!v.headerTitle}">
+                                        {!v.headerTitle}</span>
+								</h1>
+								<div class="slds-text-body_small">
+									{!v.app.cb4__Text3__c}
+								</div>
+								<!-- <c:Currency/>-->
+							</div>
+						</div>
+
+					</div>
+
+				</div>
+			</div>
+
+			<lightning:input type="toggle" label="Details" title="Show Simple Lines"
+							 class="slds-m-top_large slds-m-right_small" disabled="{!v.showDetailsDisabled}"
+							 messageToggleActive="Show" messageToggleInactive="Hide" checked="{!v.showDetails}"
+							 onchange="{!c.refreshData}" />
+
+			<lightning:input type="toggle" label="Apps" title="Grouping by Budget Apps"
+							 class="slds-m-top_large slds-m-right_small" messageToggleActive="Show" messageToggleInactive="Hide"
+							 checked="{!v.groupByApps}" onchange="{!c.refreshData}" />
+
+			<lightning:select label="Group by" value="{!v.selectedGroup}" onchange="{!c.refreshData}">
+				<option value="">-</option>
+				<aura:iteration items="{!v.groupFilter}" var="gr">
+					<option value="{!gr.value}" selected="{!v.selectedGroup == gr.value}">{!gr.title}</option>
+				</aura:iteration>
+			</lightning:select>
+
+			<lightning:button onclick="{!c.redirectToBudgetApp}" title="Back to Budget App"
+							  iconName="utility:richtextnumberedlist" class="slds-m-top_large slds-m-bottom_small" label="App"
+							  value="App" variant="neutral" />
+
+			<lightning:button label="App List" title="Back to App List" onclick="{!c.backToMainTable}"
+							  class="slds-m-top_large slds-m-bottom_small" iconName="utility:list" variant="neutral" />
+
+			<lightning:buttonMenu alternativeText="Show menu" class="slds-button_last slds-m-top_large slds-p-left_xx-small"
+								  iconName="doctype:excel" menuAlignment="right">
+				<lightning:menuItem label="Consolidated Budget" iconName="utility:download" onactive="{!c.downloadExcelConsolidated}"/>
+				<lightning:menuItem label="Split by Sheet" iconName="utility:download" onactive="{!c.downloadExcelSplitBySheets}"/>
+			</lightning:buttonMenu>
+		</div>
+	</div>
+	<!-- HEADER -->
+
+	<!-- TABLE -->
+	<div class="slds-grid slds-wrap">
+		<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+			<thead>
+			<tr class="slds-line-height_reset">
+				<th class="leftColumnTotal">
+
+				</th>
+				<th style="width: 21% !important;">
+					<div class="slds-truncate" title="Account">Account</div>
+				</th>
+				<th>
+					<div class="slds-truncate" title="Index">#</div>
+				</th>
+				<aura:iteration items="{!v.headers}" var="h">
+					<th>
+						<div class="slds-truncate slds-text-align--right" title="Period">{!h}</div>
+					</th>
+				</aura:iteration>
+				<th>
+					<div class="slds-truncate  slds-text-align--right" title="Total">Total</div>
+				</th>
+			</tr>
+			</thead>
+			<tbody>
+
+			<!-- TOTAL -->
+			<aura:iteration items="{!v.totalData}" var="r">
+				<tr class="nav">
+					<th class="leftColumnTotal">
+
+					</th>
+					<th>
+						<div class="slds-p-left--none slds-text-align_left">
+							<div class="slds-grid slds-wrap">
+								<div class="slds-size_1-of-2">
+									<div class="slds-text-title--caps" style="font-weight: bold !important">
+										{!r.title}
+									</div>
+								</div>
+								<div class="slds-size_1-of-2 slds-p-left--small">
+
+								</div>
+							</div>
+						</div>
+					</th>
+					<th class="indexTh">
+						<div></div>
+					</th>
+
+					<aura:iteration items="{!r.rowValues}" var="item" indexVar="key">
+						<th style="font-weight: bold;"
+							class="{!greaterthan(v.app.cb4__Decimal6__c,key)  ? r.type + ' noPaddingNoMargin splitRow' : r.type + ' noPaddingNoMargin' }">
+							<lightning:input variant="label-hidden" disabled="true" class="dec" step="0"
+											 type="number" value="{!item.v}" />
+						</th>
+					</aura:iteration>
+				</tr>
+			</aura:iteration>
+			<!-- TOTAL -->
+
+			<!-- SIMPLE INCOME -->
+			<aura:renderIf isTrue="{!not(empty(v.incomeData))}">
+				<tr>
+					<th style="background-color: lightgreen; padding: 0 !important;">
+					</th>
+					<th colspan="2">
+						Income
+					</th>
+				</tr>
+			</aura:renderIf>
+
+			<aura:iteration items="{!v.incomeData}" var="r" indexVar="i">
+				<tr class="{!r.type}">
+					<th class="leftColumnInc"></th>
+					<th class="{!r.type}">
+						<div class="slds-p-left--none slds-text-align_left">
+							<div class="slds-grid slds-wrap">
+								<div class="slds-size_1-of-1 slds-truncate appNameStyle">
+									<a href="{!'/'+r.app}" target="_blank" tabindex="-1">{!r.appName}</a>
+								</div>
+
+								<div class="slds-size_1-of-2 slds-truncate titleStyle ">
+									{!r.title}
+								</div>
+								<div class="slds-size_1-of-2 slds-p-left--small dimStyle">
+									<div class="subtypeInAccName">
+										{!v.selectedGroup == 'accName' ? (r.accountST == null ? '' : 'SubType: ' +
+										r.accountST) : '' }
+									</div>
+									<div>
+										{!r.accName}
+									</div>
+									<div>
+										{!r.dim6Name}
+									</div>
+									<div>
+										{!r.dim7Name}
+									</div>
+									<div>
+										{!r.dim8Name}
+									</div>
+									<div>
+										{!r.dim9Name}
+									</div>
+									<div>
+										{!r.dim10Name}
+									</div>
+								</div>
+							</div>
+
+
+						</div>
+					</th>
+					<th class="{!r.type + ' indexTh'}">
+						<div class="index">{!i + 1}</div>
+					</th>
+					<aura:iteration items="{!r.rowValues}" var="item" indexVar="key">
+						<!--<th class="{!greaterthan(v.app.cb4__Decimal6__c,key)  ? 'noPaddingNoMargin splitRow' : 'noPaddingNoMargin' }"> -->
+						<th
+								class="{!greaterthan(v.app.cb4__Decimal6__c,key)  ? r.type + ' noPaddingNoMargin splitRow' : r.type + ' noPaddingNoMargin' }">
+							<lightning:input variant="label-hidden" disabled="true" class="dec" step="0"
+											 type="number" value="{!item.v}" />
+						</th>
+
+					</aura:iteration>
+				</tr>
+			</aura:iteration>
+			<!-- SIMPLE INCOME -->
+
+			<!-- SIMPLE EXPENSE -->
+			<aura:renderIf isTrue="{!not(empty(v.expenseData))}">
+				<tr>
+					<th style="background-color: lightsalmon; padding: 0 !important;">
+					</th>
+					<th colspan="2">
+						Expense
+					</th>
+				</tr>
+			</aura:renderIf>
+
+			<aura:iteration items="{!v.expenseData}" var="r" indexVar="i">
+				<tr class="{!r.type}">
+					<th class="leftColumnExp"></th>
+					<th class="{!r.type}">
+						<div class="slds-p-left--none slds-text-align_left">
+							<div class="slds-grid slds-wrap">
+								<div class="slds-size_1-of-1 slds-truncate appNameStyle">
+									<a href="{!'/'+r.app}" target="_blank" tabindex="-1">{!r.appName}</a>
+								</div>
+
+								<div class="slds-size_1-of-2 slds-truncate titleStyle  ">
+									{!r.title}
+								</div>
+								<div class="slds-size_1-of-2 slds-p-left--small dimStyle">
+									<div class="subtypeInAccName">
+										{!v.selectedGroup == 'accName' ? (r.accountST == null ? '' : 'SubType: ' +
+										r.accountST) : '' }
+									</div>
+									<div>
+										{!r.accName}
+									</div>
+									<div>
+										{!r.dim6Name}
+									</div>
+									<div>
+										{!r.dim7Name}
+									</div>
+									<div>
+										{!r.dim8Name}
+									</div>
+									<div>
+										{!r.dim9Name}
+									</div>
+									<div>
+										{!r.dim10Name}
+									</div>
+								</div>
+							</div>
+
+
+						</div>
+					</th>
+					<th class="{!r.type + ' indexTh'}">
+						<div class="index">{!i + 1}</div>
+					</th>
+					<aura:iteration items="{!r.rowValues}" var="item" indexVar="key">
+						<th
+								class="{!greaterthan(v.app.cb4__Decimal6__c,key)  ? r.type + ' noPaddingNoMargin splitRow' : r.type + ' noPaddingNoMargin' }">
+							<lightning:input variant="label-hidden" disabled="true" class="dec" step="0"
+											 type="number" value="{!item.v}" />
+						</th>
+					</aura:iteration>
+				</tr>
+			</aura:iteration>
+			<!-- SIMPLE EXPENSE -->
+
+
+			<!-- PRODUCT MODE -->
+			<aura:iteration items="{!v.productData}" var="block" indexVar="i">
+				<aura:iteration items="{!block.rows}" var="r" indexVar="k">
+					<tr class="{!r.type}">
+						<th class="leftColumnProduct"></th>
+						<th>
+							<div class="slds-p-left--none slds-text-align_left">
+								<div class="slds-grid slds-wrap">
+									<div class="slds-size_1-of-1 slds-truncate appNameStyle">
+										<a href="{!'/'+r.app}" target="_blank" tabindex="-1">{!r.appName}</a>
+									</div>
+
+									<div class="slds-size_1-of-2 slds-truncate titleStyle  ">
+										{!r.title}
+									</div>
+									<div class="slds-size_1-of-2 slds-p-left--small dimStyle">
+										<div>
+											{!r.accName}
+										</div>
+										<div>
+											{!r.dim6Name}
+										</div>
+										<div>
+											{!r.dim7Name}
+										</div>
+										<div>
+											{!r.dim8Name}
+										</div>
+										<div>
+											{!r.dim9Name}
+										</div>
+										<div>
+											{!r.dim10Name}
+										</div>
+									</div>
+								</div>
+
+
+							</div>
+						</th>
+						<th class="{!r.type + ' indexTh'}">
+							<div class="index">{!i + 1}.{!k + 1}</div>
+						</th>
+						<aura:iteration items="{!r.rowValues}" var="item">
+							<th class="{!r.type + ' noPaddingNoMargin'}">
+								<lightning:input variant="label-hidden" disabled="true" class="dec" step="0"
+												 type="number" value="{!item.v}" />
+							</th>
+						</aura:iteration>
+					</tr>
+
+					<!-- quantityValues -->
+					<aura:renderIf isTrue="{!r.quantityValues != null}">
+						<tr>
+							<th class="leftColumnProduct"></th>
+							<th>
+								<div class="slds-grid slds-wrap">
+									<div class="slds-size_1-of-2 slds-truncate titleStyle  ">
+										<lightning:icon iconName="utility:cart" alternativeText="Quantity"
+														title="Quantity" size="xx-small" />
+										Quantity
+									</div>
+									<div class="slds-size_1-of-2 slds-p-left--small dimStyle">
+										{!block.unitName}
+									</div>
+								</div>
+							</th>
+							<th>
+								{!i + 1}.{!k + 1}.1
+							</th>
+							<aura:iteration items="{!r.quantityValues}" var="item">
+								<th class="{!r.type + ' noPaddingNoMargin'}">
+									<lightning:input variant="label-hidden" disabled="true" class="dec quantity"
+													 step="0" type="number" value="{!item}" />
+								</th>
+							</aura:iteration>
+						</tr>
+					</aura:renderIf>
+					<!-- quantityValues -->
+
+					<!-- priceValues -->
+					<aura:renderIf isTrue="{!r.priceValues != null}">
+						<tr>
+							<th class="leftColumnProduct"></th>
+							<th>
+								<lightning:icon iconName="utility:graph" alternativeText="Price/Rate"
+												title="Price/Rate" size="xx-small" />
+								Price
+							</th>
+							<th>
+								{!i + 1}.{!k + 1}.2
+							</th>
+							<aura:iteration items="{!r.priceValues}" var="item">
+								<th class="{!r.type + ' noPaddingNoMargin'}">
+									<lightning:input variant="label-hidden" disabled="true" class="dec price"
+													 step="0" type="number" value="{!item}" />
+								</th>
+							</aura:iteration>
+						</tr>
+					</aura:renderIf>
+					<!-- priceValues -->
+
+
+				</aura:iteration>
+			</aura:iteration>
+			<!-- PRODUCT MODE -->
+
+
+			<!-- EMPLOYEE MODE -->
+			<aura:iteration items="{!v.employeeData}" var="block" indexVar="i">
+				<aura:iteration items="{!block.rows}" var="r" indexVar="k">
+					<tr class="{!r.type}">
+						<th class="leftColumnProduct"></th>
+						<th>
+							<div class="slds-p-left--none slds-text-align_left">
+								<div class="slds-grid slds-wrap">
+									<div class="slds-size_1-of-1 slds-truncate appNameStyle">
+										<a href="{!'/'+r.app}" target="_blank" tabindex="-1">{!r.appName}</a>
+									</div>
+
+									<div class="slds-size_1-of-2 slds-truncate titleStyle  ">
+										{!r.title}
+									</div>
+									<div class="slds-size_1-of-2 slds-p-left--small dimStyle">
+										<div>
+											{!r.accName}
+										</div>
+										<div>
+											{!r.dim6Name}
+										</div>
+										<div>
+											{!r.dim7Name}
+										</div>
+										<div>
+											{!r.dim8Name}
+										</div>
+										<div>
+											{!r.dim9Name}
+										</div>
+										<div>
+											{!r.dim10Name}
+										</div>
+									</div>
+								</div>
+
+
+							</div>
+						</th>
+						<th class="{!r.type + ' indexTh'}">
+							<div class="index">{!i + 1}.{!k + 1}</div>
+						</th>
+						<aura:iteration items="{!r.rowValues}" var="item">
+							<th class="{!r.type + ' noPaddingNoMargin'}">
+								<lightning:input variant="label-hidden" disabled="true" class="dec" step="0"
+												 type="number" value="{!item.v}" />
+							</th>
+						</aura:iteration>
+					</tr>
+
+					<!-- hourValues -->
+					<aura:renderIf isTrue="{!r.quantityValues != null}">
+						<tr>
+							<th class="leftColumnProduct"></th>
+							<th>
+								<div class="slds-grid slds-wrap">
+									<div class="slds-size_1-of-2 slds-truncate titleStyle  ">
+										<lightning:icon iconName="utility:reminder" alternativeText="Hours"
+														title="Hours" size="xx-small" />
+										Hours
+									</div>
+									<div class="slds-size_1-of-2 slds-p-left--small dimStyle">
+										{!block.unitName}
+									</div>
+								</div>
+							</th>
+							<th>
+								{!i + 1}.{!k + 1}.1
+							</th>
+							<aura:iteration items="{!r.quantityValues}" var="item">
+								<th class="{!r.type + ' noPaddingNoMargin'}">
+									<lightning:input variant="label-hidden" disabled="true" class="dec quantity"
+													 step="0" type="number" value="{!item}" />
+								</th>
+							</aura:iteration>
+						</tr>
+					</aura:renderIf>
+					<!-- hourValues -->
+
+					<!-- rateValues -->
+					<aura:renderIf isTrue="{!r.priceValues != null}">
+						<tr>
+							<th class="leftColumnProduct"></th>
+							<th>
+								<lightning:icon iconName="utility:graph" alternativeText="Rate" title="USD per hour"
+												size="xx-small" />
+								Rate
+							</th>
+							<th>
+								{!i + 1}.{!k + 1}.2
+							</th>
+							<aura:iteration items="{!r.priceValues}" var="item">
+								<th class="{!r.type + ' noPaddingNoMargin'}">
+									<lightning:input variant="label-hidden" disabled="true" class="dec price"
+													 step="0" type="number" value="{!item}" />
+								</th>
+							</aura:iteration>
+						</tr>
+					</aura:renderIf>
+					<!-- rateValues -->
+
+
+				</aura:iteration>
+			</aura:iteration>
+			<!-- EMPLOYEE MODE -->
+
+			</tbody>
+		</table>
+	</div>
+	<div style="height: 100px;">
+	</div>
+	<!-- TABLE -->
+
+	<!--<div class="slds-card slds-card slds-p-top&#45;&#45;small slds-p-bottom&#45;&#45;small slds-p-left&#45;&#45;xxx-small" id="excelPanel"
+		 style="width: 380px; opacity: 0.9; position: fixed; top: 220px; right:-350px;  box-shadow: 0px 0px 5px;">
+
+		<lightning:layout>
+			<lightning:layoutItem>
+				<div onclick="{!c.showExcelPanel}" class="excelPanel">
+					<div>
+						<lightning:icon iconName="doctype:excel" size="medium" alternativeText="Excel" />
+					</div>
+				</div>
+			</lightning:layoutItem>
+			<lightning:layoutItem class="slds-p-left&#45;&#45;small">
+				<div class="slds-grid slds-gutters_direct-xxx-small">
+					<div class="slds-col">
+						<lightning:button label="Consolidated Budget" iconName="utility:download" class=""
+										  iconPosition="left" onclick="{!c.downloadExcelConsolidated}" />
+					</div>
+					<div class="slds-col">
+						<lightning:button label="Split by Sheet" iconName="utility:download" class=""
+										  iconPosition="left" onclick="{!c. downloadExcelSplitBySheets}" />
+					</div>
+				</div>
+
+			</lightning:layoutItem>
+		</lightning:layout>
+
+
+	</div>-->
+
+	<!-- MODERN SPINNER -->
+	<div style="z-index: 9000; display: none;" id="spinnerDiv">
+		<lightning:spinner alternativeText="Loading" size="medium" />
+	</div>
+	<!-- MODERN SPINNER -->
+
+
+</aura:component>

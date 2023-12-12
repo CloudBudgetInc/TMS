@@ -1,0 +1,61 @@
+<template>
+    <template lwc:if={isLoading}>
+        <div class="spinnerHolder">
+            <lightning-spinner alternative-text="Loading" variant="brand"></lightning-spinner>
+        </div>
+    </template>
+    <lightning-layout multiple-rows="true" class="x" horizontal-align="spread">
+        <!-- <lightning-layout-item padding="around-small" size="12">
+            <lightning-layout horizontal-align="spread"> -->
+                <lightning-layout-item padding="around-small" size="12" small-device-size="12" medium-device-size="12" large-device-size="9"> 
+                    <lightning-card title="Shifts">
+                        <div class="slds-var-p-around_medium">
+                            <ul class="slds-has-dividers_bottom-space">
+                                <template for:each={filteredShifts} for:item="shift">
+                                    <li key={shift.Id} class="slds-item">
+                                        <lightning-tile href="#">
+                                            <h3>
+                                                <div class="slds-text-title_bold slds-text-heading_large">{shift.jobName}</div>
+                                                <div class="slds-float_right">
+                                                    <lightning-button label="Details/Register" class="slds-float_right" variant="success" onclick={handleConfirmClick} data-id={shift.Id} data-start={shift.GW_Volunteers__Start_Date_Time__c}></lightning-button>
+                                                </div>   
+                                            </h3>
+                                            <p>{shift.newDate}</p>
+                                            <p class="slds-truncate slds-var-m-vertical_x-small">{shift.GW_Volunteers__Job_Location_Street__c}<br />{shift.GW_Volunteers__Job_Location_City__c}</p>
+                                            <p class="slds-truncate slds-var-m-vertical_x-small">Notes:{shift.GW_Volunteers__Description__c}</p>
+                                        </lightning-tile>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                    </lightning-card>
+                </lightning-layout-item>
+                <lightning-layout-item padding="around-small" margin="bottom-small" size="12" small-device-size="12" medium-device-size="12" large-device-size="3">
+                    <lightning-card title="City" class="slds-var-m-bottom_small">
+                        <div class="slds-var-p-around_medium">
+                            <ul class="slds-has-dividers_bottom-space">
+                                <template for:each={cityValues} for:item="city">
+                                    <li key={city.value} class="slds-item">
+                                        <lightning-button-stateful class="cityFilterButton" data-name={city.label} label-when-off={city.label} label-when-on={city.label} label-when-hover={city.label} icon-name-when-off="utility:preview" icon-name-when-on="utility:check" icon-name-when-hover="utility:preview" onclick={handleCityClick}></lightning-button-stateful>
+                                    </li>
+                                </template>
+                            </ul>
+                        </div>
+                    </lightning-card>
+                    <lightning-card title="Job Type">
+                        <div class="slds-var-p-around_medium">
+                            <ul class="slds-has-dividers_bottom-space">
+                                <template for:each={typeValues} for:item="type">
+                                    <li key={type.value} class="slds-item">
+                                        <lightning-button-stateful class="filterButton" data-name={type.label} label-when-off={type.label} label-when-on={type.label} label-when-hover={type.label} icon-name-when-off="utility:preview" icon-name-when-on="utility:check" icon-name-when-hover="utility:preview" onclick={handleFilterClick}></lightning-button-stateful>
+                                    </li>
+                                </template>
+                            </ul>
+
+                        </div>
+                    </lightning-card>
+                </lightning-layout-item>
+            <!-- </lightning-layout>
+        </lightning-layout-item> -->
+    </lightning-layout>
+</template>

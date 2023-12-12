@@ -1,0 +1,11 @@
+.available {
+    --sds-c-card-color-background: green;
+}
+
+.unavailable {
+    --sds-c-card-color-background: red;
+}
+
+.tile-bg {
+    background-color: #F6F6F6;
+}

@@ -1,0 +1,40 @@
+<template>
+    <lightning-card>
+        <h2 slot="title" class="slds-var-m-vertical_small">
+            <lightning-icon slot="media" icon-name="standard:employee_job"></lightning-icon>
+            <lightning-formatted-text value={jobName} class="slds-text-heading_large slds-m-horizontal_large"></lightning-formatted-text>
+        </h2>
+        
+        <div class="slds-grid slds-wrap">
+            <div class="slds-col slds-size_1-of-1 slds-large-size_8-of-12 slds-var-p-vertical_medium slds-var-p-horizontal_large">
+                <h3>Description</h3>
+                <lightning-formatted-rich-text value={jobDescription} ></lightning-formatted-rich-text>
+
+                <h3>Available Shifts</h3>
+                <!-- <lightning-datatable key-field="Id" data={} columns={} ></lightning-datatable> -->
+                <c-volunteer-job-shifts-table job-id={recordId} job-name={jobName}></c-volunteer-job-shifts-table>
+                
+            </div>
+            <div class="slds-col slds-size_1-of-1 slds-large-size_4-of-12 slds-var-p-vertical_medium slds-var-p-horizontal_large">
+                <div class="tile-bg slds-p-around_medium">
+                    <lightning-tile label="Location" type="media">
+                        <lightning-icon slot="media" icon-name="utility:checkin"></lightning-icon>
+                        <lightning-formatted-text value={jobLocationStreet} class="slds-text-body_regular"></lightning-formatted-text><br />
+                        <lightning-formatted-text value={jobCity} class="slds-text-body_regular"></lightning-formatted-text>, <lightning-formatted-text value={jobProvince} class="slds-text-body_regular"> </lightning-formatted-text> <lightning-formatted-text value={jobLocationPostal} class="slds-text-body_regular"></lightning-formatted-text>
+                    </lightning-tile>
+                </div>
+                <div class="tile-bg slds-p-around_medium">
+                    <lightning-tile label="Skills and Additional Info" type="media">
+                        <lightning-icon slot="media" icon-name="utility:thunder"></lightning-icon>
+                        <!-- <lightning-formatted-text value={jobSkills} class="slds-text-body_regular"></lightning-formatted-text> -->
+                            <template lwc:if={skillComputer}>
+                                    <p><lightning-icon slot="media" icon-name="utility:screen" alternative-text="Computer Skills"></lightning-icon></p>
+                            </template>
+                        
+                    </lightning-tile>
+                </div>
+            </div>
+        </div>
+
+    </lightning-card>
+</template>

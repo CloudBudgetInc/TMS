@@ -1,0 +1,34 @@
+body{
+    margin: 0;
+  }
+.mainCard {
+    color: rgb(15, 17, 15);
+    font-weight: bold;
+    background-color: rgba(255, 255, 255, 0.801);
+    background: linear-gradient(45deg, #9dcef0, #FFFFFF);
+    margin-left: 5px;
+    margin-right: 5px;
+}
+.ActualEngagementScore {
+  text-align: center; /* Center the text */
+  font-size: 80px; /* Adjust the font size to make it bigger */
+  margin-bottom: 5px; /* Add spacing below the paragraph if needed */
+  color: rgb(42, 121, 224);
+  text-shadow: 2px 2px 4px rgba(9, 64, 73, 0.5);
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: center;
+}
+
+th {
+  background-color: #7cd5f0;
+  text-align: center;
+}

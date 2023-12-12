@@ -1,0 +1,113 @@
+/**
+ * Created by Alex JR on 23/08/19.
+ */
+.THIS .fixed {
+    background: transparent;
+    position: fixed !important;
+    top: 72px !important;
+    margin-right: 27px;
+    font-weight: bold !important;
+    z-index: 9010;
+    border-radius: 4px;
+    border: 3px solid #0089d4;
+}
+
+.THIS .leftColumnTotal {
+    width: 5px !important;
+    padding: 0 !important;
+    background-color: #005fb2;
+}
+
+.THIS .leftColumnInc {
+    width: 5px !important;
+    padding: 0 !important;
+    background-color: lightgreen;
+}
+
+.THIS .leftColumnExp {
+    width: 5px !important;
+    padding: 0 !important;
+    background-color: lightsalmon;
+}
+
+.THIS .leftColumnProduct {
+    width: 5px !important;
+    padding: 0 !important;
+    background-color: #794c3a;
+}
+
+.THIS .price {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    color: darkcyan !important;
+}
+
+.THIS .quantity {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    color: darkcyan !important;
+}
+
+.THIS .dec input {
+    text-align: right;
+    padding-right: 2px !important;
+    padding-left: 2px !important;
+    font-size: smaller !important;
+}
+
+.THIS .dimStyle {
+    font-size: smaller !important;
+    padding: 0px !important;
+    color: #8d9aab;
+}
+
+.THIS .subTotal {
+    color: black;
+    font-weight: bold;
+    background-color: #b5d5f5 !important;
+}
+
+.THIS .groupTotal {
+    color: black;
+    font-weight: bold;
+    background-color: #ebf0ff !important;
+}
+
+.THIS .appNameStyle {
+    font-size: small;
+    word-wrap: break-word;
+    overflow: hidden;
+    font-weight: bold;
+    word-break: break-all;
+    letter-spacing:-1px !important;
+}
+
+.THIS .titleStyle {
+    letter-spacing:-0.5px !important;
+    font-size: small;
+    /*line-height: 1 !important;*/
+    /*font-stretch: ultra-condensed !important;*/
+    text-align: left !important;
+    max-width: 75% !important;
+    white-space: pre-wrap !important;
+    padding-right: 8px;
+}
+
+.THIS .noPaddingNoMargin {
+    padding: 0 !important;
+    margin: 0;
+}
+
+/**
+APP.cb4__Decimal6__c for rolling forecast
+ */
+.THIS .splitRow {
+    color: firebrick !important;
+}
+
+.THIS .subtypeInAccName {
+    color: #0b093e;
+    font-weight: bold;
+    text-decoration: underline dotted #0b093e;
+    margin-top: 2px;
+}

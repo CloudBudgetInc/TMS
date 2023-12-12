@@ -1,0 +1,2356 @@
+<aura:component description="CBBudgetApplication"
+				implements="lightning:actionOverride,lightning:isUrlAddressable,force:hasRecordId,force:hasSObjectName,force:appHostable,flexipage:availableForAllPageTypes,flexipage:availableForRecordHome,force:hasRecordId"
+				access="global" controller="CBBudgetApplication">
+	<ltng:require scripts="{!join(',',$Resource.cb4__jquery341, $Resource.cb4__jqueryui, $Resource.cb4__JS_CONST, $Resource.cb4__JS_UTILS)}"
+				  afterScriptsLoaded="{!c.doInit}" />
+	<ltng:require scripts="{!join(',', $Resource.cb4__exceljs, $Resource.cb4__fileSaver,
+                    $Resource.cb4__JS_CONST, $Resource.cb4__JS_UTILS,
+                    $Resource.cb4__DTjQ + '/DataTables-1.10.16/media/js/jquery.dataTables.min.js',
+                    $Resource.cb4__DTjQ + '/DataTables-1.10.16/extensions/FixedColumns/js/dataTables.fixedColumns.min.js'
+                    )}" styles="{!join(',',
+                    $Resource.cb4__DTjQ + '/DataTables-1.10.16/media/css/jquery.dataTables.min.css',
+                    $Resource.cb4__DTjQ + '/DataTables-1.10.16/extensions/FixedColumns/css/fixedColumns.dataTables.min.css',
+                    $Resource.cb4__jqueryuicss
+                    )}" />
+	<aura:handler event="cb4.compEvent" name="compEvent" action="{!c.applyAdditionalComponent}" />
+	<aura:handler name="change" value="{!v.incomeData}" action="{!c.sendIncomeData}" />
+	<aura:handler name="change" value="{!v.incomeDownUpSubData}" action="{!c.sendIncomeDownUpSubData}" />
+	<aura:handler name="change" value="{!v.incomeTopDownSubData}" action="{!c.sendIncomeTopDownSubData}" />
+	<aura:handler name="change" value="{!v.expenseData}" action="{!c.sendExpenseData}" />
+	<aura:handler name="change" value="{!v.expenseDownUpSubData}" action="{!c.sendExpenseDownUpSubData}" />
+	<aura:handler name="change" value="{!v.expenseTopDownSubData}" action="{!c.sendExpenseTopDownSubData}" />
+	<aura:handler name="change" value="{!v.totalData}" action="{!c.sendTotalData}" />
+	<aura:handler name="change" value="{!v.targetTotalData}" action="{!c.sendTargetTotalData}" />
+
+	<aura:handler name="change" value="{!v.row}" action="{!c.sendRowDataToBLComponent}" />
+
+	<aura:attribute name="recordId" type="Id" />
+	<aura:attribute name="mode" type="String" default="table" access="global" description="single, table, on" />
+	<aura:attribute name="headerTitle" type="String" default="Budget Apps" access="global" />
+	<aura:attribute name="myFileId" type="String" access="global" />
+	<aura:attribute name="isWaiting" type="Boolean" default="false" />
+	<aura:attribute name="apps" type="cb4__CBTag__c[]" description="list of apps for table" />
+	<aura:attribute name="app" type="cb4__CBTag__c" default="{ 'sobjectType':'cb4__CBTag__c', 'Name' : 'New App'}"
+					description="selected app" />
+	<aura:attribute name="appDimension" type="cb4__CBDimension__c" description="Budget app dimension" />
+	<aura:attribute name="amountDimension" type="cb4__CBDimension__c" description="Budget app amount dimension" />
+	<aura:attribute name="template" type="cb4__CBTag__c" default="{ 'sobjectType':'cb4__CBTag__c', 'Name' : 'New Template'}"
+					description="template of selected app" />
+	<aura:attribute name="attachments" type="List" default="[]" />
+	<aura:attribute name="headers" type="String[]" description="list of headers for single table" />
+	<aura:attribute name="periods" type="String[]" description="list of periods Id" />
+	<aura:attribute name="row" type="cb4.CBRow" description="Selected for editing row" />
+	<aura:attribute name="incomeData" type="cb4.CBRow[]" description="income lines" />
+	<aura:attribute name="incomeDownUpSubData" type="cb4.CBRow[]" description="income Down Up sub lines" />
+	<aura:attribute name="incomeTopDownSubData" type="cb4.CBRow[]" description="income Top Down sub lines" />
+	<aura:attribute name="expenseData" type="cb4.CBRow[]" description="expense lines" />
+	<aura:attribute name="expenseDownUpSubData" type="cb4.CBRow[]" description="expense Down Up sub lines" />
+	<aura:attribute name="expenseTopDownSubData" type="cb4.CBRow[]" description="expense Top Down sub lines" />
+	<aura:attribute name="totalData" type="cb4.CBRow[]" description="total lines income and expenses" />
+	<aura:attribute name="targetTotalData" type="cb4.CBRow[]" description="target total lines income and expenses" />
+	<aura:attribute name="needSave" type="Boolean" default="false"
+					description="If true, it needs to confirm redirect" />
+	<aura:attribute name="saveButtonDisabled" type="Boolean" default="true" />
+	<aura:attribute name="inputMode" type="Boolean" default="false" />
+	<aura:attribute name="settingsObj" type="Object" />
+	<aura:attribute name="pageFilter" type="Object" default="" />
+	<aura:attribute name="moduleName" type="String" access="global" default="BudgetApplication" />
+	<aura:attribute name="approvingIsAllowed" type="String" access="global" default="true"
+					description="true if all children of the App is Posted" />
+	<aura:attribute name="editDisabled" type="Boolean" access="global" default="false"
+					description="true if the App is Posted" />
+	<aura:attribute name="navigationStrings" type="List" access="global" default="[]"
+					description="Position of the App (list of parents)" />
+
+	<aura:attribute name="incomeAccountsSO" type="cb4.CBSO[]" description="" />
+	<aura:attribute name="expenseAccountsSO" type="cb4.CBSO[]" description="" />
+	<aura:attribute name="accountToSubtypeSO" type="cb4.CBSO[]" description="" />
+	<aura:attribute name="rowAccountSO" type="cb4.CBSO[]" description="Accounts for Row Dialog" />
+	<aura:attribute name="templateSO" type="cb4.CBSO[]" description="" />
+	<aura:attribute name="periodSO" type="cb4.CBSO[]" description="Budget years" />
+	<aura:attribute name="departmentSO" type="cb4.CBSO[]" description="" />
+	<aura:attribute name="appSO" type="cb4.CBSO[]" description="" />
+	<aura:attribute name="userSO" type="cb4.CBSO[]" description="List of active Users with Licenses" />
+	<aura:attribute name="userWithPermSetSO" type="cb4.CBSO[]" description="List of active Users with PermSets" />
+	<aura:attribute name="userAllSO" type="cb4.CBSO[]" description="userWithPermSetSO + userSO sorted" />
+	<aura:attribute name="queueSO" type="cb4.CBSO[]" description="List of Queue" />
+	<aura:attribute name="productSOFull" type="cb4.CBSO[]" description="Full list of Products" />
+	<aura:attribute name="productSO" type="cb4.CBSO[]" description="List of Displayed Products" />
+	<aura:attribute name="productFilter" type="String" />
+	<aura:attribute name="productIsSearching" type="Boolean" default="false" />
+	<aura:attribute name="pricebookSO" type="cb4.CBSO[]" description="List of Price Books" />
+	<aura:attribute name="pricebookEntries" type="Object" description="List of PricebookEntries" />
+	<aura:attribute name="employeeSO" type="cb4.CBSO[]" description="List of Employees" />
+	<aura:attribute name="globalRateSO" type="cb4.CBSO[]" description="List of Global Rates" />
+	<aura:attribute name="rateSO" type="cb4.CBSO[]" description="List of Employee's Rates" />
+	<aura:attribute name="employeeRate" type="Object" description="Employee Rate Mapping" />
+	<aura:attribute name="rateAmount" type="Object" description="Rate Amount Object" />
+	<aura:attribute name="additionalComponent" type="Aura.Component[]" />
+	<aura:attribute name="additionalBudgetLineComponent" type="Aura.Component[]" />
+	<aura:attribute name="additionalCMP" type="Object" />
+	<aura:attribute name="additionalBLCMP" type="Object" />
+
+	<!-- BA dimensions -->
+	<aura:attribute name="appDim4name" type="String" description="App Dimension 4 name" />
+	<aura:attribute name="appDim5name" type="String" description="App Dimension 5 name" />
+	<aura:attribute name="appDim6name" type="String" description="App Dimension 6 name" />
+	<aura:attribute name="appDim7name" type="String" description="App Dimension 7 name" />
+	<aura:attribute name="appDim8name" type="String" description="App Dimension 8 name" />
+	<aura:attribute name="appDim9name" type="String" description="App Dimension 9 name" />
+	<aura:attribute name="appDim10name" type="String" description="App Dimension 10 name" />
+
+	<aura:attribute name="appDim4SO" type="cb4.CBSO[]" description="List of App dimensions SO" />
+	<aura:attribute name="appDim5SO" type="cb4.CBSO[]" description="List of App dimensions SO" />
+	<aura:attribute name="appDim6SO" type="cb4.CBSO[]" description="List of App dimensions SO" />
+	<aura:attribute name="appDim7SO" type="cb4.CBSO[]" description="List of App dimensions SO" />
+	<aura:attribute name="appDim8SO" type="cb4.CBSO[]" description="List of App dimensions SO" />
+	<aura:attribute name="appDim9SO" type="cb4.CBSO[]" description="List of App dimensions SO" />
+	<aura:attribute name="appDim10SO" type="cb4.CBSO[]" description="List of App dimensions SO" />
+	<!-- BA dimensions -->
+
+	<aura:attribute name="appAccFilter" type="String" description="Line Dimension 6 filter" />
+	<aura:attribute name="d6filter" type="String" description="Line Dimension 6 filter" />
+	<aura:attribute name="d7filter" type="String" description="Line Dimension 7 filter" />
+	<aura:attribute name="d8filter" type="String" description="Line Dimension 8 filter" />
+	<aura:attribute name="d9filter" type="String" description="Line Dimension 9 filter" />
+	<aura:attribute name="d10filter" type="String" description="Line Dimension 10 filter" />
+
+	<!-- BA Amount dimensions -->
+	<aura:attribute name="Text6__c" type="String" description="Line text 6 title" />
+	<aura:attribute name="Text7__c" type="String" description="Line text 7 title" />
+	<aura:attribute name="Text8__c" type="String" description="Line text 8 title" />
+	<aura:attribute name="Text9__c" type="String" description="Line text 9 title" />
+
+	<aura:attribute name="Decimal6__c" type="String" description="Line decimal 6 title" />
+	<aura:attribute name="Decimal7__c" type="String" description="Line decimal 7 title" />
+	<aura:attribute name="Decimal8__c" type="String" description="Line decimal 8 title" />
+	<aura:attribute name="Decimal9__c" type="String" description="Line decimal 9 title" />
+	<aura:attribute name="Decimal10__c" type="String" description="Line decimal 10 title" />
+
+	<aura:attribute name="d4name" type="String" description="Line Dimension 4 name" />
+	<aura:attribute name="d5name" type="String" description="Line Dimension 5 name" />
+	<aura:attribute name="d6name" type="String" description="Line Dimension 6 name" />
+	<aura:attribute name="d7name" type="String" description="Line Dimension 7 name" />
+	<aura:attribute name="d8name" type="String" description="Line Dimension 8 name" />
+	<aura:attribute name="d9name" type="String" description="Line Dimension 9 name" />
+	<aura:attribute name="d10name" type="String" description="Line Dimension 10 name" />
+
+	<aura:attribute name="accountsSO" type="cb4.CBSO[]" description="List of Line dimensions SO" />
+	<aura:attribute name="d4SO" type="cb4.CBSO[]" description="List of Line dimensions SO" />
+	<aura:attribute name="d5SO" type="cb4.CBSO[]" description="List of Line dimensions SO" />
+	<aura:attribute name="d6SO" type="cb4.CBSO[]" description="List of Line dimensions SO" />
+	<aura:attribute name="d7SO" type="cb4.CBSO[]" description="List of Line dimensions SO" />
+	<aura:attribute name="d8SO" type="cb4.CBSO[]" description="List of Line dimensions SO" />
+	<aura:attribute name="d9SO" type="cb4.CBSO[]" description="List of Line dimensions SO" />
+	<aura:attribute name="d10SO" type="cb4.CBSO[]" description="List of Line dimensions SO" />
+	<!-- BA Amount dimensions -->
+
+	<!-- Main Table-->
+	<aura:attribute name="showStructure" type="Boolean" default="false" access="global" />
+	<aura:attribute name="gridColumns" type="List" access="global" />
+	<aura:attribute name="gridData" type="Object" access="global" />
+	<aura:attribute name="gridExpandedRows" type="List" access="global" />
+	<aura:attribute name="currentExpandedRows" type="String" />
+	<aura:attribute name="hideLevel" type="String" default="1" />
+	<aura:attribute name="hideLevels" type="List" default="[{'value':'1', 'title':'None'}]" />
+	<!-- Main Table-->
+
+	<!-- App structure -->
+	<aura:attribute name="showAppStructure" type="Boolean" default="false" access="global" />
+	<aura:attribute name="gridAppColumns" type="List" access="global" />
+	<aura:attribute name="gridAppData" type="Object" access="global" />
+	<aura:attribute name="gridAppExpandedRows" type="List" access="global" />
+	<aura:attribute name="currentAppExpandedRows" type="String" />
+	<!-- App structure -->
+
+	<aura:attribute name="someCmp" type="Aura.Component[]" />
+	<aura:attribute name="popKey" type="String" />
+	<aura:attribute name="displayWidth" type="String" />
+	<aura:attribute name="showMode" type="Boolean" default="false" />
+
+	<aura:attribute name="uploadedFile" type="Object" description="ATTR FOR GOOGLE DRIVE" />
+	<aura:attribute name="showGoogleDrive" type="Boolean" default="false" />
+
+	<aura:attribute name="generateLinesByTypeSO" type="String" default="['Account']" />
+	<aura:attribute name="generateLinesByType" type="String" default="Account" />
+
+	<aura:attribute name="backupList" type="List" access="private" />
+	<aura:attribute name="backupJSON" type="List" access="private" />
+
+	<!--TMS Grant updates-->
+	<aura:attribute name="grantIncomeData"  type="List" description="income  Grant Lines" />
+	<aura:attribute name="grantExpenseData" type="List" description="expense Grant Lines" />
+	<aura:attribute name="grantsMap"        type="Object"  description="Grants Map(Id, Name)" />
+	<aura:attribute name="blockAddBtns"        type="Boolean"  default="false" />
+	<!--TMS Grant updates-->
+
+	<!--PLATFORM EVENT-->
+	<lightning:empApi aura:id="empApi" />
+	<aura:attribute name="subscription" type="Map"/>
+	<!--PLATFORM EVENT-->
+
+	<!-- HEADER -->
+	<div class="slds-page-header slds-m-bottom_medium">
+		<div class="slds-page-header__row">
+			<div class="slds-page-header__col-title">
+				<div class="slds-media">
+					<div class="slds-media__figure">
+                        <span class="slds-icon_container slds-icon-standard-calibration" title="Budget Application"
+							  style="background-color: #699be1 !important;">
+                            <lightning:icon iconName="standard:poll" alternativeText="Budget Application" />
+                        </span>
+					</div>
+					<div class="slds-media__body">
+						<div class="slds-page-header__name">
+							<div class="slds-page-header__name-title">
+								<h1>
+                                    <span class="slds-page-header__title slds-truncate" title="{!v.app.Name}">
+                                        {!v.app.cb4__TagLabel__c}</span>
+									<span class="slds-page-header__title slds-truncate" title="{!v.headerTitle}">
+                                        {!v.headerTitle}</span>
+								</h1>
+
+								<div class="slds-text-body_small description"
+									 style="min-width: 250px; max-width: 400px;">
+									{!v.app.cb4__Text3__c}
+								</div>
+
+								<!--<c:Currency/>-->
+
+							</div>
+						</div>
+
+					</div>
+
+				</div>
+			</div>
+
+			<aura:renderIf isTrue="{!v.mode == 'single'}">
+
+				<div title="Additional App Info" class="slds-p-right--medium slds-text-body_small">
+					<div class="{!v.app.cb4__Tag4Name__c == null ? 'slds-hide' : ''}">
+						<lightning:badge label="{!v.appDim4name + ' : ' + v.app.cb4__Tag4Name__c}"
+										 class="slds-badge_inverse" />
+					</div>
+					<div class="{!v.appDim6name == null || v.app.cb4__Tag6Name__c == null ? 'slds-hide' : ''}">
+						<lightning:badge label="{!v.appDim6name + ' : ' + v.app.cb4__Tag6Name__c}"
+										 class="slds-badge_inverse" />
+					</div>
+					<div class="{!v.appDim7name == null || v.app.cb4__Tag7Name__c == null ? 'slds-hide' : ''}">
+						<lightning:badge label="{!v.appDim7name + ' : ' + v.app.cb4__Tag7Name__c}"
+										 class="slds-badge_inverse" />
+					</div>
+					<div class="{!v.appDim8name == null || v.app.cb4__Tag8Name__c == null ? 'slds-hide' : ''}">
+						<lightning:badge label="{!v.appDim8name + ' : ' + v.app.cb4__Tag8Name__c}"
+										 class="slds-badge_inverse" />
+					</div>
+					<div class="{!v.appDim9name == null || v.app.cb4__Tag9Name__c == null ? 'slds-hide' : ''}">
+						<lightning:badge label="{!v.appDim9name + ' : ' + v.app.cb4__Tag9Name__c}"
+										 class="slds-badge_inverse" />
+					</div>
+					<div class="{!v.appDim10name == null || v.app.cb4__Tag10Name__c == null ? 'slds-hide' : ''}">
+						<lightning:badge label="{!v.appDim10name + ' : ' + v.app.cb4__Tag10Name__c}"
+										 class="slds-badge_inverse" />
+					</div>
+				</div>
+
+				<lightning:buttonGroup class="slds-m-right--medium">
+
+					<!-- PATH -->
+					<div class="slds-path slds-m-top--large slds-m-right--small">
+						<div class="slds-grid slds-path__track">
+							<div class="slds-grid slds-path__scroller-container">
+								<div class="slds-path__scroller" role="application">
+									<div class="slds-path__scroller_inner">
+										<ul class="slds-path__nav" role="listbox" aria-orientation="horizontal">
+											<aura:iteration var="parent" items="{!v.navigationStrings}" indexVar="key">
+												<li class="slds-path__item slds-is-current slds-is-active">
+													<a aria-selected="false"
+													   class="slds-path__link slds-p-around_none slds-m-around_none slds-text-body_small"
+													   title="Click to redirect" href="{! '/' + parent.key}"
+													   id="path-50" tabindex="-1">
+                                                        <span class="slds-path__stage">
+                                                            <lightning:icon iconName="utility:check"
+																			alternativeText="Queue Complete" />
+                                                            <span class="slds-assistive-text">Queue Complete</span>
+                                                        </span>
+														<span class="slds-path__title">{!parent.value}</span>
+													</a>
+												</li>
+											</aura:iteration>
+
+										</ul>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<!-- PATH -->
+
+					<aura:if isTrue="{!and(v.app.Id != null, v.approvingIsAllowed == 'true')}">
+						<div class="slds-m-top--large">
+							<cb4:ApprovalProcess aura:id="CBApprovalProcessMain" approvedRecordId="{!v.app.Id}" />
+						</div>
+					</aura:if>
+
+					<!-- Additional Component -->
+					<div class="slds-m-top_x-small slds-m-right_small slds-m-left_small slds-m-bottom_small">
+						{!v.additionalComponent}
+					</div>
+					<!-- Additional Component -->
+
+					<div style="vertical-align: top;">
+
+
+						<lightning:button label="Save" onclick="{!c.saveApp}" disabled="{!v.saveButtonDisabled}"
+										  title="Save Budget App" iconName="utility:save" class="slds-button--brand saveButton" />
+						<lightning:button label="Summary" onclick="{!c.redirectToAppSheet}"
+										  title="Redirect to Summary View" iconName="utility:table" disabled="{!v.app.Id == null}"
+										  variant="neutral" />
+						<lightning:button label="App List" title="Back to App List" onclick="{!c.backToMainTable}"
+										  iconName="utility:list" disabled="{!v.app.Id == null}" variant="neutral" />
+
+						<lightning:button label="" onclick="{!c.refreshCalcRules}" title="Recalculate Formulas"
+										  iconName="utility:formula" disabled="{!v.app.Id == null}"
+										  class="{!v.settingsObj.CalcRules == null ? 'slds-hide' : v.settingsObj.CalcRules}"
+										  variant="neutral" />
+						<lightning:buttonMenu alternativeText="Show menu" class="slds-button_last slds-m-top_large moreBtn"
+											  iconName="utility:settings" menuAlignment="center" disabled="{!v.app.Id == null}">
+							<lightning:menuItem label="Clone" iconName="utility:multi_picklist" onactive="{!c.cloneApp}"
+												class="{!v.settingsObj.CloneMenu == null ? 'slds-hide' : v.settingsObj.CloneMenu}" />
+							<lightning:menuItem label="Update Titles" iconName="utility:mark_all_as_read"
+												onactive="{!c.applyTitleRule}" />
+							<lightning:menuDivider
+									class="{!v.settingsObj.CloneMenu == null ? 'slds-hide' : v.settingsObj.CloneMenu}" />
+							<aura:renderIf isTrue="{!v.app.Id != null}">
+								<lightning:menuItem label="History" title="History" onactive="{!c.showBackup}"
+													iconName="utility:change_record_type" />
+								<lightning:menuItem label="Delete" title="Delete" onactive="{!c.deleteApp}"
+													iconName="utility:delete" />
+							</aura:renderIf>
+						</lightning:buttonMenu>
+					</div>
+
+
+				</lightning:buttonGroup>
+			</aura:renderIf>
+			<aura:renderIf isTrue="{!v.mode == 'table'}">
+				<div class="slds-grid">
+					<div class="slds-p-right_medium">
+						<lightning:select label="Hide Level" value="{!v.hideLevel}" onchange="{!c.onHideLevelChanges}">
+							<aura:iteration items="{!v.hideLevels}" var="hl">
+								<option value="{!hl.value}" text="{!hl.title}" selected="{!v.hideLevel == hl.value}" />
+							</aura:iteration>
+						</lightning:select>
+					</div>
+					<div>
+						<lightning:buttonGroup>
+							<lightning:buttonIcon iconName="utility:refresh" variant="brand"
+												  class="slds-m-top--large slds-button_success" alternativeText="Refresh Structure"
+												  title="Refresh App Table" onclick="{!c.updateApp}" />
+							<lightning:button label="Recalculate Totals" onclick="{!c.recalculateAllApps}"
+											  title="Recalculate all App totals and dependencies"
+											  class="slds-m-top--large slds-button_destructive" />
+							<lightning:button label="Create App" onclick="{!c.createApp}"
+											  title="Create New Budget Application" class="slds-m-top--large" />
+						</lightning:buttonGroup>
+					</div>
+				</div>
+			</aura:renderIf>
+
+
+			<!--<div class="slds-media__figure slds-m-top&#45;&#45;large">
+				<c:HelpDocumentation module="BudgetApp"/>
+			</div>-->
+		</div>
+	</div>
+	<!-- HEADER -->
+
+	<!--TABLE-->
+	<aura:renderIf isTrue="{!v.mode == 'table'}">
+		<div aura:id="budgetsTable" class="slds-card slds-show slds-p-bottom--medium " style="margin-bottom: 20px;">
+			<aura:renderIf isTrue="{!v.showStructure}">
+				<div class="slds-table--header-fixed_container" style="padding-top: 0; height: 100%;">
+					<div class="slds-scrollable_y" style="height:100%;">
+						<lightning:treeGrid showRowNumberColumn="true" aura:id="treeGrid" columns="{!v.gridColumns}"
+											data="{!v.gridData}" hideCheckboxColumn="true" expandedRows="{!v.gridExpandedRows}"
+											keyField="Id" onrowaction="{!c.handleRowAction}" />
+					</div>
+				</div>
+			</aura:renderIf>
+		</div>
+		<div style="position: fixed; left: 12px; bottom: 0; width: 99%; text-align: center; z-index: 5000">
+			<cb4:Context aura:id="contextCmp" displaysOnHomePage="false" />
+		</div>
+	</aura:renderIf>
+	<!--TABLE-->
+
+	<!-- INITIATION OF NEW APP -->
+	<aura:renderIf isTrue="{!and(and(v.app.Id == null, v.mode == 'single'), v.app.cb4__Text5__c == null)}">
+		<div class="slds-card slds-p-bottom--medium">
+			<div class="slds-grid slds-wrap">
+				<div class="slds-size_1-of-5">
+					<div class="slds-p-around--small slds-text-align_left initTitle">
+						<lightning:input name="Title" label="Title" aura:id='titleField' minlength="5" maxlength="80" required="true"
+										 messageWhenValueMissing="At least 5 symbols" messageWhenTooLong="No more than 80 characters" value="{!v.app.Name}" />
+					</div>
+				</div>
+				<div class="slds-size_1-of-5">
+					<div class="slds-p-around--small slds-text-align_left initTemplate">
+						<lightning:select name="App Template" label="App Template" required="true"
+										  messageWhenValueMissing="Select App Template" value="{!v.app.cb4__Tag2__c}">
+							<aura:iteration items="{!v.templateSO}" var="option">
+								<option value="{!option.value}" text="{!option.title}" />
+							</aura:iteration>
+						</lightning:select>
+					</div>
+				</div>
+				<div class="slds-size_1-of-5">
+					<div class="slds-p-around--small slds-text-align_left initPeriod">
+						<lightning:select name="Period" label="Period" required="true"
+										  messageWhenValueMissing="Select Period" value="{!v.app.cb4__Tag3__c}">
+							<aura:iteration items="{!v.periodSO}" var="option">
+								<option value="{!option.value}" text="{!option.title}"
+										selected="{!v.app.cb4__Tag3__c == option.value}" />
+							</aura:iteration>
+						</lightning:select>
+					</div>
+					<div class="slds-p-around--small slds-text-align_left initPeriod">
+						<lightning:select name="Department" label="{!v.appDim4name}" value="{!v.app.cb4__Tag4__c}">
+							<option value="-" text="-" />
+							<aura:iteration items="{!v.departmentSO}" var="option">
+								<option value="{!option.value}" text="{!option.title}"
+										selected="{!v.app.cb4__Tag4__c == option.value}" />
+							</aura:iteration>
+						</lightning:select>
+					</div>
+				</div>
+				<div class="slds-size_1-of-5">
+					<div class="slds-p-around--small slds-text-align_left">
+						<lightning:select name="Parent App" label="Parent App" value="{!v.app.cb4__Tag1__c}">
+							<option value="" text="-" />
+							<aura:iteration items="{!v.appSO}" var="option">
+								<option value="{!option.value}" text="{!option.title}" />
+							</aura:iteration>
+						</lightning:select>
+					</div>
+				</div>
+				<div class="slds-size_1-of-5">
+					<div class="{!empty(v.appDim6SO) + 'hide slds-p-around--small'}">
+						<lightning:select label="{!v.appDim6name}" value="{!v.app.cb4__Tag6__c}">
+							<option value="" text="-" />
+							<aura:iteration items="{!v.appDim6SO}" var="option">
+								<option value="{!option.value}" text="{!option.title}"
+										selected="{!v.app.cb4__Tag6__c == option.value}" />
+							</aura:iteration>
+						</lightning:select>
+					</div>
+					<div class="{!empty(v.appDim7SO) + 'hide slds-p-around--small '}">
+						<lightning:select label="{!v.appDim7name}" value="{!v.app.cb4__Tag7__c}">
+							<option value="" text="-" />
+							<aura:iteration items="{!v.appDim7SO}" var="option">
+								<option value="{!option.value}" text="{!option.title}"
+										selected="{!v.app.cb4__Tag7__c == option.value}" />
+							</aura:iteration>
+						</lightning:select>
+					</div>
+					<div class="{!empty(v.appDim8SO) + 'hide slds-p-around--small '}">
+						<lightning:select label="{!v.appDim8name}" value="{!v.app.cb4__Tag8__c}">
+							<option value="" text="-" />
+							<aura:iteration items="{!v.appDim8SO}" var="option">
+								<option value="{!option.value}" text="{!option.title}"
+										selected="{!v.app.cb4__Tag8__c == option.value}" />
+							</aura:iteration>
+						</lightning:select>
+					</div>
+					<div class="{!empty(v.appDim9SO) + 'hide slds-p-around--small '}">
+						<lightning:select label="{!v.appDim9name}" value="{!v.app.cb4__Tag9__c}">
+							<option value="" text="-" />
+							<aura:iteration items="{!v.appDim9SO}" var="option">
+								<option value="{!option.value}" text="{!option.title}"
+										selected="{!v.app.cb4__Tag9__c == option.value}" />
+							</aura:iteration>
+						</lightning:select>
+					</div>
+					<div class="{!empty(v.appDim10SO) + 'hide slds-p-around--small '}">
+						<lightning:select label="{!v.appDim10name}" value="{!v.app.cb4__Tag10__c}">
+							<option value="" text="-" />
+							<aura:iteration items="{!v.appDim10SO}" var="option">
+								<option value="{!option.value}" text="{!option.title}"
+										selected="{!v.app.cb4__Tag10__c == option.value}" />
+							</aura:iteration>
+						</lightning:select>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</aura:renderIf>
+	<!-- INITIATION OF NEW APP -->
+
+	<!-- SINGLE -->
+	<aura:renderIf
+			isTrue="{!or((and(v.app.Id != null, v.mode == 'single')), (and(v.app.cb4__Text5__c == 'Cloned', v.mode == 'single')))}">
+		<lightning:card>
+			<lightning:tabset>
+				<lightning:tab label="App">
+
+					<div aura:id="singleModeLayout" class="slds-card slds-p-bottom--medium singlePanel ">
+						<div>
+
+							<!-- TARGET TOTALS -->
+							<div class="{!v.template.cb4__Text1__c == 'Top-Down'? '' : 'truehide' }">
+								<div>
+									<div
+											class="slds-media__figure slds-m-left--medium slds-m-right--medium slds-m-top--none">
+
+										<div style="display: inline-block; width: 20%;">
+                                            <span class="slds-icon_container slds-icon-standard-calibration"
+												  title="Target Total">
+                                                <lightning:icon iconName="standard:sales_cadence_target"
+																alternativeText="Target Total" />
+                                            </span>
+											<span class="slds-p-left--medium slds-text-title--caps">Target Total</span>
+										</div>
+
+									</div>
+									<div class="slds-grid slds-wrap slds-m-around--medium">
+										<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+											<thead>
+											<tr class="slds-line-height_reset">
+												<th class="th25percent">
+													<div class="slds-truncate" title="Title">Title</div>
+												</th>
+												<th>
+													#
+												</th>
+												<aura:iteration items="{!v.headers}" var="h">
+													<th>
+														<div class="slds-truncate slds-text-align--right"
+															 title="Period">{!h}</div>
+													</th>
+												</aura:iteration>
+												<th>
+													<div class="slds-truncate slds-text-align--right" title="Total">
+														Total
+													</div>
+												</th>
+											</tr>
+											</thead>
+											<tbody>
+											<aura:iteration items="{!v.targetTotalData}" var="r">
+												<tr class="{!r.class}">
+													<th>
+														<div class="slds-text-title_caps  total">{!r.title} Total
+														</div>
+													</th>
+													<th>
+														&nbsp;&nbsp;
+													</th>
+													<aura:iteration items="{!r.rowValues}" indexVar="key"
+																	var="item">
+														<th class="noPaddingNoMargin">
+															<lightning:input variant="label-hidden" maxlength="9"
+																			 disabled="{!item.t == 'disabled'}"
+																			 class="{!'targetTotalV'+key + ' dec total'}"
+																			 type="number" step="1" value="{!item.v}" />
+														</th>
+													</aura:iteration>
+												</tr>
+											</aura:iteration>
+
+											</tbody>
+										</table>
+									</div>
+								</div>
+							</div>
+							<!-- TARGET TOTALS -->
+
+							<!-- TOTALS -->
+							<div>
+								<div>
+									<div
+											class="slds-media__figure slds-m-left--medium slds-m-right--medium slds-m-top--none">
+										<div class="slds-grid slds-wrap">
+											<div class="slds-size_1-of-5">
+                                                <span class="slds-icon_container slds-icon-standard-calibration"
+													  title="Total">
+                                                    <lightning:icon iconName="standard:work_queue"
+																	alternativeText="Total" />
+                                                </span>
+												<span class="slds-p-left--medium slds-text-title--caps">Total</span>
+											</div>
+											<div class="slds-size_4-of-5">
+												<lightning:layout>
+													<lightning:layoutItem>
+														<div
+																class=" slds-m-left--large slds-m-right--medium slds-m-top--medium slds-align-bottom">
+															<lightning:input type="toggle" label="Show more"
+																			 name="input1" class="inputModeToggle"
+																			 messageToggleActive="On" messageToggleInactive="Off"
+																			 onchange="{!c.turnDetailMode}" />
+														</div>
+													</lightning:layoutItem>
+													<lightning:layoutItem>
+														<lightning:layout class="{!v.needSave + 'hide'}">
+															<lightning:layoutItem
+																	class="{!empty(v.accountsSO) + 'hide soStyle '}">
+																<div class="slds-m-around_none">
+																	<lightning:select label="CB Account"
+																					  onchange="{!c.applySinglePageFilter}"
+																					  messageWhenValueMissing="Please specify CB Account"
+																					  value="{!v.appAccFilter}">
+																		<option value="" text="ALL" />
+																		<aura:iteration items="{!v.accountsSO}"
+																						var="option">
+																			<option value="{!option.value}"
+																					text="{!option.title}"
+																					selected="{!v.appAccFilter == option.value}" />
+																		</aura:iteration>
+																	</lightning:select>
+																</div>
+															</lightning:layoutItem>
+
+															<lightning:layoutItem
+																	class="{!empty(v.d6SO) + 'hide soStyle '}">
+																<div class="slds-m-around_none">
+																	<lightning:select label="{!v.d6name}"
+																					  onchange="{!c.applySinglePageFilter}"
+																					  messageWhenValueMissing="Please specify dimension"
+																					  value="{!v.d6filter}">
+																		<option value="" text="ALL" />
+																		<aura:iteration items="{!v.d6SO}" var="option">
+																			<option value="{!option.value}"
+																					text="{!option.title}"
+																					selected="{!v.d6filter == option.value}" />
+																		</aura:iteration>
+																	</lightning:select>
+																</div>
+															</lightning:layoutItem>
+															<lightning:layoutItem
+																	class="{!empty(v.d7SO) + 'hide soStyle'}">
+																<div class="slds-m-around_none">
+																	<lightning:select label="{!v.d7name}"
+																					  onchange="{!c.applySinglePageFilter}"
+																					  messageWhenValueMissing="Please specify dimension"
+																					  value="{!v.d7filter}">
+																		<option value="" text="ALL" />
+																		<aura:iteration items="{!v.d7SO}" var="option">
+																			<option value="{!option.value}"
+																					text="{!option.title}"
+																					selected="{!v.d7filter == option.value}" />
+																		</aura:iteration>
+																	</lightning:select>
+																</div>
+															</lightning:layoutItem>
+															<lightning:layoutItem
+																	class="{!empty(v.d8SO) + 'hide soStyle'}">
+																<div class="slds-m-around_none">
+																	<lightning:select label="{!v.d8name}"
+																					  onchange="{!c.applySinglePageFilter}"
+																					  messageWhenValueMissing="Please specify dimension"
+																					  value="{!v.d8filter}">
+																		<option value="" text="ALL" />
+																		<aura:iteration items="{!v.d8SO}" var="option">
+																			<option value="{!option.value}"
+																					text="{!option.title}"
+																					selected="{!v.d8filter == option.value}" />
+																		</aura:iteration>
+																	</lightning:select>
+																</div>
+															</lightning:layoutItem>
+															<lightning:layoutItem
+																	class="{!empty(v.d9SO) + 'hide soStyle'}">
+																<div class="slds-m-around_none">
+																	<lightning:select label="{!v.d9name}"
+																					  onchange="{!c.applySinglePageFilter}"
+																					  messageWhenValueMissing="Please specify dimension"
+																					  value="{!v.d9filter}">
+																		<option value="" text="ALL" />
+																		<aura:iteration items="{!v.d9SO}" var="option">
+																			<option value="{!option.value}"
+																					text="{!option.title}"
+																					selected="{!v.d9filter == option.value}" />
+																		</aura:iteration>
+																	</lightning:select>
+																</div>
+															</lightning:layoutItem>
+															<lightning:layoutItem
+																	class="{!empty(v.d10SO) + 'hide soStyle'}">
+																<div class="slds-m-around_none">
+																	<lightning:select label="{!v.d10name}"
+																					  onchange="{!c.applySinglePageFilter}"
+																					  messageWhenValueMissing="Please specify dimension"
+																					  value="{!v.d10filter}">
+																		<option value="" text="ALL" />
+																		<aura:iteration items="{!v.d10SO}" var="option">
+																			<option value="{!option.value}"
+																					text="{!option.title}"
+																					selected="{!v.d10filter == option.value}" />
+																		</aura:iteration>
+																	</lightning:select>
+																</div>
+															</lightning:layoutItem>
+														</lightning:layout>
+													</lightning:layoutItem>
+												</lightning:layout>
+
+											</div>
+										</div>
+									</div>
+									<div class="slds-grid slds-wrap slds-m-around--medium" id="nav">
+										<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+											<thead>
+											<tr class="slds-line-height_reset">
+												<th class="th25percent">
+													<div class="slds-truncate" title="Title">Title</div>
+												</th>
+												<th>
+													#
+												</th>
+												<aura:iteration items="{!v.headers}" var="h">
+													<th>
+														<div class="slds-truncate slds-text-align--right"
+															 title="Period">{!h}</div>
+													</th>
+												</aura:iteration>
+												<th>
+													<div class="slds-truncate slds-text-align--right" title="Total">
+														Total
+													</div>
+												</th>
+											</tr>
+											</thead>
+											<tbody>
+											<aura:iteration items="{!v.totalData}" var="r">
+												<tr class="{!r.class}">
+													<th>
+														<div class="slds-text-title_caps total">{!r.title} Total
+														</div>
+													</th>
+													<th>
+														&nbsp;&nbsp;
+													</th>
+													<aura:iteration items="{!r.rowValues}" indexVar="key"
+																	var="item">
+														<th
+																class="{!greaterthan(v.app.cb4__Decimal6__c,key)  ? 'noPaddingNoMargin splitRow' : 'noPaddingNoMargin' }">
+															<lightning:input variant="label-hidden" maxlength="9"
+																			 disabled="{!item.t == 'disabled'}"
+																			 class="{!'totalV' + key + ' dec total'}"
+																			 type="number" step="0.01" value="{!item.v}" />
+														</th>
+													</aura:iteration>
+												</tr>
+											</aura:iteration>
+
+											</tbody>
+										</table>
+									</div>
+								</div>
+							</div>
+							<!-- TOTALS -->
+
+							<lightning:overlayLibrary aura:id="overlayLib" />
+
+							<!-- INCOME -->
+							<aura:renderIf isTrue="{!v.template.cb4__Boolean2__c}">
+
+								<div>
+									<div class="slds-media__figure slds-m-around--medium ">
+										<div style="display: inline-block;">
+                                            <span class="slds-icon_container slds-icon-standard-calibration"
+												  title="Income">
+                                                <lightning:icon iconName="standard:investment_account"
+																alternativeText="Income" />
+                                            </span>
+											<span class="slds-p-left--medium slds-text-title--caps">Income</span>
+										</div>
+										<div class="slds-p-left_large" style="display: inline-block;">
+											<lightning:button label="Add" onclick="{!c.addLine}" name="income"
+															  iconName="utility:add" disabled="{!or(v.blockAddBtns, v.editDisabled)}"
+															  title="Add Income Line" />
+										</div>
+									</div>
+									<div class="slds-grid slds-wrap slds-m-around--medium">
+										<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+											<thead>
+											<tr class="slds-line-height_reset">
+												<th class="th25percent">
+													<div class="slds-truncate" title="Title">Title</div>
+												</th>
+												<th>
+													<div class="slds-truncate" title="Index">#</div>
+												</th>
+												<aura:iteration items="{!v.headers}" var="h">
+													<th>
+														<div class="slds-truncate slds-text-align--right"
+															 title="Period">{!h}</div>
+													</th>
+												</aura:iteration>
+												<th>
+													<div class="slds-truncate slds-text-align--right" title="Total">
+														Total
+													</div>
+												</th>
+											</tr>
+											</thead>
+											<tbody>
+											<!-- SIMPLE INCOME -->
+											<aura:iteration items="{!v.incomeData}" var="r" indexVar="idx">
+
+												<tr id="{!r.key}" class="{!'tr'+r.styleClass}">
+													<th>
+														<div class="slds-text-align_left">
+
+															<!-- INCOME SIMPLE DETAIL COLUMN -->
+															<lightning:layout multipleRows="true">
+																<lightning:layoutItem padding="around-none"
+																					  size="12">
+																	<div
+																			class="page-section page-header slds-grid_vertical">
+																		<div>
+																			<lightning:button
+																					iconName="utility:delete"
+																					class="slds-p-around--none"
+																					variant="base" title="Delete Row"
+																					iconPosition="left" value="{!r.key}"
+																					onclick="{!c.deleteRow}"
+																					disabled="{!v.editDisabled}"/>
+																			<lightning:button label="{!r.title}"
+																							  class="hideEdge"
+																							  iconName="utility:edit"
+																							  variant="base" iconPosition="left"
+																							  value="{!r.key}"
+																							  onclick="{!c.showDetails}"/>
+																			<lightning:helptext
+																					class="slds-float--right"
+																					content="{!r.description}" />
+																			<lightning:icon
+																					iconName="utility:formula"
+																					alternativeText="Calculated"
+																					variant="warning"
+																					class="{!(r.styleClass != 'calcRule') + 'hide slds-float--right'}"
+																					title="Calculated line"
+																					size="small" />
+																			<lightning:icon iconName="utility:cart"
+																							alternativeText="Price/Quantity"
+																							class="{!(r.productId == null) + 'hide slds-float--right'}"
+																							title="Price-Quantity"
+																							size="small" />
+																		</div>
+																		<div
+																				class="{!if(v.template.cb4__Decimal6__c == 19.0, 'slds-m-left_xx-large slds-text-body_small', 'slds-hide')}">
+																			<p class="cb-descr-limit hideEdge">
+																				{!r.description}</p>
+																		</div>
+																	</div>
+																</lightning:layoutItem>
+
+																<aura:renderIf isTrue="{!v.showMode == true}">
+																	<lightning:layoutItem padding="around-none"
+																						  size="12" class="detailSection">
+																		<lightning:layout>
+																			<lightning:layoutItem
+																					padding="around-none"
+																					class="showMoreDetails" size="6">
+																				<div
+																						class="page-section page-right">
+																					<div class="cssTrunc">{!r.accT}
+																					</div>
+																					<div class="cssTrunc">{!r.dim6T}
+																					</div>
+																					<div class="cssTrunc">{!r.dim7T}
+																					</div>
+																				</div>
+																			</lightning:layoutItem>
+																			<lightning:layoutItem
+																					padding="around-none"
+																					class="showMoreDetails" size="6">
+																				<div
+																						class="page-section page-right">
+																					<div class="cssTrunc">{!r.dim8T}
+																					</div>
+																					<div class="cssTrunc">{!r.dim9T}
+																					</div>
+																					<div class="cssTrunc">
+																						{!r.dim10T}</div>
+																				</div>
+																			</lightning:layoutItem>
+																		</lightning:layout>
+																	</lightning:layoutItem>
+																</aura:renderIf>
+															</lightning:layout>
+
+															<!-- INCOME SIMPLE DETAIL COLUMN -->
+														</div>
+													</th>
+													<th class="indexTh">
+														<div class="slds-truncate index" title="Index">{!idx + 1}
+														</div>
+													</th>
+													<aura:iteration items="{!r.rowValues}" indexVar="key"
+																	var="item">
+														<th
+																class="{!greaterthan(v.app.cb4__Decimal6__c,key)  ? 'noPaddingNoMargin splitRow' : 'noPaddingNoMargin' }">
+															<lightning:input variant="label-hidden" maxlength="9"
+																			 label="income" class="dec" step="0.01"
+																			 disabled="{!or(item.t == 'disabled', v.editDisabled)}"
+																			 name="{!r.key}" type="number"
+																			 onchange="{!c.valueChangeResponse}"
+																			 value="{!item.v}" />
+														</th>
+														<!-- disabled="{!or(item.t == 'disabled', v.editDisabled)}" -->
+													</aura:iteration>
+												</tr>
+
+											</aura:iteration>
+											<!-- SIMPLE INCOME -->
+
+											<!-- SUB DOWN UP INCOME -->
+											<aura:iteration items="{!v.incomeDownUpSubData}" var="r" indexVar="idx">
+												<tr class="slds-hint-parent">
+													<th>
+														<div class="slds-p-left--small slds-m-around_none"
+															 style="min-width: 200px;">
+															<lightning:button label="{!r.title}"
+																			  iconName="utility:edit" variant="base"
+																			  class="hideEdge" iconPosition="left"
+																			  value="{!r.key}" onclick="{!c.redirectToApp}" />
+															<lightning:badge label="APP▲" class="slds-float--right"
+																			 title="Bottom-Up Sub App" />
+														</div>
+													</th>
+													<th class="indexTh">
+														<div class="{!r.status == 'Posted' ? 'posted slds-truncate index ' : 'unposted slds-truncate index '}"
+															 title="{!'Sub App is ' + r.status}">{!idx + 1}
+														</div>
+													</th>
+													<aura:iteration items="{!r.rowValues}" indexVar="key"
+																	var="item">
+														<th class="noPaddingNoMargin">
+															<div style="font-size: smaller;"></div>
+															<lightning:input variant="label-hidden" maxlength="9"
+																			 label="income" class="dec" step="0.01"
+																			 disabled="true" name="{!r.key}" type="number"
+																			 value="{!item.v}" />
+														</th>
+													</aura:iteration>
+												</tr>
+											</aura:iteration>
+											<!-- SUB DOWN UP INCOME -->
+
+											<!-- SUB TOP DOWN INCOME -->
+											<aura:iteration items="{!v.incomeTopDownSubData}" var="r"
+															indexVar="idx">
+												<tr class="slds-hint-parent">
+													<th>
+														<div class="slds-p-left--small slds-m-around_none"
+															 style="min-width: 200px;">
+															<lightning:button label="{!r.title}" class="hideEdge"
+																			  iconName="utility:edit" variant="base"
+																			  iconPosition="left" value="{!r.key}"
+																			  onclick="{!c.redirectToApp}" />
+															<lightning:badge label="APP▼" class="slds-float--right"
+																			 title="Top-Down Sub App" />
+															<aura:renderIf isTrue="{!r.description == '0'}">
+																<lightning:badge label="✓"
+																				 class="slds-float--right greenLabel"
+																				 title="Approximately Match" />
+																<aura:set attribute="else">
+																	<lightning:badge label="⚠"
+																					 class="slds-float--right yellowLabel"
+																					 title="{!r.description}" />
+																</aura:set>
+															</aura:renderIf>
+
+														</div>
+													</th>
+													<th class="indexTh">
+														<div class="{!r.status == 'Posted' ? 'posted slds-truncate index ' : 'unposted slds-truncate index '}"
+															 title="{!'Sub App is ' + r.status}">{!idx + 1}
+														</div>
+													</th>
+													<aura:iteration items="{!r.rowValues}" indexVar="key"
+																	var="item">
+														<th class="noPaddingNoMargin">
+															<div style="font-size: smaller;"></div>
+															<lightning:input variant="label-hidden" maxlength="9"
+																			 label="income" class="dec" step="0.01"
+																			 disabled="{!or(item.t == 'disabled', v.editDisabled)}"
+																			 name="{!r.key}" type="number"
+																			 onchange="{!c.valueChangeResponse}"
+																			 value="{!item.v}" />
+														</th>
+													</aura:iteration>
+												</tr>
+											</aura:iteration>
+											<!-- SUB TOP DOWN INCOME -->
+											</tbody>
+										</table>
+									</div>
+								</div>
+											<!--INCOME GRANTS-->
+											<aura:iteration items="{!v.grantIncomeData}" var="grantData" indexVar="i">
+											<div>
+												<div class="slds-media__figure slds-m-around--medium ">
+													<div style="display: inline-block;">
+                                            	<span class="slds-icon_container slds-icon-standard-calibration"
+												  title="Income">
+                                                <lightning:icon iconName="standard:investment_account"
+																alternativeText="Income" />
+                                            	</span>
+														<span class="slds-p-left--medium slds-text-title--caps">{!grantData[0]}</span>
+													</div>
+													<!--<div class="slds-p-left&#45;&#45;large" style="display: inline-block;">
+														<lightning:button label="Add" onclick="{!c.addLine}" name="income"
+																		  iconName="utility:add" disabled="{!v.editDisabled}"
+																		  title="Add Income Line" />
+													</div>-->
+												</div>
+												<div class="slds-grid slds-wrap slds-m-around--medium">
+													<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+														<thead>
+														<tr class="slds-line-height_reset">
+															<th class="th25percent">
+																<div class="slds-truncate" title="Title">Title</div>
+															</th>
+															<th>
+																<div class="slds-truncate" title="Index">#</div>
+															</th>
+															<aura:iteration items="{!v.headers}" var="h">
+																<th>
+																	<div class="slds-truncate slds-text-align--right"
+																		 title="Period">{!h}</div>
+																</th>
+															</aura:iteration>
+															<th>
+																<div class="slds-truncate slds-text-align--right" title="Total">
+																	Total
+																</div>
+															</th>
+														</tr>
+														</thead>
+														<tbody>
+														<!-- SIMPLE INCOME -->
+														<aura:iteration items="{!grantData[1]}" var="r" indexVar="idx">
+
+															<tr id="{!r.key}" class="{!'tr'+r.styleClass}">
+																<th>
+																	<div class="slds-text-align_left">
+
+																		<!-- INCOME SIMPLE DETAIL COLUMN -->
+																		<lightning:layout multipleRows="true">
+																			<lightning:layoutItem padding="around-none"
+																								  size="12">
+																				<div
+																						class="page-section page-header slds-grid_vertical">
+																					<div>
+																						<lightning:button
+																								iconName="utility:delete"
+																								class="slds-p-around--none"
+																								variant="base" title="Delete Row"
+																								iconPosition="left" value="{!r.key}"
+																								onclick="{!c.deleteRow}"
+																								disabled="{!v.editDisabled}"/>
+																						<lightning:button label="{!r.title}"
+																										  class="hideEdge"
+																										  iconName="utility:edit"
+																										  variant="base" iconPosition="left"
+																										  value="{!r.key}"
+																										  onclick="{!c.showDetails}"/>
+																						<lightning:helptext
+																								class="slds-float--right"
+																								content="{!r.description}" />
+																						<lightning:icon
+																								iconName="utility:formula"
+																								alternativeText="Calculated"
+																								variant="warning"
+																								class="{!(r.styleClass != 'calcRule') + 'hide slds-float--right'}"
+																								title="Calculated line"
+																								size="small" />
+																						<lightning:icon iconName="utility:cart"
+																										alternativeText="Price/Quantity"
+																										class="{!(r.productId == null) + 'hide slds-float--right'}"
+																										title="Price-Quantity"
+																										size="small" />
+																					</div>
+																					<div
+																							class="{!if(v.template.cb4__Decimal6__c == 19.0, 'slds-m-left_xx-large slds-text-body_small', 'slds-hide')}">
+																						<p class="cb-descr-limit hideEdge">
+																							{!r.description}</p>
+																					</div>
+																				</div>
+																			</lightning:layoutItem>
+
+																			<aura:renderIf isTrue="{!v.showMode == true}">
+																				<lightning:layoutItem padding="around-none"
+																									  size="12" class="detailSection">
+																					<lightning:layout>
+																						<lightning:layoutItem
+																								padding="around-none"
+																								class="showMoreDetails" size="6">
+																							<div
+																									class="page-section page-right">
+																								<div class="cssTrunc">{!r.accT}
+																								</div>
+																								<div class="cssTrunc">{!r.dim6T}
+																								</div>
+																								<div class="cssTrunc">{!r.dim7T}
+																								</div>
+																							</div>
+																						</lightning:layoutItem>
+																						<lightning:layoutItem
+																								padding="around-none"
+																								class="showMoreDetails" size="6">
+																							<div
+																									class="page-section page-right">
+																								<div class="cssTrunc">{!r.dim8T}
+																								</div>
+																								<div class="cssTrunc">{!r.dim9T}
+																								</div>
+																								<div class="cssTrunc">
+																									{!r.dim10T}</div>
+																							</div>
+																						</lightning:layoutItem>
+																					</lightning:layout>
+																				</lightning:layoutItem>
+																			</aura:renderIf>
+																		</lightning:layout>
+
+																		<!-- INCOME SIMPLE DETAIL COLUMN -->
+																	</div>
+																</th>
+																<th class="indexTh">
+																	<div class="slds-truncate index" title="Index">{!idx + 1}
+																	</div>
+																</th>
+																<aura:iteration items="{!r.rowValues}" indexVar="key"
+																				var="item">
+																	<th
+																			class="{!greaterthan(v.app.cb4__Decimal6__c,key)  ? 'noPaddingNoMargin splitRow' : 'noPaddingNoMargin' }">
+																		<lightning:input variant="label-hidden" maxlength="9"
+																						 label="income" class="dec" step="0.01"
+																						 disabled="{!or(item.t == 'disabled', v.editDisabled)}"
+																						 name="{!r.key}" type="number"
+																						 onchange="{!c.valueChangeResponse}"
+																						 value="{!item.v}" />
+																	</th>
+																	<!-- disabled="{!or(item.t == 'disabled', v.editDisabled)}" -->
+																</aura:iteration>
+															</tr>
+
+														</aura:iteration>
+														<!-- SIMPLE INCOME -->
+														</tbody>
+													</table>
+												</div>
+											</div>
+											</aura:iteration>
+											<!--GRANTS SECTION-->
+							</aura:renderIf>
+							<!-- INCOME -->
+
+							<!-- EXPENSE -->
+							<aura:renderIf isTrue="{!v.template.cb4__Boolean3__c}">
+
+								<div>
+									<div class="slds-media__figure slds-m-around--medium">
+										<div style="display: inline-block;">
+                                            <span class="slds-icon_container slds-icon-standard-calibration"
+												  title="Expense">
+                                                <lightning:icon iconName="standard:product_required"
+																alternativeText="Expense" />
+                                            </span>
+											<span class="slds-p-left--medium slds-text-title--caps">Expense</span>
+										</div>
+										<div class="slds-p-left_large" style="display: inline-block;">
+											<lightning:button label="Add" onclick="{!c.addLine}" name="expense"
+															  iconName="utility:add" disabled="{!or(v.blockAddBtns, v.editDisabled)}"
+															  title="Add Expense Line" />
+										</div>
+									</div>
+									<div class="slds-grid slds-wrap slds-m-around--medium">
+										<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+											<thead>
+											<tr class="slds-line-height_reset">
+												<th class="th25percent">
+													<div class="slds-truncate" title="Title">Title</div>
+												</th>
+												<th>
+													<div class="slds-truncate" title="Index">#</div>
+												</th>
+												<aura:iteration items="{!v.headers}" var="h">
+													<th>
+														<div class="slds-truncate slds-text-align--right"
+															 title="Period">{!h}</div>
+													</th>
+												</aura:iteration>
+												<th>
+													<div class="slds-truncate slds-text-align--right" title="Total">
+														Total
+													</div>
+												</th>
+											</tr>
+											</thead>
+
+											<tbody>
+											<!-- SIMPLE EXPENSE -->
+											<aura:iteration items="{!v.expenseData}" var="r" indexVar="idx">
+
+												<tr id="{!r.key}" class="{!'tr'+r.styleClass}">
+													<th>
+														<div class="slds-text-align_left">
+
+															<!-- EXPENSE SIMPLE DETAIL COLUMN -->
+															<lightning:layout multipleRows="true">
+																<lightning:layoutItem padding="around-none"
+																					  size="12">
+																	<div
+																			class="page-section page-header slds-grid_vertical">
+																		<div>
+																			<lightning:button
+																					iconName="utility:delete"
+																					class="slds-p-around--none"
+																					variant="base" title="Delete Row"
+																					iconPosition="left" value="{!r.key}"
+																					onclick="{!c.deleteRow}"
+																					disabled="{!v.editDisabled}"/>
+																			<lightning:button label="{!r.title}"
+																							  class="hideEdge"
+																							  iconName="utility:edit"
+																							  variant="base" iconPosition="left"
+																							  value="{!r.key}"
+																							  onclick="{!c.showDetails}" />
+																			<lightning:helptext
+																					class="slds-float--right"
+																					content="{!r.description}" />
+																			<lightning:icon
+																					iconName="utility:formula"
+																					alternativeText="Calculated"
+																					variant="warning"
+																					class="{!(r.styleClass != 'calcRule') + 'hide slds-float--right'}"
+																					title="Calculated line"
+																					size="small" />
+																			<lightning:icon iconName="utility:cart"
+																							alternativeText="Price/Quantity"
+																							class="{!(r.productId == null) + 'hide slds-float--right'}"
+																							title="Price-Quantity"
+																							size="small" />
+																		</div>
+																		<div
+																				class="{!if(v.template.cb4__Decimal6__c == 19.0, 'slds-m-left_xx-large slds-text-body_small', 'slds-hide')}">
+																			<p class="cb-descr-limit hideEdge">
+																				{!r.description}</p>
+																		</div>
+																	</div>
+																</lightning:layoutItem>
+
+																<aura:renderIf isTrue="{!v.showMode == true}">
+																	<lightning:layoutItem padding="around-none"
+																						  size="12" class="detailSection">
+																		<lightning:layout>
+																			<lightning:layoutItem
+																					padding="around-none"
+																					class="showMoreDetails" size="6">
+																				<div
+																						class="page-section page-right">
+																					<div class="cssTrunc">{!r.accT}
+																					</div>
+																					<div class="cssTrunc">{!r.dim6T}
+																					</div>
+																					<div class="cssTrunc">{!r.dim7T}
+																					</div>
+																				</div>
+																			</lightning:layoutItem>
+																			<lightning:layoutItem
+																					padding="around-none"
+																					class="showMoreDetails" size="6">
+																				<div
+																						class="page-section page-right">
+																					<div class="cssTrunc">{!r.dim8T}
+																					</div>
+																					<div class="cssTrunc">{!r.dim9T}
+																					</div>
+																					<div class="cssTrunc">
+																						{!r.dim10T}</div>
+																				</div>
+																			</lightning:layoutItem>
+																		</lightning:layout>
+																	</lightning:layoutItem>
+																</aura:renderIf>
+															</lightning:layout>
+
+															<!-- EXPENSE SIMPLE DETAIL COLUMN -->
+														</div>
+													</th>
+													<th class="indexTh">
+														<div class="slds-truncate index" title="Index">{!idx + 1}
+														</div>
+													</th>
+													<aura:iteration items="{!r.rowValues}" indexVar="key"
+																	var="item">
+														<th
+																class="{!greaterthan(v.app.cb4__Decimal6__c,key)  ? 'noPaddingNoMargin splitRow' : 'noPaddingNoMargin' }">
+															<lightning:input variant="label-hidden" maxlength="9"
+																			 label="expense" class="dec" step="0.01"
+																			 disabled="{!or(item.t == 'disabled', v.editDisabled)}"
+																			 name="{!r.key}" type="number"
+																			 onchange="{!c.valueChangeResponse}"
+																			 value="{!item.v}" />
+														</th>
+													</aura:iteration>
+												</tr>
+
+											</aura:iteration>
+											<!-- SIMPLE EXPENSE -->
+
+											<!-- SUB DOWN UP EXPENSE -->
+											<aura:iteration items="{!v.expenseDownUpSubData}" var="r"
+															indexVar="idx">
+												<tr class="slds-hint-parent">
+													<th>
+														<div class="slds-p-left--small slds-m-around_none"
+															 style="min-width: 200px;">
+															<lightning:button label="{!r.title}"
+																			  iconName="utility:edit" variant="base"
+																			  class="hideEdge" iconPosition="left"
+																			  value="{!r.key}" onclick="{!c.redirectToApp}" />
+															<lightning:badge label="APP▲" class="slds-float--right"
+																			 title="Bottom-Up Sub App" />
+														</div>
+													</th>
+													<th class="indexTh">
+														<div class="{!r.status == 'Posted' ? 'posted slds-truncate index ' : 'unposted slds-truncate index '}"
+															 title="{!'Sub App is ' + r.status}">{!idx + 1}
+														</div>
+													</th>
+													<aura:iteration items="{!r.rowValues}" indexVar="key"
+																	var="item">
+														<th class="noPaddingNoMargin">
+															<lightning:input variant="label-hidden" maxlength="9"
+																			 disabled="true" class="dec" step="0.01"
+																			 name="{!r.key}" label="expense" type="number"
+																			 value="{!item.v}" />
+														</th>
+													</aura:iteration>
+												</tr>
+											</aura:iteration>
+											<!-- SUB DOWN UP  EXPENSE -->
+
+											<!-- SUB TOP DOWN EXPENSE -->
+											<aura:iteration items="{!v.expenseTopDownSubData}" var="r"
+															indexVar="idx">
+												<tr class="slds-hint-parent">
+													<th>
+														<div class="slds-p-left--small slds-m-around_none"
+															 style="min-width: 200px;">
+															<lightning:button label="{!r.title}"
+																			  iconName="utility:edit" class="hideEdge"
+																			  variant="base" iconPosition="left" value="{!r.key}"
+																			  onclick="{!c.redirectToApp}" />
+															<lightning:badge label="APP▼" class="slds-float--right"
+																			 title="Top-Down Sub App" />
+															<aura:renderIf isTrue="{!r.description == '0'}">
+																<lightning:badge label="✓"
+																				 class="slds-float--right greenLabel"
+																				 title="Approximately Match" />
+																<aura:set attribute="else">
+																	<aura:renderIf isTrue="{!r.remain > 0 }">
+																		<lightning:icon iconName="utility:arrowdown"
+																						size="x-small" title="{!r.description}"
+																						class="slds-float--right yellowLabel slds-p-horizontal_x-small slds-p-vertical_xx-small slds cb-bl-limit" />
+																		<aura:set attribute="else">
+
+																			<lightning:icon
+																					iconName="utility:arrowup"
+																					size="x-small"
+																					title="{!r.description}"
+																					class="slds-float--right yellowLabel slds-p-horizontal_x-small slds-p-vertical_xx-small slds cb-bl-limit" />
+																		</aura:set>
+																	</aura:renderIf>
+																</aura:set>
+
+															</aura:renderIf>
+														</div>
+													</th>
+													<th class="indexTh">
+														<div class="{!r.status == 'Posted' ? 'posted slds-truncate index ' : 'unposted slds-truncate index '}"
+															 title="{!'Sub App is ' + r.status}">{!idx + 1}
+														</div>
+													</th>
+													<aura:iteration items="{!r.rowValues}" indexVar="key"
+																	var="item">
+														<th class="noPaddingNoMargin">
+															<lightning:input variant="label-hidden" maxlength="9"
+																			 disabled="{!or(item.t == 'disabled', v.editDisabled)}"
+																			 class="dec" step="0.01" name="{!r.key}"
+																			 label="expense" type="number"
+																			 onchange="{!c.valueChangeResponse}"
+																			 value="{!item.v}" />
+														</th>
+													</aura:iteration>
+												</tr>
+											</aura:iteration>
+											<!-- SUB TOP DOWN  EXPENSE -->
+
+											</tbody>
+										</table>
+									</div>
+								</div>
+								<!--GRANT SECTION-->
+								<aura:iteration items="{!v.grantExpenseData}" var="grantData" indexVar="i">
+								<div>
+									<div class="slds-media__figure slds-m-around--medium">
+										<div style="display: inline-block;">
+                                            <span class="slds-icon_container slds-icon-standard-calibration"
+												  title="Expense">
+                                                <lightning:icon iconName="standard:product_required"
+																alternativeText="Expense" />
+                                            </span>
+											<span class="slds-p-left--medium slds-text-title--caps">{!grantData[0]}</span>
+										</div>
+										<!--<div class="slds-p-left&#45;&#45;large" style="display: inline-block;">
+											<lightning:button label="Add" onclick="{!c.addLine}" name="expense"
+															  iconName="utility:add" disabled="{!v.editDisabled}"
+															  title="Add Expense Line" />
+										</div>-->
+									</div>
+									<div class="slds-grid slds-wrap slds-m-around--medium">
+										<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+											<thead>
+											<tr class="slds-line-height_reset">
+												<th class="th25percent">
+													<div class="slds-truncate" title="Title">Title</div>
+												</th>
+												<th>
+													<div class="slds-truncate" title="Index">#</div>
+												</th>
+												<aura:iteration items="{!v.headers}" var="h">
+													<th>
+														<div class="slds-truncate slds-text-align--right"
+															 title="Period">{!h}</div>
+													</th>
+												</aura:iteration>
+												<th>
+													<div class="slds-truncate slds-text-align--right" title="Total">
+														Total
+													</div>
+												</th>
+											</tr>
+											</thead>
+
+											<tbody>
+											<!-- SIMPLE EXPENSE -->
+											<aura:iteration items="{!grantData[1]}" var="r" indexVar="idx">
+
+												<tr id="{!r.key}" class="{!'tr'+r.styleClass}">
+													<th>
+														<div class="slds-text-align_left">
+
+															<!-- EXPENSE SIMPLE DETAIL COLUMN -->
+															<lightning:layout multipleRows="true">
+																<lightning:layoutItem padding="around-none"
+																					  size="12">
+																	<div
+																			class="page-section page-header slds-grid_vertical">
+																		<div>
+																			<lightning:button
+																					iconName="utility:delete"
+																					class="slds-p-around--none"
+																					variant="base" title="Delete Row"
+																					iconPosition="left" value="{!r.key}"
+																					onclick="{!c.deleteRow}"
+																					disabled="{!v.editDisabled}"/>
+																			<lightning:button label="{!r.title}"
+																							  class="hideEdge"
+																							  iconName="utility:edit"
+																							  variant="base" iconPosition="left"
+																							  value="{!r.key}"
+																							  onclick="{!c.showDetails}" />
+																			<lightning:helptext
+																					class="slds-float--right"
+																					content="{!r.description}" />
+																			<lightning:icon
+																					iconName="utility:formula"
+																					alternativeText="Calculated"
+																					variant="warning"
+																					class="{!(r.styleClass != 'calcRule') + 'hide slds-float--right'}"
+																					title="Calculated line"
+																					size="small" />
+																			<lightning:icon iconName="utility:cart"
+																							alternativeText="Price/Quantity"
+																							class="{!(r.productId == null) + 'hide slds-float--right'}"
+																							title="Price-Quantity"
+																							size="small" />
+																		</div>
+																		<div
+																				class="{!if(v.template.cb4__Decimal6__c == 19.0, 'slds-m-left_xx-large slds-text-body_small', 'slds-hide')}">
+																			<p class="cb-descr-limit hideEdge">
+																				{!r.description}</p>
+																		</div>
+																	</div>
+																</lightning:layoutItem>
+
+																<aura:renderIf isTrue="{!v.showMode == true}">
+																	<lightning:layoutItem padding="around-none"
+																						  size="12" class="detailSection">
+																		<lightning:layout>
+																			<lightning:layoutItem
+																					padding="around-none"
+																					class="showMoreDetails" size="6">
+																				<div
+																						class="page-section page-right">
+																					<div class="cssTrunc">{!r.accT}
+																					</div>
+																					<div class="cssTrunc">{!r.dim6T}
+																					</div>
+																					<div class="cssTrunc">{!r.dim7T}
+																					</div>
+																				</div>
+																			</lightning:layoutItem>
+																			<lightning:layoutItem
+																					padding="around-none"
+																					class="showMoreDetails" size="6">
+																				<div
+																						class="page-section page-right">
+																					<div class="cssTrunc">{!r.dim8T}
+																					</div>
+																					<div class="cssTrunc">{!r.dim9T}
+																					</div>
+																					<div class="cssTrunc">
+																						{!r.dim10T}</div>
+																				</div>
+																			</lightning:layoutItem>
+																		</lightning:layout>
+																	</lightning:layoutItem>
+																</aura:renderIf>
+															</lightning:layout>
+
+															<!-- EXPENSE SIMPLE DETAIL COLUMN -->
+														</div>
+													</th>
+													<th class="indexTh">
+														<div class="slds-truncate index" title="Index">{!idx + 1}
+														</div>
+													</th>
+													<aura:iteration items="{!r.rowValues}" indexVar="key"
+																	var="item">
+														<th
+																class="{!greaterthan(v.app.cb4__Decimal6__c,key)  ? 'noPaddingNoMargin splitRow' : 'noPaddingNoMargin' }">
+															<lightning:input variant="label-hidden" maxlength="9"
+																			 label="expense" class="dec" step="0.01"
+																			 disabled="{!or(item.t == 'disabled', v.editDisabled)}"
+																			 name="{!r.key}" type="number"
+																			 onchange="{!c.valueChangeResponse}"
+																			 value="{!item.v}" />
+														</th>
+													</aura:iteration>
+												</tr>
+
+											</aura:iteration>
+											<!-- SIMPLE EXPENSE -->
+											</tbody>
+										</table>
+									</div>
+								</div>
+								</aura:iteration>
+								<!--GRANTS SECTION-->
+
+							</aura:renderIf>
+							<!-- EXPENSE -->
+
+							<div style="height: 200px;"></div>
+
+
+						</div>
+					</div>
+
+				</lightning:tab>
+				<lightning:tab label="Details">
+					<!-- EXPANDED APP COMMON INFO -->
+					<div class="slds-grid slds-wrap" id="expandedView">
+						<div class="slds-size_1-of-3">
+							<div class="slds-p-around--small slds-text-align_left">
+								<lightning:input name="Title" label="Title" aura:id='titleField' maxlength="120"
+												 disabled="{!v.editDisabled}" value="{!v.app.Name}" />
+							</div>
+							<div class="slds-p-around--small slds-text-align_left">
+								<lightning:input value="{!v.app.cb4__OrderNumber__c}" label="Order Number"
+												 type="number" />
+							</div>
+							<div class="slds-p-around--small slds-text-align_left">
+								<lightning:textarea value="{!v.app.cb4__Text3__c}" label="Description" maxlength="250"
+													disabled="{!v.editDisabled}" />
+							</div>
+						</div>
+						<div class="slds-size_1-of-3">
+
+							<div
+									class="{!v.settingsObj.AdminAppParams == null ? 'slds-hide slds-p-around--small' : v.settingsObj.AdminAppParams + ' slds-p-around--small'}">
+								<lightning:select label="Owner" disabled="{!v.editDisabled}" value="{!v.app.OwnerId}">
+									<option value="" text="-" />
+									<aura:renderIf isTrue="{!v.app.cb4__Tag2__r.cb4__Boolean6__c}">
+										<aura:iteration items="{!v.userAllSO}" var="option">
+											<option value="{!option.value}" text="{!option.title}"
+													selected="{!v.app.OwnerId == option.value}" />
+										</aura:iteration>
+										<aura:set attribute="else">
+											<aura:iteration items="{!v.userSO}" var="option">
+												<option value="{!option.value}" text="{!option.title}"
+														selected="{!v.app.OwnerId == option.value}" />
+											</aura:iteration>
+										</aura:set>
+									</aura:renderIf>
+									<aura:iteration items="{!v.queueSO}" var="option">
+										<option value="{!option.value}" text="{!option.title}"
+												selected="{!v.app.OwnerId == option.value}" />
+									</aura:iteration>
+								</lightning:select>
+							</div>
+
+							<div
+									class="{!v.settingsObj.AdminAppParams == null ? 'slds-hide slds-p-around--small' : v.settingsObj.AdminAppParams + ' slds-p-around--small'}">
+								<lightning:select label="Parent (admin only)" disabled="{!v.editDisabled}"
+												  value="{!v.app.cb4__Tag1__c}">
+									<option value="" text="-" />
+									<aura:iteration items="{!v.appSO}" var="option">
+										<option value="{!option.value}" text="{!option.title}"
+												selected="{!v.app.cb4__Tag1__c == option.value}" />
+									</aura:iteration>
+								</lightning:select>
+							</div>
+
+							<div
+									class="{!v.settingsObj.AdminAppParams == null ? 'slds-hide slds-p-around--small' : v.settingsObj.AdminAppParams + ' slds-p-around--small'}">
+								<lightning:select label="Template (admin only)" disabled="{!v.editDisabled}"
+												  required="true" value="{!v.app.cb4__Tag2__c}">
+									<aura:iteration items="{!v.templateSO}" var="option">
+										<option value="{!option.value}" text="{!option.title}"
+												selected="{!v.app.cb4__Tag2__c == option.value}" />
+									</aura:iteration>
+								</lightning:select>
+							</div>
+
+							<div
+									class="{!v.settingsObj.AdminAppParams == null ? 'slds-hide slds-p-around--small' : v.settingsObj.AdminAppParams + ' slds-p-around--small'}">
+								<div style="width: 75%; display: inline-block; ">
+									<lightning:input type="text" value="{!v.app.cb4__Status__c}"
+													 label="Status (admin only)" placeholder="Open" />
+								</div>
+								<div style="display: inline-block; margin-left: 7px; ">
+									<lightning:input type="checkbox" checked="{!v.app.cb4__isLocked__c}"
+													 label="Final Status" />
+								</div>
+							</div>
+
+							<div
+									class="{!v.settingsObj.AdminAppParams == null ? 'slds-hide slds-p-around--small' : v.settingsObj.AdminAppParams + ' slds-p-around--small'}">
+								<lightning:select label="BY (admin only)" disabled="{!v.editDisabled}" required="true"
+												  value="{!v.app.cb4__Tag3__c}">
+									<aura:iteration items="{!v.periodSO}" var="option">
+										<option value="{!option.value}" text="{!option.title}"
+												selected="{!v.app.cb4__Tag3__c == option.value}" />
+									</aura:iteration>
+								</lightning:select>
+							</div>
+
+							<div
+									class="{!v.settingsObj.AdminAppParams == null ? 'slds-hide slds-p-around--small' : v.settingsObj.AdminAppParams + ' slds-p-around--small'}">
+								<lightning:select label="{!v.appDim4name + ' (admin only)'}" required="true"
+												  value="{!v.app.cb4__Tag4__c}">
+									<aura:iteration items="{!v.departmentSO}" var="option">
+										<option value="{!option.value}" text="{!option.title}"
+												selected="{!v.app.cb4__Tag4__c == option.value}" />
+									</aura:iteration>
+								</lightning:select>
+							</div>
+
+
+							<div class="{!empty(v.appDim6SO) + 'hide slds-p-around--small'}">
+								<lightning:select label="{!v.appDim6name}" disabled="{!v.editDisabled}"
+												  value="{!v.app.cb4__Tag6__c}">
+									<option value=" " text="-" />
+									<aura:iteration items="{!v.appDim6SO}" var="option">
+										<option value="{!option.value}" text="{!option.title}"
+												selected="{!v.app.cb4__Tag6__c == option.value}" />
+									</aura:iteration>
+								</lightning:select>
+							</div>
+							<div class="{!empty(v.appDim7SO) + 'hide slds-p-around--small '}">
+								<lightning:select label="{!v.appDim7name}" disabled="{!v.editDisabled}"
+												  value="{!v.app.cb4__Tag7__c}">
+									<option value=" " text="-" />
+									<aura:iteration items="{!v.appDim7SO}" var="option">
+										<option value="{!option.value}" text="{!option.title}"
+												selected="{!v.app.cb4__Tag7__c == option.value}" />
+									</aura:iteration>
+								</lightning:select>
+							</div>
+							<div class="{!empty(v.appDim8SO) + 'hide slds-p-around--small '}">
+								<lightning:select label="{!v.appDim8name}" disabled="{!v.editDisabled}"
+												  value="{!v.app.cb4__Tag8__c}">
+									<option value=" " text="-" />
+									<aura:iteration items="{!v.appDim8SO}" var="option">
+										<option value="{!option.value}" text="{!option.title}"
+												selected="{!v.app.cb4__Tag8__c == option.value}" />
+									</aura:iteration>
+								</lightning:select>
+							</div>
+							<div class="{!empty(v.appDim9SO) + 'hide slds-p-around--small '}">
+								<lightning:select label="{!v.appDim9name}" disabled="{!v.editDisabled}"
+												  value="{!v.app.cb4__Tag9__c}">
+									<option value=" " text="-" />
+									<aura:iteration items="{!v.appDim9SO}" var="option">
+										<option value="{!option.value}" text="{!option.title}"
+												selected="{!v.app.cb4__Tag9__c == option.value}" />
+									</aura:iteration>
+								</lightning:select>
+							</div>
+							<div class="{!empty(v.appDim10SO) + 'hide slds-p-around--small '}">
+								<lightning:select label="{!v.appDim10name}" disabled="{!v.editDisabled}"
+												  value="{!v.app.cb4__Tag10__c}">
+									<option value=" " text="-" />
+									<aura:iteration items="{!v.appDim10SO}" var="option">
+										<option value="{!option.value}" text="{!option.title}"
+												selected="{!v.app.cb4__Tag10__c == option.value}" />
+									</aura:iteration>
+								</lightning:select>
+							</div>
+
+						</div>
+						<div class="slds-size_1-of-3">
+
+							<lightning:tile label="App Details">
+								<dl class="slds-dl_horizontal slds-p-around--small">
+									<dt class="slds-dl_horizontal__label">Template:</dt>
+									<dd class="slds-dl_horizontal__detail">
+										<a href="{!'/'+ v.template.Id}" target="_blank>">
+											{!v.app.cb4__Tag2Name__c}
+										</a>
+									</dd>
+
+									<dt class="slds-dl_horizontal__label">Approach:</dt>
+									<dd class="slds-dl_horizontal__detail">{!v.template.cb4__Text1__c }</dd>
+
+									<dt class="slds-dl_horizontal__label">Type:</dt>
+									<dd class="slds-dl_horizontal__detail">{!v.template.cb4__Text2__c}</dd>
+
+									<dt class="slds-dl_horizontal__label">Period:</dt>
+									<dd class="slds-dl_horizontal__detail">{!v.app.cb4__Tag3Name__c}</dd>
+
+									<dt class="slds-dl_horizontal__label">Calc Rule(s):</dt>
+									<dd class="slds-dl_horizontal__detail">
+										<a href="{!'/'+ v.template.cb4__Tag4__c}" target="_blank>">
+											{!v.template.cb4__Tag4Name__c}
+										</a>
+									</dd>
+
+									<dt class=" slds-dl_horizontal__label">Status:</dt>
+									<dd class="slds-dl_horizontal__detail">{!v.app.cb4__Status__c}</dd>
+
+								</dl>
+							</lightning:tile>
+							<aura:renderIf isTrue="{!v.appDimension.cb4__File1__c.vi == 't'}">
+								<lightning:fileUpload name="fileUploader1" label="{!v.appDimension.cb4__File1__c.v}"
+													  multiple="false" accept=".pdf, .csv, .xls, .xlsx, .png, .jpeg"
+													  recordId="{!v.app.Id}" onuploadfinished="{! c.handleUploadFinished }" />
+							</aura:renderIf>
+							<aura:renderIf isTrue="{!v.appDimension.cb4__File2__c.vi == 't'}">
+								<div class="slds-tile slds-m-top_small">
+									<h3 class="slds-truncate" title="{!v.appDimension.cb4__File2__c.v}">
+										<a data-aura-rendered-by="1852:0"
+										   href="javascript:void(0);">{!v.appDimension.cb4__File2__c.v}</a>
+									</h3>
+									<div class="slds-tile__detail slds-text-body_small">
+										<dl class="slds-dl_horizontal slds-p-around_small">
+											<aura:renderIf isTrue="{!v.attachments.length == 0}">
+												<dt class=" slds-dl_horizontal__label"></dt>
+												<dd class="slds-dl_horizontal__detail">
+													<p>No files found</p>
+												</dd>
+											</aura:renderIf>
+											<aura:iteration items="{!v.attachments}" var="attachment"
+															indexVar="counter">
+												<dt class=" slds-dl_horizontal__label">{!counter + 1}.</dt>
+												<dd class="slds-dl_horizontal__detail">
+													<a href="{!attachment.url}" target="_blank">{!attachment.Title}</a>
+												</dd>
+											</aura:iteration>
+										</dl>
+									</div>
+								</div>
+							</aura:renderIf>
+						</div>
+
+					</div>
+					<!-- EXPANDED APP COMMON INFO -->
+				</lightning:tab>
+			</lightning:tabset>
+		</lightning:card>
+		<div class="slds-card slds-card slds-p-top--small slds-p-bottom--small slds-p-left--xxx-small"
+			 aura:id="excelPanel"
+			 style="width: 380px; opacity: 0.9; position: fixed; top: 220px; right:-350px;  box-shadow: 0px 0px 5px;">
+
+			<lightning:layout>
+				<lightning:layoutItem>
+					<div onclick="{!c.showExcelPanel}" class="excelPanel">
+						<div>
+							<lightning:icon iconName="doctype:excel" size="medium" alternativeText="Excel" />
+						</div>
+					</div>
+				</lightning:layoutItem>
+				<lightning:layoutItem class="slds-p-left--small">
+					<lightning:button label="Download Simple Lines" iconName="utility:download"
+									  class="slds-m-left--xx-small slds-text-body_small slds-nowrap" iconPosition="left"
+									  onclick="{!c.downloadExcel}" />
+
+				</lightning:layoutItem>
+				<lightning:layoutItem title="Uploading is available only in the Open status">
+					<lightning:input type="file" variant="label-hidden" disabled="{!v.app.cb4__Status__c != 'Open'}"
+									 class="slds-text-body_small slds-nowrap" multiple="false" accept=".xlsx, .xlx"
+									 onchange="{!c.handleFilesChange}" />
+				</lightning:layoutItem>
+			</lightning:layout>
+
+		</div>
+
+	</aura:renderIf>
+	<!-- SINGLE -->
+
+	<!-- ONE LINE INTERFACE -->
+	<section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aura:id="modalDiv"
+			 aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open slds-modal_large slds-hide">
+		<div class="slds-modal__container">
+			<header class="slds-modal__header">
+				<h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">{!v.row.title}</h2>
+				<lightning:badge class="slds-float--right" label="{!v.row.ie}" />
+			</header>
+			<div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+
+				<lightning:layout>
+					<lightning:layoutItem padding="around-small">
+						<div>
+							<lightning:buttonIcon iconName="utility:level_down" size="small" value="{!v.row.key}"
+												  alternativeText="Convert to Simple Row" onclick="{!c.convertToSimpleRow}"
+												  class="{!v.row.styleClass + 'slds-hide slds-m-bottom_xx-small'}" />
+						</div>
+					</lightning:layoutItem>
+					<lightning:layoutItem padding="around-small">
+						<div class="slds-m-around_none">
+							<lightning:input type="text" disabled="{!v.editDisabled}" placeholder="Put in some title"
+											 messageWhenTooLong="You cannot use more than 250 characters" label="Title"
+											 maxlength="250" value="{!v.row.title}" />
+						</div>
+
+						<div class="slds-m-around_none ">
+							<lightning:select name="{!v.row.key}" disabled="{!v.editDisabled}" label="CB Account"
+											  required="true" accesskey="account" messageWhenValueMissing="Please specify account"
+											  onchange="{!c.updateAppLineTitle}" value="{!v.row.account}">
+								<aura:iteration items="{!v.rowAccountSO}" var="option">
+									<option value="{!option.value}" text="{!option.title}"
+											selected="{!v.row.account == option.value}" />
+								</aura:iteration>
+							</lightning:select>
+						</div>
+					</lightning:layoutItem>
+
+					<lightning:layoutItem padding="around-small">
+						<div class="{!or(empty(v.d6SO), v.amountDimension.cb4__Dimension6__c.vi == 'f')+ 'hide slds-m-around_none'}">
+							<lightning:select disabled="{!v.editDisabled}" onchange="{!c.updateAppLineTitle}"
+											  label="{!v.d6name}" accesskey="dimension6" value="{!v.row.dim6}">
+								<option value="" text="-" />
+								<aura:iteration items="{!v.d6SO}" var="option">
+									<option value="{!option.value}" text="{!option.title}"
+											selected="{!v.row.dim6 == option.value}" />
+								</aura:iteration>
+							</lightning:select>
+						</div>
+
+						<div class="{!or(empty(v.d7SO), v.amountDimension.cb4__Dimension7__c.vi == 'f') + 'hide slds-m-around_none'}">
+							<lightning:select disabled="{!v.editDisabled}" onchange="{!c.updateAppLineTitle}"
+											  label="{!v.d7name}" accesskey="dimension7" value="{!v.row.dim7}">
+								<option value="" text="-" />
+								<aura:iteration items="{!v.d7SO}" var="option">
+									<option value="{!option.value}" text="{!option.title}"
+											selected="{!v.row.dim7 == option.value}" />
+								</aura:iteration>
+							</lightning:select>
+						</div>
+
+						<div class="{!or(empty(v.d8SO), v.amountDimension.cb4__Dimension8__c.vi == 'f') + 'hide slds-m-around_none'}">
+							<lightning:select disabled="{!v.editDisabled}" onchange="{!c.updateAppLineTitle}"
+											  label="{!v.d8name}" accesskey="dimension8" value="{!v.row.dim8}">
+								<option value="" text="-" />
+								<aura:iteration items="{!v.d8SO}" var="option">
+									<option value="{!option.value}" text="{!option.title}"
+											selected="{!v.row.dim8 == option.value}" />
+								</aura:iteration>
+							</lightning:select>
+						</div>
+
+						<div class="{!or(empty(v.d9SO), v.amountDimension.cb4__Dimension9__c.vi == 'f') + 'hide slds-m-around_none'}">
+							<lightning:select disabled="{!v.editDisabled}" onchange="{!c.updateAppLineTitle}"
+											  label="{!v.d9name}" accesskey="dimension9" value="{!v.row.dim9}">
+								<option value="" text="-" />
+								<aura:iteration items="{!v.d9SO}" var="option">
+									<option value="{!option.value}" text="{!option.title}"
+											selected="{!v.row.dim9 == option.value}" />
+								</aura:iteration>
+							</lightning:select>
+						</div>
+
+						<div class="{!or(empty(v.d10SO), v.amountDimension.cb4__Dimension10__c.vi == 'f') + 'hide slds-m-around_none'}">
+							<lightning:select disabled="{!v.editDisabled}" onchange="{!c.updateAppLineTitle}"
+											  label="{!v.d10name}" accesskey="dimension10" value="{!v.row.dim10}">
+								<option value="" text="-" />
+								<aura:iteration items="{!v.d10SO}" var="option">
+									<option value="{!option.value}" text="{!option.title}"
+											selected="{!v.row.dim10 == option.value}" />
+								</aura:iteration>
+							</lightning:select>
+						</div>
+					</lightning:layoutItem>
+
+					<!-- ADDITIONAL LINE TEXT -->
+					<lightning:layoutItem padding="around-small">
+						<div class="{!(v.amountDimension.cb4__Text6__c.vi == 'f') + 'hide slds-m-around_none'}">
+							<lightning:input label="{!v.Text6__c}" maxlength="250" type="text" value="{!v.row.text6}" disabled="{!or(v.editDisabled, v.amountDimension.cb4__Boolean1__c.d == 't')}"/>
+						</div>
+						<div class="{!(v.amountDimension.cb4__Text7__c.vi == 'f') + 'hide slds-m-around_none'}">
+							<lightning:input label="{!v.Text7__c}" maxlength="250" type="text" value="{!v.row.text7}" disabled="{!or(v.editDisabled, v.amountDimension.cb4__Boolean1__c.d == 't')}"/>
+						</div>
+						<div class="{!(v.amountDimension.cb4__Text8__c.vi == 'f') + 'hide slds-m-around_none'}">
+							<lightning:input label="{!v.Text8__c}" maxlength="250" type="text" value="{!v.row.text8}" disabled="{!or(v.editDisabled, v.amountDimension.cb4__Boolean1__c.d == 't')}"/>
+						</div>
+						<div class="{!(v.amountDimension.cb4__Text9__c.vi == 'f') + 'hide slds-m-around_none'}">
+							<lightning:input label="{!v.Text9__c}" maxlength="250" type="text" value="{!v.row.text9}" disabled="{!or(v.editDisabled, v.amountDimension.cb4__Boolean1__c.d == 't')}"/>
+						</div>
+					</lightning:layoutItem>
+					<!-- ADDITIONAL LINE TEXT -->
+
+					<!-- ADDITIONAL LINE DECIMAL -->
+					<lightning:layoutItem padding="around-small">
+						<div class="{!(v.amountDimension.cb4__Decimal6__c.vi == 'f') + 'hide slds-m-around_none'}">
+							<lightning:input label="{!v.Decimal6__c}" maxlength="9" type="number"
+											 value="{!v.row.decimal6}" disabled="{!or(v.editDisabled, v.amountDimension.cb4__Boolean1__c.d == 't')}"/>
+						</div>
+						<div class="{!(v.amountDimension.cb4__Decimal7__c.vi == 'f') + 'hide slds-m-around_none'}">
+							<lightning:input label="{!v.Decimal7__c}" maxlength="9" type="number"
+											 value="{!v.row.decimal7}" disabled="{!or(v.editDisabled, v.amountDimension.cb4__Boolean1__c.d == 't')}"/>
+						</div>
+						<div class="{!(v.amountDimension.cb4__Decimal8__c.vi == 'f') + 'hide slds-m-around_none'}">
+							<lightning:input label="{!v.Decimal8__c}" maxlength="9" type="number"
+											 value="{!v.row.decimal8}" disabled="{!or(v.editDisabled, v.amountDimension.cb4__Boolean1__c.d == 't')}"/>
+						</div>
+						<div class="{!(v.amountDimension.cb4__Decimal9__c.vi == 'f') + 'hide slds-m-around_none'}">
+							<lightning:input label="{!v.Decimal9__c}" maxlength="9" type="number"
+											 value="{!v.row.decimal9}" disabled="{!or(v.editDisabled, v.amountDimension.cb4__Boolean1__c.d == 't')}"/>
+						</div>
+						<div class="{!(v.amountDimension.cb4__Decimal10__c.vi == 'f') + 'hide slds-m-around_none'}">
+							<lightning:input label="{!v.Decimal10__c}" maxlength="9" type="number"
+											 value="{!v.row.decimal10}" disabled="{!or(v.editDisabled, v.amountDimension.cb4__Boolean1__c.d == 't')}"/>
+						</div>
+					</lightning:layoutItem>
+					<!-- ADDITIONAL LINE DECIMAL -->
+
+					<!--ADDITIONAL LINE BOOLEANS-->
+					<lightning:layoutItem class="slds-p-top_x-large">
+						<div class="{!(v.amountDimension.cb4__Boolean1__c.vi == 'f') + 'hide'}">
+							<lightning:input type="checkbox"
+											 name="cb4__Boolean1__c"
+											 label="{!v.amountDimension.cb4__Boolean1__c.v}"
+											 checked="{!v.row.boolean1}"
+											 disabled="{!or(v.editDisabled,v.amountDimension.cb4__Boolean1__c.d == 't')}" />
+
+						</div>
+						<div class="{!(v.amountDimension.cb4__Boolean2__c.vi == 'f') + 'hide'}">
+							<lightning:input type="checkbox"
+											 name="cb4__Boolean2__c"
+											 label="{!v.amountDimension.cb4__Boolean2__c.v}"
+											 checked="{!v.row.boolean2}"
+											 disabled="{!or(v.editDisabled,v.amountDimension.cb4__Boolean2__c.d == 't')}" />
+						</div>
+						<div class="{!(v.amountDimension.cb4__Boolean3__c.vi == 'f') + 'hide'}">
+							<lightning:input type="checkbox"
+											 name="cb4__Boolean3__c"
+											 label="{!v.amountDimension.cb4__Boolean3__c.v}"
+											 checked="{!v.row.boolean3}"
+											 disabled="{!or(v.editDisabled,v.amountDimension.cb4__Boolean3__c.d == 't')}" />
+						</div>
+						<div class="{!(v.amountDimension.cb4__Boolean4__c.vi == 'f') + 'hide'}">
+							<lightning:input type="checkbox"
+											 name="cb4__Boolean4__c"
+											 label="{!v.amountDimension.cb4__Boolean4__c.v}"
+											 checked="{!v.row.boolean4}"
+											 disabled="{!or(v.editDisabled,v.amountDimension.cb4__Boolean4__c.d == 't')}" />
+						</div>
+						<div class="{!(v.amountDimension.cb4__Boolean5__c.vi == 'f') + 'hide'}">
+							<lightning:input type="checkbox"
+											 name="cb4__Boolean5__c"
+											 label="{!v.amountDimension.cb4__Boolean5__c.v}"
+											 checked="{!v.row.boolean5}"
+											 disabled="{!or(v.editDisabled,v.amountDimension.cb4__Boolean5__c.d == 't')}" />
+						</div>
+					</lightning:layoutItem>
+					<!--ADDITIONAL LINE BOOLEANS-->
+
+					<aura:if isTrue="{!v.template.cb4__Text2__c == 'Rate and Quantity'}">
+						<lightning:layoutItem size="4" padding="around-small">
+
+							<lightning:select disabled="{!v.editDisabled}" label="Product" onchange="{!c.setPrice}"
+											  value="{!v.row.productId}">
+								<option value="" text="-" />
+								<aura:iteration items="{!v.productSO}" var="option">
+									<option value="{!option.value}" text="{!option.title}"
+											selected="{!v.row.productId == option.value}" />
+								</aura:iteration>
+							</lightning:select>
+
+							<lightning:select disabled="{!v.editDisabled}" label="Price Book" onchange="{!c.setPrice}"
+											  value="{!v.row.pricebookId}">
+								<option value="" text="-" />
+								<aura:iteration items="{!v.pricebookSO}" var="option">
+									<option value="{!option.value}" text="{!option.title}"
+											selected="{!v.row.pricebookId == option.value}" />
+								</aura:iteration>
+							</lightning:select>
+						</lightning:layoutItem>
+					</aura:if>
+
+
+					<aura:if isTrue="{!v.template.cb4__Text2__c == 'Employee and Rate'}">
+						<lightning:layoutItem size="4" padding="around-small">
+							<lightning:select disabled="{!v.editDisabled}" label="Employee" accesskey="empRate"
+											  onchange="{!c.setRate}" value="{!v.row.employeeId}">
+								<option value="" text="-" />
+								<aura:iteration items="{!v.employeeSO}" var="option">
+									<option value="{!option.value}" text="{!option.title}"
+											selected="{!v.row.employeeId == option.value}" />
+								</aura:iteration>
+							</lightning:select>
+
+							<lightning:select disabled="{!v.editDisabled}" label="Rate" accesskey="empRate"
+											  onchange="{!c.setRate}" value="{!v.row.rateId}">
+								<option value="" text="-" />
+								<aura:iteration items="{!v.rateSO}" var="option">
+									<option value="{!option.value}" text="{!option.title}"
+											selected="{!v.row.rateId == option.value}" />
+								</aura:iteration>
+								<aura:iteration items="{!v.globalRateSO}" var="option">
+									<option value="{!option.value}" text="{!option.title}"
+											selected="{!v.row.rateId == option.value}" />
+								</aura:iteration>
+							</lightning:select>
+						</lightning:layoutItem>
+					</aura:if>
+
+
+					<lightning:layoutItem size="4" padding="around-small">
+						<div class="slds-m-around_none">
+							<lightning:textarea onblur="{!c.updateAppLineTitle}" disabled="{!v.editDisabled}"
+												accesskey="description" maxlength="250"
+												messageWhenTooLong="You cannot use more than 250 characters" placeholder="Description"
+												label="Description" value="{!v.row.description}" />
+						</div>
+					</lightning:layoutItem>
+
+				</lightning:layout>
+
+				<aura:if isTrue="{!v.row != null}">
+					<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+						<thead>
+						<tr class="slds-line-height_reset">
+							<th>
+
+							</th>
+
+							<aura:iteration items="{!v.headers}" var="h">
+								<th>
+									<div class="slds-truncate slds-text-align--right" title="Period">{!h}</div>
+								</th>
+							</aura:iteration>
+							<th>
+								<div class="slds-truncate slds-text-align--right" title="Total">
+									Total
+								</div>
+							</th>
+						</tr>
+						</thead>
+						<tbody>
+
+						<tr>
+							<th>
+								<lightning:icon iconName="utility:money" alternativeText="Money" title="Money"
+												size="small" variant="success" />
+							</th>
+							<aura:iteration items="{!v.row.rowValues}" var="item">
+								<th class="noPaddingNoMargin">
+									<lightning:input variant="label-hidden" maxlength="9" class="dec" step="0.01"
+													 placeholder="Enter a number"
+													 disabled="{!or(item.t == 'disabled', v.editDisabled)}"
+													 onchange="{!c.calculateDialogTotals}" value="{!item.v}" type="number" />
+								</th>
+							</aura:iteration>
+						</tr>
+
+						<!-- PRICE & QUANTITY -->
+						<aura:if
+								isTrue="{! and( (v.template.cb4__Text2__c == 'Rate and Quantity') , (v.row.productId != null) )}">
+							<tr>
+								<th>
+									<lightning:icon iconName="utility:cart" alternativeText="Quantity"
+													title="Quantity" size="small" />
+								</th>
+								<aura:iteration items="{!v.row.rowValues}" var="item">
+									<th class="noPaddingNoMargin">
+										<lightning:input variant="label-hidden" maxlength="9" class="dec" step="1"
+														 min="0" placeholder="Put a number"
+														 disabled="{!or(item.t == 'disabled', v.editDisabled)}"
+														 onchange="{!c.calculateDialogTotals}" value="{!item.q}" type="number" />
+									</th>
+								</aura:iteration>
+							</tr>
+							<tr>
+								<th>
+									<lightning:icon iconName="utility:graph" alternativeText="Price/Rate"
+													title="Price/Rate" size="small" />
+								</th>
+								<aura:iteration items="{!v.row.rowValues}" var="item" indexVar="i"
+												end="{!v.row.rowValues.length - 1}">
+									<th class="noPaddingNoMargin">
+										<lightning:input variant="label-hidden" maxlength="9" class="dec"
+														 step="0.01" placeholder="Enter a number"
+														 disabled="{!or(item.t == 'disabled', v.editDisabled)}"
+														 onchange="{!c.calculateDialogTotals}" value="{!item.p}" type="number" />
+									</th>
+								</aura:iteration>
+							</tr>
+						</aura:if>
+						<!-- PRICE & QUANTITY -->
+
+
+						<!-- EMPLOYEE & RATE -->
+						<aura:if
+								isTrue="{! and( (v.template.cb4__Text2__c == 'Employee and Rate') , (v.row.rateId != null) )}">
+							<tr>
+								<th>
+									<lightning:icon iconName="utility:reminder" alternativeText="Hours"
+													title="Hours" size="small" />
+								</th>
+								<aura:iteration items="{!v.row.rowValues}" var="item">
+									<th class="noPaddingNoMargin">
+										<lightning:input variant="label-hidden" maxlength="9" class="dec" step="0.1"
+														 min="0" placeholder="Enter a number"
+														 disabled="{!or(item.t == 'disabled', v.editDisabled)}"
+														 onchange="{!c.calculateDialogTotals}" value="{!item.q}" type="number" />
+									</th>
+								</aura:iteration>
+							</tr>
+							<tr>
+								<th>
+									<lightning:icon iconName="utility:resource_capacity" alternativeText="Rate"
+													title="Rate" size="small" />
+								</th>
+								<aura:iteration items="{!v.row.rowValues}" var="item"
+												end="{!v.row.rowValues.length - 1}">
+									<th class="noPaddingNoMargin">
+										<lightning:input variant="label-hidden" maxlength="9" class="dec"
+														 step="0.01" placeholder="Enter a number"
+														 disabled="{!or(item.t == 'disabled', v.editDisabled)}"
+														 onchange="{!c.calculateDialogTotals}" value="{!item.p}" type="number" />
+									</th>
+								</aura:iteration>
+							</tr>
+						</aura:if>
+						<!-- EMPLOYEE & RATE -->
+
+
+						</tbody>
+					</table>
+					<!-- Additional Budget Line Component -->
+					<div>
+						{!v.additionalBudgetLineComponent}
+					</div>
+					<!-- Additional Budget Line Component -->
+				</aura:if>
+			</div>
+
+			<footer class="slds-modal__footer">
+
+				<aura:renderIf isTrue="{!v.template.cb4__Text2__c == 'Totals'}">
+					<div>
+						<div class="slds-float_left" style="width: 10%;"
+							 title="To fill in the line enter the base amount and select an action">
+							<lightning:input type="number" placeholder="Base amount" aura:id="dialogSourceAmount"
+											 step="0.01" disabled="{!v.editDisabled}"
+											 class="dec slds-float_right slds-m-left_xx-large " variant="label-hidden" />
+						</div>
+						<div class="slds-float_left" title="Relations">
+							<lightning:buttonMenu alternativeText="Population menu" variant="border-filled"
+												  iconName="utility:magicwand" disabled="{!v.editDisabled}"
+												  onselect="{!c.applyPopulation}">
+								<lightning:menuItem value="spread" label="Spread" />
+								<lightning:menuItem value="splitBY" label="Split by periods" />
+								<lightning:menuItem value="multiply" label="Multiply by" />
+								<lightning:menuItem value="divide" label="Divide by" />
+								<lightning:menuItem value="increase" label="Increase by" />
+								<lightning:menuItem value="back" label="Reset" />
+								<lightning:menuItem value="pattern" label="Apply pattern" disabled="true" />
+							</lightning:buttonMenu>
+						</div>
+					</div>
+
+				</aura:renderIf>
+
+				<button class="slds-button slds-button_neutral" onclick="{!c.closeDetails}">Cancel</button>
+				<aura:renderIf isTrue="{!v.template.cb4__Text2__c == 'Totals'}">
+					<button class="slds-button slds-button_neutral" onclick="{!c.applyDetailsAndClone}" disabled="{!v.editDisabled}">Clone</button>
+					<button class="slds-button slds-button_success" onclick="{!c.applyDetailsAndNew}" disabled="{!v.editDisabled}">Apply &#38;
+						New</button>
+				</aura:renderIf>
+				<button class="slds-button slds-button_success" onclick="{!c.applyDetails}" disabled="{!v.editDisabled}">Apply</button>
+
+			</footer>
+		</div>
+	</section>
+	<div class="slds-backdrop slds-backdrop_open slds-hide" style="z-index: 3000;" aura:id="modalBackGround"></div>
+	<!-- ONE LINE INTERFACE -->
+
+	<!-- BACKUP -->
+	<section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aura:id="backupDiv"
+			 aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open slds-modal_small slds-hide">
+		<div class="slds-modal__container">
+			<header class="slds-modal__header">
+				<h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">{!v.app.Name} History</h2>
+			</header>
+			<div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+				<table class="slds-table slds-table_cell-buffer slds-table_bordered">
+					<thead>
+					<tr class="slds-line-height_reset">
+						<th>
+							<div class="slds-truncate" style="width: 10px;" title="Index">#</div>
+						</th>
+						<th>
+							<div class="slds-truncate" title="Title">Title</div>
+						</th>
+						<th>
+							<div class="slds-truncate" title="User">User</div>
+						</th>
+						<th>
+							<div class="slds-truncate" title="Action Date">Action Date</div>
+						</th>
+						<th style="width: 30px;">
+							<div class="slds-truncate" title="Action">Action</div>
+						</th>
+						<th style="width: 10px;">
+							<div class="slds-truncate" title="CBLog">CBLog</div>
+						</th>
+					</tr>
+					</thead>
+					<tbody>
+					<aura:iteration items="{!v.backupList}" var="backup" indexVar="i">
+						<tr class="slds-hint-parent">
+							<th>
+								{!i + 1}
+							</th>
+							<th>
+								{!backup.cb4__Title__c}
+							</th>
+							<td>
+								{!backup.Owner.Name}
+							</td>
+							<td>
+								<lightning:formattedDateTime value="{!backup.CreatedDate}" year="numeric"
+															 month="numeric" day="numeric" hour="2-digit" minute="2-digit" timeZone="UTC"
+															 timeZoneName="short" hour12="false" />
+							</td>
+							<td>
+								<lightning:button label="Restore" iconPosition="left" value="{!backup.Id}"
+												  onclick="{!c.applyBackup}" />
+							</td>
+							<td>
+								<a href="{!'/' + backup.Id}"> {! backup.Name } </a>
+							</td>
+						</tr>
+					</aura:iteration>
+					</tbody>
+				</table>
+			</div>
+
+			<footer class="slds-modal__footer">
+				<lightning:buttonGroup>
+					<lightning:button onclick="{!c.hideBackup}" variant="neutral" label="Cancel" />
+					<lightning:button onclick="{!c.refreshBackupList}" variant="brand" iconName="utility:refresh" />
+				</lightning:buttonGroup>
+			</footer>
+		</div>
+	</section>
+	<!-- BACKUP -->
+
+
+	<!-- AUTOFILL -->
+	<section role="dialog" tabindex="-1" aria-labelledby="modal-heading-01" aria-modal="true" aura:id="generatorModal"
+			 aria-describedby="modal-content-id-1" class="slds-modal slds-fade-in-open slds-modal_small slds-hide">
+		<div class="slds-modal__container">
+			<header class="slds-modal__header">
+				<h2 id="modal-heading-01" class="slds-modal__title slds-hyphenate">Generator Settings</h2>
+			</header>
+			<div class="slds-modal__content slds-p-around_medium" id="modal-content-id-1">
+
+				<lightning:select label="Generate Lines Split by" value="{!v.generateLinesByType}">
+					<aura:iteration items="{!v.generateLinesByTypeSO}" var="option">
+						<option value="{!option}" text="{!option}" />
+					</aura:iteration>
+				</lightning:select>
+
+			</div>
+
+			<footer class="slds-modal__footer">
+
+				<button class="slds-button slds-button_neutral" onclick="{!c.closeDetails}">Cancel</button>
+				<button class="slds-button slds-button_brand" onclick="{!c.generateAppLines}">Generate</button>
+
+			</footer>
+		</div>
+	</section>
+	<div class="slds-backdrop slds-backdrop_open slds-hide" style="z-index: 3000;" aura:id="generatorBackGround"></div>
+	<!-- AUTOFILL -->
+
+	<!--Notification Section-->
+	<div aura:id="cbnotification" class="slds-hide" style="height:4.5rem">
+		<div class="slds-notification-container">
+			<section class="slds-notification" role="dialog" aria-labelledby="noti-332"
+					 aria-describedby="dialog-body-id-331">
+				<div class="slds-notification__body" id="dialog-body-id-331">
+					<a class="slds-notification__target slds-media" style="background: #fedfd0;" href="#">
+                        <span class="slds-icon_container slds-media__figure" title="Warning">
+                            <lightning:icon iconName="utility:report_issue" variant="warning" size="small" />
+                            <span class="slds-assistive-text">Warning</span>
+                        </span>
+						<div class="slds-media__body">
+							<h2 class="slds-text-heading_small slds-m-bottom_xx-small" id="noti-332">
+								Helpful Hint</h2>
+							<p>Your monitor resolution is not optimal, zoom out for a better user experience</p>
+						</div>
+					</a>
+					<button
+							class="slds-button slds-button_icon slds-button_icon-container slds-notification__close slds-m-right_small">
+						<lightning:buttonIcon iconName="utility:close" variant="bare" value="{!false}"
+											  onclick="{! c.hideNotification}" title="Close" />
+						<lightning:buttonIcon iconName="utility:turn_off_notifications" variant="bare" value="{!true}"
+											  onclick="{! c.hideNotification}" title="Close and turn off notification" />
+						<span class="slds-assistive-text">Close</span>
+					</button>
+				</div>
+			</section>
+		</div>
+	</div>
+	<!--Notification Section-->
+
+	<!-- SUPER MODERN SPINNER -->
+	<lightning:spinner aura:id="sms" class="slds-hide" />
+	<!-- SUPER MODERN SPINNER -->
+
+
+</aura:component>

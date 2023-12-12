@@ -261,6 +261,7 @@ public with sharing class CBForecastGenerator implements Database.Batchable<SObj
                 cb4__Tag3__c = currPeriodToBasePeriod.containsKey(t.cb4__Tag3__c) ? currPeriodToBasePeriod.get(t.cb4__Tag3__c) : t.cb4__Tag3__c,
                 cb4__Tag6__c = t.cb4__Tag6__c,
                 cb4__Tag7__c = t.cb4__Tag7__c,
+                cb4__Tag8__c = t.cb4__Tag8__c,
                 cb4__Decimal1__c = t.cb4__Decimal1__c,
                 cb4__Dimension__c = budgetAppAmountDimensionId,
                 OwnerId = oId != null ? oId : t.OwnerId

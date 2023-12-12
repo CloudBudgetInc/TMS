@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- tmsVolunteerPortalNavigationMenu.js-meta.xml -->
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata" fqn="tmsVolunteerPortalNavigationMenu">
+    <apiVersion>57.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>TMS Volunteer Portal Navigation Menu</masterLabel>
+    <description>Custom Navigation Menu</description>
+    <targets>
+        <target>lightningCommunity__Page</target>
+        <target>lightningCommunity__Default</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightningCommunity__Default">
+            <property name="linkSetMasterLabel"
+                type="String"
+                default="Default Navigation"
+                label="Navigation Link Set Name"
+                description="The Navigation Menu name to display to logged-in users (authenticated)"/>
+            <property name="publicLinkSetMasterLabel"
+                    type="String"
+                    default="Default Navigation"
+                    label="Navigation Link Set Name for Public Users"
+                    description="The Navigation Menu name to display to public users (unauthenticated)" />
+            <property name="addHomeMenuItem"
+                type="Boolean"
+                default="false"
+                label="Add Home menu item"
+                description="Include the Home menu item"/>
+            <property name="includeImageUrls"
+                type="Boolean"
+                default="false"
+                label="Retrieve image URLs"
+                description="Include image URLs in the data. Useful for a Tile Menu component with images. Ensure all relevant users have permission to access Document object."/>
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

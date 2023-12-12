@@ -9,7 +9,7 @@ public with sharing class CBEntryMappingV2 implements Database.Batchable<SObject
 	private Map<String, String> bridgeDim1Dim2Dim3Lvl1Map = CBServiceV2.getBridgeDim1Dim2Dim3Map(1); // key is FF Dimension1 Id + FF Dimension2 Id + FF Dimension3 Id  value is
 	private Map<String, String> bridgeDim1Dim2Dim3Lvl2Map = CBServiceV2.getBridgeDim1Dim2Dim3Map(2);
 	private Map<String, String> bridgeDim1Dim2Dim3Lvl3Map = CBServiceV2.getBridgeDim1Dim2Dim3Map(3);
-	private Map<String, String> BDGToOwnerMap = CBServiceV2.getBDGToOwnerMap();
+	private Map<String, String> BDGToOwnerMap = CBServiceV2.getBDGToOwnerMap(); 
 	private static Id CURRENT_FY_ID = [SELECT Id FROM cb4__CBTag__c WHERE cb4__Dimension__c = :cb4.CBUtils.dimensionNameIdMap.get('Budget Year') AND Name = :CBVariable.currentFY LIMIT 1][0].Id;
 	private static Id ACTUAL_ENTRY_CLASS_ID = [SELECT Id FROM cb4__CBTag__c WHERE cb4__Dimension__c = :cb4.CBUtils.dimensionNameIdMap.get('Entry Class') AND Name = 'Actual'][0].Id;
 

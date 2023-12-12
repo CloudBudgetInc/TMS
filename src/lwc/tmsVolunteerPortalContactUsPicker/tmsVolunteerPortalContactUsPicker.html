@@ -1,0 +1,38 @@
+<template>
+
+    <h2 class="slds-text-heading_large slds-text-color_inverse">Contact Us</h2>
+
+    <lightning-layout vertical-align="center" class="x-large">
+        <lightning-layout-item flexibility="auto" padding="around-small">
+            <p>1-833-GIV-HOPE (448-4673)</p>
+            <template lwc:if={displayCalgary}>
+                <p>Email: <a href="mailto:volunteer@theseed.ca">volunteer@theseed.ca</a></p>
+            </template>
+            <template lwc:if={displayEdmonton}>
+                <p>Email: <a href="mailto:volunteeredmonton@theseed.ca">volunteeredmonton@theseed.ca</a></p>
+            </template>
+            <template lwc:if={displayKamloops}>
+                <p>Email: <a href="mailto:kamloopsvolunteer@theseed.ca">kamloopsvolunteer@theseed.ca</a></p>
+            </template>
+            <template lwc:if={displayMedicineHat}>
+                <p>Email: <a href="mailto:volunteerMH@theseed.ca">volunteerMH@theseed.ca</a></p>
+            </template>
+            <template lwc:if={displayRedDeer}>
+                <p>Email: <a href="mailto:reddeervolunteers@theseed.ca">reddeervolunteers@theseed.ca</a></p>
+            </template>
+        </lightning-layout-item>
+
+        <lightning-layout-item flexibility="auto" padding="around-small">
+            <p>We have locations and services in 5 different cities.</p>
+            <lightning-select
+            name="Contact Us"
+            label=""
+            value={value}
+            options={options}
+            onchange={handleChange}
+            required ></lightning-select>
+
+        </lightning-layout-item>    
+    </lightning-layout>    
+
+</template>

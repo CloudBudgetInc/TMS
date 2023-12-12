@@ -33,6 +33,76 @@
     helpGetCBalances: function (cmp) {
         try {
             let _this = this;
+            let offset = '10000';
+            function callbackExec(cbalsLength){
+                console.group('CALLBACK EXEC');
+                console.log('offset', offset);
+                console.groupEnd();
+                if(cbalsLength < 10000){
+                    cmp.set("v.fitPageEnabled", cmp.get("v.report.cb4__FitToPageEnabled__c"));
+                    _this.helpGenerateReportLines(cmp);
+                    _this.helpGetFilterSelectOptions(cmp);
+
+                    _this.helpRefreshReportData(cmp);
+                }else{
+                    offset = offset*1 + 10000;
+                    _CBRequest(
+                        cmp,
+                        "c.getAllCBalancesServer",
+                        {
+                            "reportId": cmp.get("v.recordId"),
+                            'offsetValue' : (offset + '')
+                        },
+                        null,
+                        callback,
+                        null,
+                        _TEXT.REPORT.FAILED_GET_REPORT,
+                        false
+                    );
+                }
+            }
+
+            function callback(cmp, res) {
+                try {
+                    let CBalsRes = cmp.get('v.CBals');
+                    let CBals = res.getReturnValue();
+
+                    if ((CBalsRes && CBals === null) || (CBalsRes.length && CBals.length === 0)) {
+                        _CBMessages.fireOtherMessage(_TEXT.REPORT.HAVE_NO_DATA);
+                        cmp.set("v.tableHeaders", []);
+                        _hideSpinner(cmp);
+                        return;
+                    }
+                    CBalsRes = CBalsRes.concat(CBals);
+                    cmp.set('v.CBals', CBalsRes);
+                    callbackExec(CBals.length);
+                } catch (e) {
+                    alert("helpGetCBalances " + e);
+                }
+
+            }
+
+            _CBRequest(
+                cmp,
+                "c.getAllCBalancesServer",
+                {
+                    "reportId": cmp.get("v.recordId"),
+                    'offsetValue' : null
+                },
+                null,
+                callback,
+                null,
+                _TEXT.REPORT.FAILED_GET_REPORT,
+                false
+            );
+        } catch (e) {
+            alert(e);
+        }
+    },
+
+    helpGetCBalancesOld: function (cmp) {
+        try {
+            let _this = this;
 
             function callback() {
                 try {

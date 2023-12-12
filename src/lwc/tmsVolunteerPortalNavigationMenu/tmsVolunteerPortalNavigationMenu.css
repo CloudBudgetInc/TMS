@@ -1,0 +1,12 @@
+.navbar {
+    padding-bottom: 10px;
+    background-color: var(--lwc-cardBackgroundColor);
+}
+
+nav {
+    min-height: 35px;
+}
+
+.my-button-menu{
+    --slds-c-button-color-border: white;
+}

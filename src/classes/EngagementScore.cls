@@ -1,9 +1,6 @@
 /**
  * RFM (Engagement) Score Project for TMS Development. Created by John Dagsa August 24, 2023
- * To do: to overcome SOQL DML restriction - let's do a while loop where we have 2 extra fields being checked in WHERE part of query
- * Essentially when the Scheduled apex runs, mark the date field of on acc when it last ran. Then do a Boolean checkin if date > today
- * Now your query will only do the WHERE flag=true and I think this should work
- * Or what if you just do a for loop --- isn't this much easier?
+ * To do: to overcome SOQL DML restriction - done via converting to batch apex
  */
 
 public class EngagementScore Implements Schedulable{

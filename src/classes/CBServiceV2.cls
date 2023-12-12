@@ -62,6 +62,8 @@ public with sharing class CBServiceV2 {
 	public static Map<String, String> getBridgeDim1Dim2Dim3Map(Integer lvl) {
 		String lvlText = 'Level ' + lvl;
 		Map<String, String> r = new Map<String, String>();
+		Date startBYDate = CBVariable.startFY;
+		Date endBYDate = CBVariable.endFY;
 
 		Map<String, String> dimAndBRDBridge = new Map<String, String>(); // mapping of CB Dimensions and RBs. Key is FF record Id, value is CB analogue
 		for (cb4__CBTag__c t : [
@@ -80,6 +82,7 @@ public with sharing class CBServiceV2 {
 				SELECT Dimension_1__c, Dimension_2__c, Dimension_3__c, Budget_Reporting_Department__c
 				FROM Budget_Reporting_Department_Line__c
 				WHERE Budget_Reporting_Department__r.Reporting_Level__c = :lvlText // number of BRD level
+				AND ((StartDate__c = NULL OR StartDate__c >= :startBYDate) AND (ExpDate__c <= :endBYDate OR ExpDate__c = NULL))
 				LIMIT 50000
 		]) {
 			for (Budget_Reporting_Department_Line__c brdl : brdls) {

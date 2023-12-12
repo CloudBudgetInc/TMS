@@ -1,0 +1,17 @@
+<template>
+    <lightning-card icon-name="utility:today">
+        <div class="filters">
+            <lightning-combobox name="city" label="City" value={selectedCity} options={cityOptions} onchange={handleCityChange}></lightning-combobox>
+            <lightning-combobox name="skill" label="Skill Required" value={selectedSkill} options={skillOptions} onchange={handleSkillChange}></lightning-combobox>
+        </div>
+        <div class="type-multi-select">
+            <template for:each={typeOptions} for:item="typeOption">
+                <div key={typeOption.value} class="type-option">
+                    <input type="checkbox" id={typeOption.value} value={typeOption.value} onchange={handleTypeChange} />
+                    <label for={typeOption.value} style="background-color: {typeOption.color};">{typeOption.label}</label>
+                </div>
+            </template>
+        </div>
+        <div lwc:dom="manual" class="calendar"></div>
+    </lightning-card>
+</template>

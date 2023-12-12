@@ -1,0 +1,8 @@
+.error {
+    color: #aa0000;
+    font-weight: bolder;
+}
+
+.warning {
+    color: #ad7400;
+}

@@ -1,0 +1,59 @@
+<template>
+
+	<!-- SPINNER -->
+	<c-cb-spinner show={showSpinner}></c-cb-spinner>
+	<!-- SPINNER -->
+
+	<lightning-card title="Budget Report Department Line Loader">
+
+		<lightning-layout multiple-rows="true" vertical-align="center" class="x-large">
+
+			<lightning-layout-item padding="around-small">
+				<div>
+					<lightning-button label="Download BRDLines" icon-name="utility:download"
+									  onclick={downloadBRDLinesFile}></lightning-button>
+				</div>
+				<div>
+					<lightning-input accept=".xlsx" label="" multiple name="file uploader"
+									 onchange={handleFilesUploading}
+									 type="file"></lightning-input>
+				</div>
+				<div>
+					<template lwc:if={showSaveButton}>
+						<div class="slds-p-top_small">
+							<lightning-button label="Delete all existed and create new" disabled={disableSaveButton} variant="brand" class="slds-m-top_x-small"
+											  onclick={saveBRDLines}></lightning-button>
+						</div>
+						<div class="slds-p-top_small">
+							<lightning-button label="Add new and Save" disabled={disableSaveButton} variant="brand" class="slds-m-top_x-small"
+											  onclick={saveBRDLinesSafe}></lightning-button>
+						</div>
+					</template>
+				</div>
+			</lightning-layout-item>
+			<lightning-layout-item padding="around-small">
+				<div class="slds-m-top_x-small slds-text-body_regular slds-text-color_error slds-text-title_bold">
+					<p>Attention! You may lose your data in PROD.</p>
+					<p>All BRD Lines can be deleted if loading a blank Excel file.</p>
+					<p>Best practice is:</p>
+					<p>1. Download BRD Lines Excel file as your backup.</p>
+					<p>2. Make a copy of BRD Lines Excel file and make the needed updates.</p>
+					<p>3. Upload the updated BRD Lines Excel file.</p>
+				</div>
+			</lightning-layout-item>
+			<lightning-layout-item flexibility="auto" padding="around-small">
+				<template lwc:if={showSaveButton}>
+					<div class="slds-box slds-m-top_large" style="max-height: 519px; overflow-y: scroll;">
+
+						<template for:each={logs} for:item="log">
+							<div key={log} class={log.cl}>
+								{log.message}
+							</div>
+						</template>
+					</div>
+				</template>
+			</lightning-layout-item>
+		</lightning-layout>
+
+	</lightning-card>
+</template>
